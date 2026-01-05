@@ -25,22 +25,30 @@ florida_tax_rag/
 │   │   └── utils.py        # Citation parsing utilities
 │   └── ingestion/          # Document processing pipeline
 │       ├── models.py       # Unified LegalDocument model
-│       └── consolidate.py  # Consolidation functions
+│       ├── consolidate.py  # Consolidation functions
+│       ├── chunking.py     # Hierarchical chunking (parent/child)
+│       ├── tokenizer.py    # Token counting (tiktoken)
+│       ├── citation_extractor.py  # Citation extraction
+│       └── build_citation_graph.py # Citation graph construction
 ├── scripts/
 │   ├── scrape_statutes.py
 │   ├── scrape_admin_code.py
 │   ├── scrape_taa.py
 │   ├── scrape_case_law.py
 │   ├── audit_raw_data.py   # Data quality audit
-│   └── consolidate_corpus.py # Corpus consolidation
+│   ├── consolidate_corpus.py # Corpus consolidation
+│   ├── chunk_corpus.py     # Hierarchical chunking
+│   └── extract_citations.py # Citation graph extraction
 ├── data/
 │   ├── raw/                # Raw scraped data
 │   │   ├── statutes/       # 742 statute sections
 │   │   ├── admin_code/     # 101 administrative rules
 │   │   ├── taa/            # Technical Assistance Advisements + PDFs
 │   │   └── case_law/       # 308 Florida Supreme Court cases
-│   └── processed/          # Consolidated corpus
+│   └── processed/          # Processed data
 │       ├── corpus.json     # Unified document corpus (4.16 MB)
+│       ├── chunks.json     # Hierarchical chunks (11.18 MB)
+│       ├── citation_graph.json # Citation relationships (670 KB)
 │       └── statistics.json # Consolidation metrics
 └── tests/
 ```
@@ -63,6 +71,27 @@ florida_tax_rag/
 | **Statute Citations** | 786 |
 | **Rule Citations** | 3 |
 | **Case-to-Case Citations** | 2,469 |
+
+### Chunking Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Chunks** | 3,022 |
+| **Parent Chunks** | 1,152 |
+| **Child Chunks** | 1,870 |
+| **Avg Tokens/Chunk** | 362 |
+| **Chunks <500 tokens** | 84% |
+
+### Citation Graph Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Total Edges** | 1,126 |
+| **Relation: cites** | 796 |
+| **Relation: amends** | 148 |
+| **Relation: authority** | 105 |
+| **Relation: implements** | 41 |
+| **Relation: supersedes** | 35 |
 
 ### Average Text Lengths
 
@@ -213,8 +242,9 @@ ruff format src/
   - [x] Data quality audit (`scripts/audit_raw_data.py`)
   - [x] Unified document model (`src/ingestion/models.py`)
   - [x] Corpus consolidation (`data/processed/corpus.json`)
-  - [ ] Citation graph construction
-  - [ ] Text chunking strategies
+  - [x] Hierarchical chunking (`src/ingestion/chunking.py`)
+  - [x] Citation extraction (`src/ingestion/citation_extractor.py`)
+  - [x] Citation graph construction (`data/processed/citation_graph.json`)
 
 - [ ] **Phase 3: Knowledge Base**
   - [ ] Vector embeddings (Voyage AI)
