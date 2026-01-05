@@ -39,14 +39,19 @@ florida_tax_rag/
 │   │   ├── schema.py       # LegalChunk collection schema
 │   │   ├── client.py       # WeaviateClient with hybrid search
 │   │   └── embeddings.py   # VoyageEmbedder + Redis cache
-│   └── retrieval/          # Hybrid retrieval system
-│       ├── models.py       # RetrievalResult, CitationContext
-│       ├── hybrid.py       # HybridRetriever (vector + keyword + graph)
-│       ├── graph_expander.py # Neo4j graph expansion
-│       ├── reranker.py     # Legal-specific reranking
-│       ├── query_decomposer.py # Claude-powered query decomposition
-│       ├── multi_retriever.py  # Multi-query parallel retrieval
-│       └── prompts.py      # LLM prompts for decomposition
+│   ├── retrieval/          # Hybrid retrieval system
+│   │   ├── models.py       # RetrievalResult, CitationContext
+│   │   ├── hybrid.py       # HybridRetriever (vector + keyword + graph)
+│   │   ├── graph_expander.py # Neo4j graph expansion
+│   │   ├── reranker.py     # Legal-specific reranking
+│   │   ├── query_decomposer.py # Claude-powered query decomposition
+│   │   ├── multi_retriever.py  # Multi-query parallel retrieval
+│   │   └── prompts.py      # LLM prompts for decomposition/scoring
+│   └── agent/              # LangGraph agentic workflow
+│       ├── state.py        # TaxAgentState TypedDict
+│       ├── nodes.py        # 7 node functions (decompose, retrieve, etc.)
+│       ├── edges.py        # Conditional routing logic
+│       └── graph.py        # StateGraph definition
 ├── config/
 │   └── settings.py         # Pydantic settings from environment
 ├── scripts/
@@ -64,7 +69,8 @@ florida_tax_rag/
 │   ├── load_weaviate.py    # Load chunks + embeddings into Weaviate
 │   ├── verify_vector_store.py # Verify Weaviate data
 │   ├── test_retrieval.py   # Test hybrid retrieval
-│   └── test_decomposition.py # Test query decomposition
+│   ├── test_decomposition.py # Test query decomposition
+│   └── visualize_agent.py  # Visualize LangGraph agent workflow
 ├── data/
 │   ├── raw/                # Raw scraped data
 │   │   ├── statutes/       # 742 statute sections
@@ -435,6 +441,118 @@ User Query
 | Case | 0.8 | Interpretive authority |
 | TAA | 0.7 | Advisory only |
 
+## LangGraph Agent Workflow
+
+The system uses a LangGraph StateGraph to orchestrate multi-step reasoning over tax law queries. The agent processes queries through 7 specialized nodes that progressively refine results.
+
+### Agent Workflow Diagram
+
+```
+┌─────────────────┐
+│  decompose_query │ ◄── Break query into sub-queries
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────────┐
+│ retrieve_for_subquery│ ◄── Hybrid search (vector + keyword)
+└────────┬────────────┘
+         │
+    ┌────┴────┐
+    ▼         ▼
+┌─────────┐ ┌──────────────┐
+│ expand_ │ │ score_       │ ◄── Parallel: graph + relevance
+│ graph   │ │ relevance    │
+└────┬────┘ └──────┬───────┘
+     └──────┬──────┘
+            ▼
+   ┌────────────────┐
+   │filter_irrelevant│ ◄── Remove low-relevance chunks
+   └───────┬────────┘
+           │
+           ▼ (loop if more sub-queries)
+   ┌──────────────────────┐
+   │check_temporal_validity│ ◄── Verify effective dates
+   └───────┬──────────────┘
+           │
+           ▼
+   ┌──────────────────┐
+   │ synthesize_answer │ ◄── Prepare citations & context
+   └──────────────────┘
+```
+
+### Node Descriptions
+
+| Node | Purpose | Key Operations |
+|------|---------|----------------|
+| `decompose_query` | Break complex queries into sub-queries | Uses Claude LLM for decomposition |
+| `retrieve_for_subquery` | Run hybrid retrieval | Vector + keyword search via Weaviate |
+| `expand_with_graph` | Find related documents | Neo4j: implementing rules, interpreting cases |
+| `score_relevance` | LLM-based relevance scoring | Parallel scoring with semaphore (5 concurrent) |
+| `filter_irrelevant` | Remove low-quality chunks | Threshold: 0.5, minimum: 10 chunks |
+| `check_temporal_validity` | Verify temporal applicability | Extract tax year, filter future docs |
+| `synthesize_answer` | Prepare final response | Calculate confidence, format citations |
+
+### Using the Agent
+
+```python
+from src.agent import create_tax_agent_graph
+import asyncio
+
+async def query_agent():
+    graph = create_tax_agent_graph()
+
+    result = await graph.ainvoke({
+        "original_query": "Is software consulting taxable in Miami?"
+    })
+
+    print(f"Sub-queries: {len(result['sub_queries'])}")
+    print(f"Retrieved chunks: {len(result['retrieved_chunks'])}")
+    print(f"Filtered chunks: {len(result['filtered_chunks'])}")
+    print(f"Confidence: {result['confidence']:.2f}")
+
+    for citation in result['citations'][:5]:
+        print(f"  - {citation['citation']} ({citation['doc_type']})")
+
+asyncio.run(query_agent())
+```
+
+### Confidence Scoring
+
+Confidence is calculated based on the quality of retrieved sources:
+
+| Source Type | Weight |
+|-------------|--------|
+| Statute | 1.0 |
+| Rule | 0.9 |
+| Case | 0.7 |
+| TAA | 0.6 |
+
+Formula: `confidence = sum(weights for top 5 chunks) / 5`
+
+### Agent State
+
+The `TaxAgentState` TypedDict tracks workflow progress:
+
+```python
+# Key state fields
+original_query: str          # User's question
+sub_queries: list            # Decomposed sub-queries
+retrieved_chunks: list       # Accumulates across sub-queries (Annotated[list, add])
+filtered_chunks: list        # After relevance filtering
+temporally_valid_chunks: list # After temporal validation
+citations: list[Citation]    # Prepared citations
+confidence: float            # 0-1 confidence score
+reasoning_steps: list        # Accumulated reasoning (Annotated[list, add])
+errors: list                 # Accumulated errors (Annotated[list, add])
+```
+
+### Visualizing the Agent
+
+```bash
+# Generate workflow diagram
+python scripts/visualize_agent.py
+```
+
 ## Key Features
 
 ### Scraper Infrastructure
@@ -555,8 +673,24 @@ make format             # Format code
   - [x] Legal-specific reranking (primary authority boost, recency)
   - [x] Query decomposition (Claude-powered)
   - [x] Multi-query parallel retrieval
-  - [ ] Multi-agent orchestration (LangGraph)
+
+- [x] **Phase 5: Agentic Workflow**
+  - [x] LangGraph StateGraph definition
+  - [x] Query decomposition node
+  - [x] Hybrid retrieval node
+  - [x] Graph expansion node (Neo4j integration)
+  - [x] LLM-based relevance scoring
+  - [x] Relevance filtering with threshold
+  - [x] Temporal validity checking
+  - [x] Citation preparation & confidence scoring
+  - [x] Unit tests (16 tests passing)
+  - [x] Integration tests
+
+- [ ] **Phase 6: Answer Generation & API**
+  - [ ] Full answer synthesis with Claude
   - [ ] Citation verification
+  - [ ] FastAPI REST endpoint
+  - [ ] Streaming responses
 
 ## Documentation
 

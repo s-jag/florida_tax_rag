@@ -63,3 +63,6 @@ class TaxAgentState(TypedDict, total=False):
     # Iteration control
     max_iterations: int
     current_iteration: int
+
+    # Internal state for synthesis (used between prompts)
+    _synthesis_context: str  # Formatted context for LLM answer generation

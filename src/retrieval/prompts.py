@@ -66,3 +66,20 @@ Key Florida tax resources you're familiar with:
 - Florida case law on tax matters
 
 Be precise and focused on Florida-specific tax law.'''
+
+# Relevance scoring prompt for agent nodes
+RELEVANCE_PROMPT = '''Given this tax law question and a document excerpt,
+rate the relevance from 0 to 10:
+
+Question: {query}
+Document Type: {doc_type}
+Citation: {citation}
+Document Text:
+{text}
+
+Consider:
+- Does this directly answer the question?
+- Is this the authoritative source (statute > rule > case > taa)?
+- Is this current law or potentially superseded?
+
+Return JSON only: {{"score": 0-10, "reasoning": "brief explanation"}}'''
