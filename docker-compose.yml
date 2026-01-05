@@ -1,0 +1,72 @@
+services:
+  # Neo4j Knowledge Graph - stores citation network between statutes, rules, and cases
+  neo4j:
+    image: neo4j:5.15-community
+    container_name: florida_tax_neo4j
+    ports:
+      - "7474:7474"  # Browser UI
+      - "7687:7687"  # Bolt protocol
+    volumes:
+      - ./docker-data/neo4j/data:/data
+      - ./docker-data/neo4j/logs:/logs
+      - ./docker-data/neo4j/plugins:/plugins
+    environment:
+      - NEO4J_AUTH=neo4j/florida_tax_rag_dev
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      - NEO4J_dbms_security_procedures_allowlist=apoc.*
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - florida_tax_network
+
+  # Weaviate Vector Database - semantic search with hybrid BM25 + vector
+  weaviate:
+    image: semitechnologies/weaviate:1.24.1
+    container_name: florida_tax_weaviate
+    ports:
+      - "8080:8080"
+      - "50051:50051"  # gRPC
+    volumes:
+      - ./docker-data/weaviate:/var/lib/weaviate
+    environment:
+      - QUERY_DEFAULTS_LIMIT=25
+      - AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true
+      - PERSISTENCE_DATA_PATH=/var/lib/weaviate
+      - DEFAULT_VECTORIZER_MODULE=none
+      - ENABLE_MODULES=text2vec-api,reranker-transformers
+      - CLUSTER_HOSTNAME=node1
+      # Hybrid search is enabled by default in Weaviate
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/v1/.well-known/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - florida_tax_network
+
+  # Redis - caching layer for embeddings to reduce Voyage API calls
+  redis:
+    image: redis:7-alpine
+    container_name: florida_tax_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./docker-data/redis:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - florida_tax_network
+
+networks:
+  florida_tax_network:
+    driver: bridge

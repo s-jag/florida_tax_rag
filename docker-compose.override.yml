@@ -1,0 +1,22 @@
+# Development-specific overrides
+# This file is automatically loaded by docker-compose alongside docker-compose.yml
+
+services:
+  neo4j:
+    # More verbose logging in development
+    environment:
+      - NEO4J_dbms_logs_debug_level=DEBUG
+    # Expose additional ports for debugging
+    ports:
+      - "7473:7473"  # HTTPS browser (if needed)
+
+  weaviate:
+    environment:
+      # Enable query logging for debugging
+      - LOG_LEVEL=debug
+      # Disable telemetry in development
+      - DISABLE_TELEMETRY=true
+
+  redis:
+    # Use debug logging
+    command: redis-server --appendonly yes --loglevel debug
