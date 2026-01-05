@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     weaviate_url: str = "http://localhost:8080"
     weaviate_api_key: Optional[SecretStr] = None
 
+    # Redis (Embedding Cache)
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+
 
 @lru_cache
 def get_settings() -> Settings:
