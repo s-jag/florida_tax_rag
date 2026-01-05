@@ -481,7 +481,7 @@ The system uses a LangGraph StateGraph to orchestrate multi-step reasoning over 
            │
            ▼
    ┌──────────────────┐
-   │ synthesize_answer │ ◄── Prepare citations & context
+   │ synthesize_answer │ ◄── LLM generation with citations
    └──────────────────┘
 ```
 
@@ -495,7 +495,7 @@ The system uses a LangGraph StateGraph to orchestrate multi-step reasoning over 
 | `score_relevance` | LLM-based relevance scoring | Parallel scoring with semaphore (5 concurrent) |
 | `filter_irrelevant` | Remove low-quality chunks | Threshold: 0.5, minimum: 10 chunks |
 | `check_temporal_validity` | Verify temporal applicability | Extract tax year, filter future docs |
-| `synthesize_answer` | Prepare final response | Calculate confidence, format citations |
+| `synthesize_answer` | Generate final answer | TaxLawGenerator: LLM call, citation extraction & validation |
 
 ### Using the Agent
 
@@ -556,6 +556,86 @@ errors: list                 # Accumulated errors (Annotated[list, add])
 ```bash
 # Generate workflow diagram
 python scripts/visualize_agent.py
+```
+
+## Answer Generation
+
+The `TaxLawGenerator` produces legally-accurate responses with validated citations using Claude LLM.
+
+### Generation Pipeline
+
+```
+temporally_valid_chunks → TaxLawGenerator → GeneratedResponse
+                              │
+                              ├── format_chunks_for_context()
+                              ├── LLM call with SYSTEM_PROMPT
+                              ├── extract_citations()
+                              └── validate_citations()
+```
+
+### System Prompt
+
+The generator uses a specialized **Florida Tax Attorney** persona with 12 critical rules:
+1. Answer using ONLY provided legal context
+2. Cite specific Florida Statute (§) or Rule (F.A.C.) for EVERY claim
+3. Format citations as `[Source: § 212.05(1)]` or `[Source: Rule 12A-1.005]`
+4. State when law is ambiguous or context insufficient
+5. Present multiple interpretations with sources
+6. Note effective dates of cited provisions
+7. Distinguish between Statutes, Rules, Cases, and TAAs
+
+### Citation Validation
+
+Citations extracted from LLM responses are validated against source chunks:
+
+```python
+from src.generation import TaxLawGenerator
+
+generator = TaxLawGenerator()
+
+# Generate response with validated citations
+response = await generator.generate(
+    query="What is the sales tax rate in Florida?",
+    chunks=retrieved_chunks[:10],
+)
+
+print(f"Answer: {response.answer[:200]}...")
+print(f"Confidence: {response.confidence:.2f}")
+print(f"Citations: {len(response.citations)}")
+
+for citation in response.citations:
+    status = "✓" if citation.verified else "⚠ UNVERIFIED"
+    print(f"  {status} {citation.citation_text}")
+```
+
+### Confidence Scoring
+
+Confidence is calculated based on source quality and citation verification:
+
+| Factor | Weight |
+|--------|--------|
+| Source quality (top 5 chunks) | 60% |
+| Citation verification rate | 40% |
+
+**Source type weights:**
+| Document Type | Weight |
+|--------------|--------|
+| Statute | 1.0 |
+| Rule | 0.9 |
+| Case | 0.7 |
+| TAA | 0.6 |
+
+### Hallucination Detection
+
+The generator flags citations not found in provided context:
+
+```python
+# Warnings indicate potential hallucinations
+if response.warnings:
+    print("Warnings:")
+    for w in response.warnings:
+        print(f"  ⚠ {w}")
+# Example: "2 citation(s) could not be verified against provided sources"
 ```
 
 ## Key Features
@@ -688,12 +768,14 @@ make format             # Format code
   - [x] Relevance filtering with threshold
   - [x] Temporal validity checking
   - [x] Citation preparation & confidence scoring
-  - [x] Unit tests (16 tests passing)
+  - [x] Unit tests (73 tests passing)
   - [x] Integration tests
 
 - [ ] **Phase 6: Answer Generation & API**
-  - [ ] Full answer synthesis with Claude
-  - [ ] Citation verification
+  - [x] Full answer synthesis with Claude (TaxLawGenerator)
+  - [x] Citation extraction and validation
+  - [x] Hallucination detection (unverified citation warnings)
+  - [x] Confidence scoring (source quality + verification rate)
   - [ ] FastAPI REST endpoint
   - [ ] Streaming responses
 
