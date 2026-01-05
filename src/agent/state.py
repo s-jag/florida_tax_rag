@@ -66,3 +66,11 @@ class TaxAgentState(TypedDict, total=False):
 
     # Internal state for synthesis (used between prompts)
     _synthesis_context: str  # Formatted context for LLM answer generation
+
+    # Validation and correction
+    validation_result: Optional[dict]  # ValidationResult as dict
+    correction_result: Optional[dict]  # CorrectionResult as dict
+    regeneration_count: int  # Number of regeneration attempts
+    max_regenerations: int  # Max regeneration attempts (default 2)
+    validation_passed: bool  # Whether validation passed
+    original_answer: Optional[str]  # Original answer before corrections

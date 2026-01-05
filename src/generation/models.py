@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -89,4 +90,131 @@ class GeneratedResponse(BaseModel):
     generation_metadata: dict = Field(
         default_factory=dict,
         description="Metadata about generation (model, tokens, timing, etc.)",
+    )
+
+
+# ============================================================================
+# Hallucination Detection Models
+# ============================================================================
+
+
+class HallucinationType(str, Enum):
+    """Types of hallucinations that can be detected in generated responses."""
+
+    UNSUPPORTED_CLAIM = "unsupported_claim"
+    """Claim not backed by any source document."""
+
+    MISQUOTED_TEXT = "misquoted_text"
+    """Quote or paraphrase doesn't match source meaning."""
+
+    FABRICATED_CITATION = "fabricated_citation"
+    """Citation references non-existent law or document."""
+
+    OUTDATED_INFO = "outdated_info"
+    """Information from superseded or repealed law."""
+
+    MISATTRIBUTED = "misattributed"
+    """Claim attributed to wrong source."""
+
+    OVERGENERALIZATION = "overgeneralization"
+    """Single case or exception presented as general rule."""
+
+
+class DetectedHallucination(BaseModel):
+    """A single detected hallucination in the response.
+
+    Contains details about the hallucinated claim, its type, severity,
+    and suggested correction if available.
+    """
+
+    claim_text: str = Field(
+        ...,
+        description="The exact text from the response containing the hallucination",
+    )
+    hallucination_type: HallucinationType = Field(
+        ...,
+        description="Classification of the hallucination type",
+    )
+    cited_source: Optional[str] = Field(
+        default=None,
+        description="The citation referenced for this claim, if any",
+    )
+    actual_source_text: Optional[str] = Field(
+        default=None,
+        description="What the source actually says (for misquoted/misattributed)",
+    )
+    severity: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Severity score: 0.0=minor, 1.0=critical legal error",
+    )
+    reasoning: str = Field(
+        ...,
+        description="Explanation of why this is considered a hallucination",
+    )
+    suggested_correction: Optional[str] = Field(
+        default=None,
+        description="Suggested corrected text, if correction is possible",
+    )
+
+
+class ValidationResult(BaseModel):
+    """Complete result of response validation.
+
+    Contains all detected hallucinations, verified claims, and
+    flags indicating whether correction or regeneration is needed.
+    """
+
+    hallucinations: list[DetectedHallucination] = Field(
+        default_factory=list,
+        description="List of detected hallucinations",
+    )
+    verified_claims: list[str] = Field(
+        default_factory=list,
+        description="Claims that were verified against sources",
+    )
+    overall_accuracy: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Overall accuracy score (1.0 = fully verified)",
+    )
+    needs_regeneration: bool = Field(
+        default=False,
+        description="True if hallucinations are severe enough to require regeneration",
+    )
+    needs_correction: bool = Field(
+        default=False,
+        description="True if response can be corrected without full regeneration",
+    )
+    validation_metadata: dict = Field(
+        default_factory=dict,
+        description="Metadata about the validation process",
+    )
+
+
+class CorrectionResult(BaseModel):
+    """Result of applying corrections to a response.
+
+    Contains the corrected answer and details about what changes were made.
+    """
+
+    corrected_answer: str = Field(
+        ...,
+        description="The corrected response text",
+    )
+    corrections_made: list[str] = Field(
+        default_factory=list,
+        description="List of corrections applied",
+    )
+    disclaimers_added: list[str] = Field(
+        default_factory=list,
+        description="Disclaimers added to the response",
+    )
+    confidence_adjustment: float = Field(
+        default=0.0,
+        ge=-1.0,
+        le=0.0,
+        description="Negative adjustment to apply to confidence score",
     )

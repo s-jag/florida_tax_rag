@@ -98,3 +98,41 @@ def check_for_errors(state: TaxAgentState) -> Literal["continue", "error"]:
             return "error"
 
     return "continue"
+
+
+def route_after_validation(
+    state: TaxAgentState,
+) -> Literal["regenerate", "correct", "accept"]:
+    """Route based on validation results.
+
+    Decision logic:
+    1. If validation passed -> "accept" (go to END)
+    2. If needs_correction but not regeneration -> "correct"
+    3. If needs_regeneration and under limit -> "regenerate" (back to synthesize)
+    4. If needs_regeneration but at limit -> "correct" (best effort)
+
+    Args:
+        state: Current agent state with validation_result
+
+    Returns:
+        Next action: "regenerate", "correct", or "accept"
+    """
+    validation_passed = state.get("validation_passed", True)
+
+    if validation_passed:
+        return "accept"
+
+    validation_data = state.get("validation_result", {})
+    needs_regeneration = validation_data.get("needs_regeneration", False)
+    needs_correction = validation_data.get("needs_correction", False)
+
+    regeneration_count = state.get("regeneration_count", 0)
+    max_regenerations = state.get("max_regenerations", 2)
+
+    if needs_regeneration and regeneration_count < max_regenerations:
+        return "regenerate"
+    elif needs_correction or needs_regeneration:
+        # If we can't regenerate anymore, try to correct
+        return "correct"
+    else:
+        return "accept"

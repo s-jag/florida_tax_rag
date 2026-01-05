@@ -582,3 +582,150 @@ async def synthesize_answer(state: TaxAgentState) -> dict[str, Any]:
             "reasoning_steps": [f"Generation failed: {str(e)}"],
             "_synthesis_context": format_chunks_for_context(valid_chunks[:10]),
         }
+
+
+async def validate_response(state: TaxAgentState) -> dict[str, Any]:
+    """Validate the generated response for hallucinations.
+
+    Uses ResponseValidator to:
+    1. Check each claim against source chunks
+    2. Detect hallucinations, misquotes, fabricated citations
+    3. Calculate overall accuracy score
+    4. Determine if correction or regeneration is needed
+
+    Args:
+        state: Current agent state with final_answer and temporally_valid_chunks
+
+    Returns:
+        State updates with validation_result, validation_passed
+    """
+    from src.generation.validator import ResponseValidator
+
+    final_answer = state.get("final_answer")
+    chunks = state.get("temporally_valid_chunks", [])
+    query = state["original_query"]
+
+    logger.info(
+        "node_started",
+        node="validate_response",
+        answer_length=len(final_answer) if final_answer else 0,
+    )
+
+    # Skip validation if no answer was generated
+    if not final_answer:
+        return {
+            "validation_result": None,
+            "validation_passed": False,
+            "reasoning_steps": ["Validation skipped: no answer to validate"],
+        }
+
+    try:
+        validator = ResponseValidator()
+        result = await validator.validate_response(
+            response_text=final_answer,
+            query=query,
+            chunks=chunks[:10],  # Use same chunks as generation
+        )
+
+        # Store original answer before any corrections
+        original_answer = state.get("original_answer") or final_answer
+
+        validation_passed = not result.needs_regeneration and not result.needs_correction
+
+        logger.info(
+            "node_completed",
+            node="validate_response",
+            accuracy=result.overall_accuracy,
+            hallucination_count=len(result.hallucinations),
+            validation_passed=validation_passed,
+        )
+
+        return {
+            "validation_result": result.model_dump(),
+            "validation_passed": validation_passed,
+            "original_answer": original_answer,
+            "reasoning_steps": [
+                f"Validation: accuracy={result.overall_accuracy:.2f}, "
+                f"hallucinations={len(result.hallucinations)}, "
+                f"passed={validation_passed}"
+            ],
+        }
+
+    except Exception as e:
+        logger.error("node_failed", node="validate_response", error=str(e))
+        return {
+            "validation_result": None,
+            "validation_passed": True,  # Pass on error to avoid blocking (fail-open)
+            "errors": [f"Validation error: {e}"],
+            "reasoning_steps": [f"Validation failed: {e}"],
+        }
+
+
+async def correct_response(state: TaxAgentState) -> dict[str, Any]:
+    """Correct the response by removing/fixing hallucinated content.
+
+    Uses ResponseCorrector to:
+    1. Apply simple corrections for low-severity issues
+    2. Use LLM for complex corrections
+    3. Add disclaimers where needed
+    4. Adjust confidence score
+
+    Args:
+        state: Current agent state with validation_result
+
+    Returns:
+        State updates with corrected final_answer, confidence adjustment
+    """
+    from src.generation.corrector import ResponseCorrector
+    from src.generation.models import ValidationResult
+
+    final_answer = state.get("final_answer", "")
+    validation_data = state.get("validation_result")
+    chunks = state.get("temporally_valid_chunks", [])
+    current_confidence = state.get("confidence", 0.5)
+
+    logger.info("node_started", node="correct_response")
+
+    if not validation_data:
+        return {
+            "reasoning_steps": ["Correction skipped: no validation result"],
+        }
+
+    try:
+        validation_result = ValidationResult(**validation_data)
+        corrector = ResponseCorrector()
+
+        result = await corrector.correct(
+            response_text=final_answer,
+            validation_result=validation_result,
+            chunks=chunks[:10],
+        )
+
+        # Apply confidence adjustment
+        new_confidence = max(0.0, current_confidence + result.confidence_adjustment)
+
+        logger.info(
+            "node_completed",
+            node="correct_response",
+            corrections_made=len(result.corrections_made),
+            confidence_before=current_confidence,
+            confidence_after=new_confidence,
+        )
+
+        return {
+            "final_answer": result.corrected_answer,
+            "correction_result": result.model_dump(),
+            "confidence": new_confidence,
+            "validation_passed": True,  # Mark as passed after correction
+            "reasoning_steps": [
+                f"Correction applied: {len(result.corrections_made)} fixes, "
+                f"confidence adjusted {current_confidence:.2f} -> {new_confidence:.2f}"
+            ],
+        }
+
+    except Exception as e:
+        logger.error("node_failed", node="correct_response", error=str(e))
+        return {
+            "errors": [f"Correction error: {e}"],
+            "reasoning_steps": [f"Correction failed: {e}"],
+        }

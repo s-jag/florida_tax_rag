@@ -225,14 +225,26 @@ class TestGraphStructure:
         assert start_edges[0].target == "decompose"
 
     def test_graph_has_end(self):
-        """Test graph has synthesize leading to end."""
+        """Test graph has validation path leading to end."""
         graph = create_tax_agent_graph()
         graph_def = graph.get_graph()
 
-        # Find edges from synthesize
+        # Synthesize now leads to validate
         synth_edges = [e for e in graph_def.edges if e.source == "synthesize"]
         assert len(synth_edges) == 1
-        assert synth_edges[0].target == "__end__"
+        assert synth_edges[0].target == "validate"
+
+        # Validate has conditional edges (accept leads to __end__)
+        validate_edges = [e for e in graph_def.edges if e.source == "validate"]
+        targets = {e.target for e in validate_edges}
+        assert "__end__" in targets  # accept path
+        assert "synthesize" in targets  # regenerate path
+        assert "correct" in targets  # correct path
+
+        # Correct leads to __end__
+        correct_edges = [e for e in graph_def.edges if e.source == "correct"]
+        assert len(correct_edges) == 1
+        assert correct_edges[0].target == "__end__"
 
     def test_graph_has_conditional_edges(self):
         """Test graph has conditional edges from retrieve and check_temporal."""

@@ -4,15 +4,21 @@ from __future__ import annotations
 
 from langgraph.graph import END, StateGraph
 
-from .edges import should_continue_retrieval, should_expand_graph
+from .edges import (
+    route_after_validation,
+    should_continue_retrieval,
+    should_expand_graph,
+)
 from .nodes import (
     check_temporal_validity,
+    correct_response,
     decompose_query,
     expand_with_graph,
     filter_irrelevant,
     retrieve_for_subquery,
     score_relevance,
     synthesize_answer,
+    validate_response,
 )
 from .state import TaxAgentState
 
@@ -23,7 +29,7 @@ def create_tax_agent_graph() -> StateGraph:
     Graph Structure:
         START -> decompose -> retrieve -> [expand_graph | score_relevance]
               -> filter -> check_temporal -> [retrieve_next | decompose_more | synthesize]
-              -> END
+              -> validate -> [regenerate | correct | accept] -> END
 
     Returns:
         Compiled StateGraph ready for execution
@@ -39,6 +45,10 @@ def create_tax_agent_graph() -> StateGraph:
     graph.add_node("filter", filter_irrelevant)
     graph.add_node("check_temporal", check_temporal_validity)
     graph.add_node("synthesize", synthesize_answer)
+
+    # Validation and correction nodes
+    graph.add_node("validate", validate_response)
+    graph.add_node("correct", correct_response)
 
     # Set entry point
     graph.set_entry_point("decompose")
@@ -74,8 +84,22 @@ def create_tax_agent_graph() -> StateGraph:
         },
     )
 
-    # Synthesize leads to END
-    graph.add_edge("synthesize", END)
+    # Synthesize leads to validation
+    graph.add_edge("synthesize", "validate")
+
+    # Conditional: after validation, decide next step
+    graph.add_conditional_edges(
+        "validate",
+        route_after_validation,
+        {
+            "regenerate": "synthesize",  # Loop back to regenerate
+            "correct": "correct",  # Go to correction
+            "accept": END,  # Accept and finish
+        },
+    )
+
+    # After correction, go to END
+    graph.add_edge("correct", END)
 
     return graph.compile()
 

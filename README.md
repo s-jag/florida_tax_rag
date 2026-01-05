@@ -49,14 +49,16 @@ florida_tax_rag/
 │   │   └── prompts.py      # LLM prompts for decomposition/scoring
 │   ├── agent/              # LangGraph agentic workflow
 │   │   ├── state.py        # TaxAgentState TypedDict
-│   │   ├── nodes.py        # 7 node functions (decompose, retrieve, etc.)
+│   │   ├── nodes.py        # 9 node functions (decompose, retrieve, validate, etc.)
 │   │   ├── edges.py        # Conditional routing logic
 │   │   └── graph.py        # StateGraph definition
 │   └── generation/         # LLM response generation with citations
-│       ├── prompts.py      # Tax attorney system prompt
+│       ├── prompts.py      # Tax attorney system prompt + validation prompts
 │       ├── formatter.py    # Chunk formatting for context
 │       ├── generator.py    # TaxLawGenerator class
-│       └── models.py       # GeneratedResponse, ValidatedCitation
+│       ├── validator.py    # ResponseValidator (hallucination detection)
+│       ├── corrector.py    # ResponseCorrector (self-correction)
+│       └── models.py       # GeneratedResponse, ValidationResult, etc.
 ├── config/
 │   └── settings.py         # Pydantic settings from environment
 ├── scripts/
@@ -448,7 +450,7 @@ User Query
 
 ## LangGraph Agent Workflow
 
-The system uses a LangGraph StateGraph to orchestrate multi-step reasoning over tax law queries. The agent processes queries through 7 specialized nodes that progressively refine results.
+The system uses a LangGraph StateGraph to orchestrate multi-step reasoning over tax law queries. The agent processes queries through 9 specialized nodes that progressively refine results.
 
 ### Agent Workflow Diagram
 
@@ -482,7 +484,27 @@ The system uses a LangGraph StateGraph to orchestrate multi-step reasoning over 
            ▼
    ┌──────────────────┐
    │ synthesize_answer │ ◄── LLM generation with citations
-   └──────────────────┘
+   └────────┬─────────┘
+            │
+            ▼
+   ┌──────────────────┐
+   │ validate_response │ ◄── Hallucination detection
+   └────────┬─────────┘
+            │
+     ┌──────┼──────┐
+     ▼      ▼      ▼
+   accept  correct  regenerate
+     │      │          │
+     │      ▼          │
+     │  ┌────────┐     │
+     │  │ correct │     │
+     │  │ response│     │
+     │  └────┬───┘     │
+     │       │         │
+     ▼       ▼         │
+   ┌─────────────┐     │
+   │     END     │◄────┘ (back to synthesize, max 2x)
+   └─────────────┘
 ```
 
 ### Node Descriptions
@@ -496,6 +518,8 @@ The system uses a LangGraph StateGraph to orchestrate multi-step reasoning over 
 | `filter_irrelevant` | Remove low-quality chunks | Threshold: 0.5, minimum: 10 chunks |
 | `check_temporal_validity` | Verify temporal applicability | Extract tax year, filter future docs |
 | `synthesize_answer` | Generate final answer | TaxLawGenerator: LLM call, citation extraction & validation |
+| `validate_response` | Detect hallucinations | LLM-based semantic verification against sources |
+| `correct_response` | Fix hallucinated content | Text replacement or LLM rewriting |
 
 ### Using the Agent
 
@@ -549,6 +573,13 @@ citations: list[Citation]    # Prepared citations
 confidence: float            # 0-1 confidence score
 reasoning_steps: list        # Accumulated reasoning (Annotated[list, add])
 errors: list                 # Accumulated errors (Annotated[list, add])
+
+# Validation state (hallucination detection)
+validation_result: dict      # ValidationResult with detected hallucinations
+correction_result: dict      # CorrectionResult with corrections made
+regeneration_count: int      # Number of regeneration attempts (max 2)
+validation_passed: bool      # Whether response passed validation
+original_answer: str         # Original answer before corrections
 ```
 
 ### Visualizing the Agent
@@ -625,9 +656,70 @@ Confidence is calculated based on source quality and citation verification:
 | Case | 0.7 |
 | TAA | 0.6 |
 
-### Hallucination Detection
+### Hallucination Detection & Self-Correction
 
-The generator flags citations not found in provided context:
+The system includes comprehensive hallucination detection and self-correction using the `ResponseValidator` and `ResponseCorrector` classes.
+
+#### Hallucination Types Detected
+
+| Type | Description | Severity |
+|------|-------------|----------|
+| `unsupported_claim` | Claim not supported by any source | 0.7-0.9 |
+| `misquoted_text` | Inaccurate quotation of source material | 0.5-0.7 |
+| `fabricated_citation` | Citation to non-existent law | 0.9 |
+| `outdated_info` | Superseded or repealed provisions | 0.6-0.8 |
+| `misattributed` | Correct info attributed to wrong source | 0.4-0.6 |
+| `overgeneralization` | Claim too broad for source support | 0.3-0.5 |
+
+#### Validation Pipeline
+
+```python
+from src.generation import ResponseValidator, ResponseCorrector
+
+validator = ResponseValidator()  # Uses Claude Haiku (fast, cheap)
+corrector = ResponseCorrector()  # Uses Claude Sonnet (higher quality)
+
+# Validate response against source chunks
+result = await validator.validate_response(
+    response_text=answer,
+    query=original_query,
+    chunks=retrieved_chunks,
+)
+
+print(f"Accuracy: {result.overall_accuracy:.1%}")
+print(f"Hallucinations: {len(result.hallucinations)}")
+print(f"Verified claims: {len(result.verified_claims)}")
+
+if result.needs_correction:
+    correction = await corrector.correct(answer, result, chunks)
+    print(f"Corrected answer: {correction.corrected_answer[:200]}...")
+    print(f"Confidence adjustment: {correction.confidence_adjustment:.0%}")
+```
+
+#### Routing Thresholds
+
+| Metric | Regenerate | Correct | Accept |
+|--------|------------|---------|--------|
+| Max severity | >= 0.9 | < 0.9 | - |
+| Avg severity | >= 0.7 | >= 0.3 | < 0.3 |
+| Accuracy | < 0.5 | < 0.8 | >= 0.8 |
+
+- **Regenerate**: Severe hallucinations require complete re-synthesis (max 2 attempts)
+- **Correct**: Moderate issues can be patched via text replacement or LLM rewriting
+- **Accept**: Response passes validation, proceed to output
+
+#### Confidence Adjustment
+
+After corrections, confidence is reduced to reflect uncertainty:
+
+| Correction Type | Adjustment |
+|-----------------|------------|
+| Simple text replacement | -10% per correction (max -30%) |
+| LLM-based rewriting | -20% base + severity-based (max -50%) |
+
+#### Simple Citation Warnings
+
+The generator also flags citations not found in provided context:
 
 ```python
 # Warnings indicate potential hallucinations
@@ -768,13 +860,14 @@ make format             # Format code
   - [x] Relevance filtering with threshold
   - [x] Temporal validity checking
   - [x] Citation preparation & confidence scoring
-  - [x] Unit tests (73 tests passing)
+  - [x] Unit tests (93 tests passing)
   - [x] Integration tests
 
 - [ ] **Phase 6: Answer Generation & API**
   - [x] Full answer synthesis with Claude (TaxLawGenerator)
   - [x] Citation extraction and validation
-  - [x] Hallucination detection (unverified citation warnings)
+  - [x] Hallucination detection (LLM-based semantic verification)
+  - [x] Self-correction (ResponseValidator + ResponseCorrector)
   - [x] Confidence scoring (source quality + verification rate)
   - [ ] FastAPI REST endpoint
   - [ ] Streaming responses
