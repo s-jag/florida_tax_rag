@@ -2,7 +2,11 @@
 
 from src.scrapers.admin_code import FloridaAdminCodeScraper
 from src.scrapers.base import BaseScraper, FetchError, ScraperError
+from src.scrapers.case_law import FloridaCaseLawScraper
+from src.scrapers.taa import FloridaTAAScraper
 from src.scrapers.models import (
+    CaseMetadata,
+    RawCase,
     RawRule,
     RawStatute,
     RawTAA,
@@ -26,6 +30,8 @@ __all__ = [
     "FetchError",
     # Scrapers
     "FloridaAdminCodeScraper",
+    "FloridaCaseLawScraper",
+    "FloridaTAAScraper",
     # Models
     "StatuteMetadata",
     "RawStatute",
@@ -33,6 +39,8 @@ __all__ = [
     "RawRule",
     "TAAMetadata",
     "RawTAA",
+    "CaseMetadata",
+    "RawCase",
     "ScrapedDocument",
     # Utilities
     "parse_statute_citation",
