@@ -1,4 +1,4 @@
-.PHONY: install test lint scrape ingest serve clean \
+.PHONY: install test lint scrape ingest serve dev clean \
        docker-up docker-down docker-logs docker-reset docker-wait \
        generate-embeddings load-weaviate verify-weaviate init-weaviate
 
@@ -29,9 +29,13 @@ scrape:
 ingest:
 	python -m src.ingestion.run
 
-# Start the FastAPI server
-serve:
+# Start the FastAPI server (development with hot reload)
+dev:
 	uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Start the FastAPI server (production mode)
+serve:
+	uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers 4
 
 # Clean up generated files
 clean:

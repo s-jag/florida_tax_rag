@@ -52,13 +52,18 @@ florida_tax_rag/
 │   │   ├── nodes.py        # 9 node functions (decompose, retrieve, validate, etc.)
 │   │   ├── edges.py        # Conditional routing logic
 │   │   └── graph.py        # StateGraph definition
-│   └── generation/         # LLM response generation with citations
-│       ├── prompts.py      # Tax attorney system prompt + validation prompts
-│       ├── formatter.py    # Chunk formatting for context
-│       ├── generator.py    # TaxLawGenerator class
-│       ├── validator.py    # ResponseValidator (hallucination detection)
-│       ├── corrector.py    # ResponseCorrector (self-correction)
-│       └── models.py       # GeneratedResponse, ValidationResult, etc.
+│   ├── generation/         # LLM response generation with citations
+│   │   ├── prompts.py      # Tax attorney system prompt + validation prompts
+│   │   ├── formatter.py    # Chunk formatting for context
+│   │   ├── generator.py    # TaxLawGenerator class
+│   │   ├── validator.py    # ResponseValidator (hallucination detection)
+│   │   ├── corrector.py    # ResponseCorrector (self-correction)
+│   │   └── models.py       # GeneratedResponse, ValidationResult, etc.
+│   └── api/                # FastAPI REST API
+│       ├── main.py         # FastAPI app with lifespan
+│       ├── routes.py       # API endpoints (6 routes)
+│       ├── models.py       # Request/response Pydantic models
+│       └── dependencies.py # Dependency injection (singletons)
 ├── config/
 │   └── settings.py         # Pydantic settings from environment
 ├── scripts/
@@ -730,6 +735,79 @@ if response.warnings:
 # Example: "2 citation(s) could not be verified against provided sources"
 ```
 
+## REST API
+
+The system exposes a FastAPI REST API for querying Florida tax law.
+
+### Starting the API
+
+```bash
+# Development (with hot reload)
+make dev
+
+# Production (with 4 workers)
+make serve
+```
+
+The API will be available at `http://localhost:8000`. Swagger docs at `/docs`.
+
+### Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/query` | POST | Execute tax law query through the agent |
+| `/api/v1/query/stream` | POST | Stream query results via SSE |
+| `/api/v1/sources/{chunk_id}` | GET | Get full chunk by ID |
+| `/api/v1/statute/{section}` | GET | Get statute with implementing rules |
+| `/api/v1/graph/{doc_id}/related` | GET | Get related documents via citations |
+| `/api/v1/health` | GET | Check Neo4j and Weaviate health |
+
+### Query Example
+
+```bash
+curl -X POST http://localhost:8000/api/v1/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is the Florida sales tax rate?"}'
+```
+
+Response:
+```json
+{
+  "request_id": "abc123",
+  "answer": "The Florida sales tax rate is 6%...",
+  "citations": [
+    {"doc_id": "statute:212.05", "citation": "Fla. Stat. § 212.05", "doc_type": "statute"}
+  ],
+  "sources": [...],
+  "confidence": 0.85,
+  "validation_passed": true,
+  "processing_time_ms": 3200
+}
+```
+
+### Query Options
+
+```json
+{
+  "query": "What is the sales tax rate?",
+  "options": {
+    "tax_year": 2024,
+    "include_reasoning": true,
+    "timeout_seconds": 60
+  }
+}
+```
+
+### Streaming Example
+
+```bash
+curl -X POST http://localhost:8000/api/v1/query/stream \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is the sales tax rate?"}'
+```
+
+Streams SSE events: `status`, `reasoning`, `chunk`, `answer`, `complete`.
+
 ## Key Features
 
 ### Scraper Infrastructure
@@ -815,6 +893,10 @@ make init-weaviate        # Initialize Weaviate schema
 make load-weaviate        # Load chunks into Weaviate
 make verify-weaviate      # Verify vector store
 
+# API
+make dev                # Start API with hot reload (development)
+make serve              # Start API in production mode
+
 # Development
 make install            # Install dependencies
 make test               # Run tests
@@ -860,17 +942,17 @@ make format             # Format code
   - [x] Relevance filtering with threshold
   - [x] Temporal validity checking
   - [x] Citation preparation & confidence scoring
-  - [x] Unit tests (93 tests passing)
+  - [x] Unit tests (377 tests passing)
   - [x] Integration tests
 
-- [ ] **Phase 6: Answer Generation & API**
+- [x] **Phase 6: Answer Generation & API**
   - [x] Full answer synthesis with Claude (TaxLawGenerator)
   - [x] Citation extraction and validation
   - [x] Hallucination detection (LLM-based semantic verification)
   - [x] Self-correction (ResponseValidator + ResponseCorrector)
   - [x] Confidence scoring (source quality + verification rate)
-  - [ ] FastAPI REST endpoint
-  - [ ] Streaming responses
+  - [x] FastAPI REST endpoint (6 endpoints)
+  - [x] Streaming responses (SSE)
 
 ## Documentation
 
