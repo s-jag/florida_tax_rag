@@ -192,7 +192,7 @@ class TestQueryEndpoint:
         assert response.status_code == 422
         data = response.json()
         assert "error" in data
-        assert data["error"] == "Validation failed"
+        assert data["error"] == "VALIDATION_ERROR"
 
     def test_query_validation_error_missing(self, client):
         """Test query with missing required field."""
@@ -203,7 +203,7 @@ class TestQueryEndpoint:
 
         assert response.status_code == 422
         data = response.json()
-        assert data["error"] == "Validation failed"
+        assert data["error"] == "VALIDATION_ERROR"
 
     def test_query_includes_sources(self, client, mock_agent_graph):
         """Test query response includes sources."""

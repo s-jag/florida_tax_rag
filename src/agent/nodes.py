@@ -8,11 +8,11 @@ import re
 from datetime import date
 from typing import Any
 
-import structlog
+from src.observability.logging import get_logger
 
 from .state import TaxAgentState
 
-logger = structlog.get_logger(__name__)
+logger = get_logger(__name__)
 
 
 async def decompose_query(state: TaxAgentState) -> dict[str, Any]:

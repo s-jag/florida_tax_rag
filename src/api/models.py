@@ -238,3 +238,31 @@ class ErrorResponse(BaseModel):
         default_factory=list, description="Detailed error information"
     )
     timestamp: datetime = Field(..., description="Error timestamp")
+
+
+# =============================================================================
+# Metrics Models
+# =============================================================================
+
+
+class LatencyStats(BaseModel):
+    """Latency statistics for metrics."""
+
+    avg: float = Field(..., description="Average latency in ms")
+    min: Optional[float] = Field(default=None, description="Minimum latency in ms")
+    max: Optional[float] = Field(default=None, description="Maximum latency in ms")
+
+
+class MetricsResponse(BaseModel):
+    """Response from /metrics endpoint."""
+
+    total_queries: int = Field(..., description="Total queries processed")
+    successful_queries: int = Field(..., description="Number of successful queries")
+    failed_queries: int = Field(..., description="Number of failed queries")
+    success_rate_percent: float = Field(..., description="Success rate percentage")
+    latency_ms: LatencyStats = Field(..., description="Latency statistics")
+    errors_by_type: dict[str, int] = Field(
+        default_factory=dict, description="Error counts by type"
+    )
+    uptime_seconds: float = Field(..., description="Uptime in seconds")
+    started_at: str = Field(..., description="Start time ISO format")

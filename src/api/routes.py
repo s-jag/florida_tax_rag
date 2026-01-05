@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
 import time
 from datetime import datetime
 from typing import AsyncGenerator
@@ -18,6 +17,8 @@ from src.graph.queries import (
     get_citing_documents,
     get_interpretation_chain,
 )
+from src.observability.logging import get_logger
+from src.observability.metrics import get_metrics_collector
 
 from .dependencies import (
     AgentGraphDep,
@@ -25,10 +26,13 @@ from .dependencies import (
     RequestIdDep,
     WeaviateDep,
 )
+from .errors import NotFoundError, QueryTimeoutError, RetrievalError
 from .models import (
     ChunkDetailResponse,
     CitationResponse,
     HealthResponse,
+    LatencyStats,
+    MetricsResponse,
     QueryRequest,
     QueryResponse,
     ReasoningStep,
@@ -38,7 +42,7 @@ from .models import (
     StatuteWithRulesResponse,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 router = APIRouter()
 
@@ -86,36 +90,39 @@ async def query(
         initial_state["query_tax_year"] = request.options.tax_year
 
     try:
+        logger.info(
+            "query_execution_started",
+            query_preview=request.query[:100],
+            timeout_seconds=request.options.timeout_seconds,
+        )
+
         # Execute with timeout
         result = await asyncio.wait_for(
             graph.ainvoke(initial_state),
             timeout=request.options.timeout_seconds,
         )
     except asyncio.TimeoutError:
-        raise HTTPException(
-            status_code=status.HTTP_408_REQUEST_TIMEOUT,
-            detail={
-                "request_id": request_id,
-                "error": "Request timed out",
-                "details": [
-                    {
-                        "code": "TIMEOUT",
-                        "message": f"Query exceeded {request.options.timeout_seconds}s timeout",
-                    }
-                ],
-                "timestamp": datetime.utcnow().isoformat(),
+        logger.warning(
+            "query_timeout",
+            query_preview=request.query[:50],
+            timeout_seconds=request.options.timeout_seconds,
+        )
+        raise QueryTimeoutError(
+            message=f"Query exceeded {request.options.timeout_seconds}s timeout",
+            details={
+                "timeout_seconds": request.options.timeout_seconds,
+                "query_preview": request.query[:50],
             },
         )
     except Exception as e:
-        logger.exception(f"Query failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "request_id": request_id,
-                "error": "Query execution failed",
-                "details": [{"code": "EXECUTION_ERROR", "message": str(e)}],
-                "timestamp": datetime.utcnow().isoformat(),
-            },
+        logger.exception(
+            "query_execution_failed",
+            error_type=type(e).__name__,
+            error_message=str(e),
+        )
+        raise RetrievalError(
+            message="Query execution failed",
+            details={"error_type": type(e).__name__, "error_message": str(e)},
         )
 
     # Calculate processing time
@@ -234,9 +241,14 @@ async def query_stream(
             yield f"event: complete\ndata: {json.dumps({'request_id': request_id, 'processing_time_ms': processing_time_ms})}\n\n"
 
         except asyncio.TimeoutError:
+            logger.warning("streaming_query_timeout", query_preview=request.query[:50])
             yield f"event: error\ndata: {json.dumps({'code': 'TIMEOUT', 'message': 'Request timed out'})}\n\n"
         except Exception as e:
-            logger.exception(f"Streaming query failed: {e}")
+            logger.exception(
+                "streaming_query_failed",
+                error_type=type(e).__name__,
+                error_message=str(e),
+            )
             yield f"event: error\ndata: {json.dumps({'code': 'EXECUTION_ERROR', 'message': str(e)})}\n\n"
 
     return StreamingResponse(
@@ -280,14 +292,10 @@ async def get_chunk(
     results = neo4j.run_query(query, {"chunk_id": chunk_id})
 
     if not results or results[0].get("c") is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "request_id": request_id,
-                "error": f"Chunk not found: {chunk_id}",
-                "details": [],
-                "timestamp": datetime.utcnow().isoformat(),
-            },
+        logger.info("chunk_not_found", chunk_id=chunk_id)
+        raise NotFoundError(
+            message=f"Chunk not found: {chunk_id}",
+            details={"chunk_id": chunk_id},
         )
 
     row = results[0]
@@ -341,14 +349,10 @@ async def get_statute(
     result = get_interpretation_chain(neo4j, section)
 
     if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "request_id": request_id,
-                "error": f"Statute not found: {section}",
-                "details": [],
-                "timestamp": datetime.utcnow().isoformat(),
-            },
+        logger.info("statute_not_found", section=section)
+        raise NotFoundError(
+            message=f"Statute not found: {section}",
+            details={"section": section},
         )
 
     return StatuteWithRulesResponse(
@@ -413,6 +417,36 @@ async def get_related_documents(
             d.model_dump() if hasattr(d, 'model_dump') else dict(d) for d in cited
         ],
         interpretation_chain=interpretation,
+    )
+
+
+# =============================================================================
+# Metrics Endpoint
+# =============================================================================
+
+
+@router.get("/metrics", response_model=MetricsResponse)
+async def get_metrics() -> MetricsResponse:
+    """Get API metrics.
+
+    Returns query statistics including counts, latency, and error breakdown.
+    """
+    metrics = get_metrics_collector()
+    stats = metrics.get_stats()
+
+    return MetricsResponse(
+        total_queries=stats["total_queries"],
+        successful_queries=stats["successful_queries"],
+        failed_queries=stats["failed_queries"],
+        success_rate_percent=stats["success_rate_percent"],
+        latency_ms=LatencyStats(
+            avg=stats["latency_ms"]["avg"],
+            min=stats["latency_ms"]["min"],
+            max=stats["latency_ms"]["max"],
+        ),
+        errors_by_type=stats["errors_by_type"],
+        uptime_seconds=stats["uptime_seconds"],
+        started_at=stats["started_at"],
     )
 
 

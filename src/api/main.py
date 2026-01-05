@@ -2,20 +2,27 @@
 
 from __future__ import annotations
 
-import logging
+import os
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import AsyncGenerator
 
+import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from src.observability.context import request_id_var
+from src.observability.logging import configure_logging, get_logger
+from src.observability.metrics import get_metrics_collector
+
 from .dependencies import cleanup_clients, get_neo4j_client, get_weaviate_client
+from .errors import RateLimitError, TaxRAGError
+from .middleware import RateLimitMiddleware, RequestLoggingMiddleware
 from .routes import router
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 # =============================================================================
@@ -28,6 +35,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Manage application lifecycle.
 
     Startup:
+    - Configure structured logging
     - Initialize database connections
     - Warm up connection pools
     - Compile agent graph (via dependency)
@@ -36,7 +44,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     - Close database connections
     - Cleanup resources
     """
-    logger.info("Starting Florida Tax RAG API...")
+    # Configure structured logging
+    # Use JSON output in production, console output in development
+    is_production = os.getenv("ENVIRONMENT", "development") == "production"
+    log_level = os.getenv("LOG_LEVEL", "INFO")
+    configure_logging(json_output=is_production, log_level=log_level)
+
+    logger.info("api_startup_started", environment="production" if is_production else "development")
 
     # Warm up connections
     try:
@@ -45,27 +59,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
         # Verify connectivity
         if not neo4j.health_check():
-            logger.warning("Neo4j not available at startup")
+            logger.warning("neo4j_not_available", status="unavailable")
         else:
-            logger.info("Neo4j connection established")
+            logger.info("neo4j_connected", status="connected")
 
         if not weaviate.health_check():
-            logger.warning("Weaviate not available at startup")
+            logger.warning("weaviate_not_available", status="unavailable")
         else:
-            logger.info("Weaviate connection established")
+            logger.info("weaviate_connected", status="connected")
 
     except Exception as e:
-        logger.error(f"Failed to initialize connections: {e}")
+        logger.error("connection_initialization_failed", error=str(e), error_type=type(e).__name__)
         # Continue anyway - health endpoint will report status
 
-    logger.info("Florida Tax RAG API ready")
+    logger.info("api_startup_complete", status="ready")
 
     yield
 
     # Shutdown
-    logger.info("Shutting down Florida Tax RAG API...")
+    logger.info("api_shutdown_started")
     await cleanup_clients()
-    logger.info("Cleanup complete")
+    logger.info("api_shutdown_complete")
 
 
 # =============================================================================
@@ -86,9 +100,10 @@ def create_app() -> FastAPI:
     )
 
     # ==========================================================================
-    # CORS Middleware
+    # Middleware Stack (order matters - last added runs first)
     # ==========================================================================
 
+    # CORS must be added first (runs last in request processing)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
@@ -102,15 +117,83 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Rate limiting middleware
+    rate_limit = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
+    app.add_middleware(RateLimitMiddleware, requests_per_minute=rate_limit)
+
+    # Request logging middleware (runs first, logs all requests)
+    app.add_middleware(RequestLoggingMiddleware)
+
     # ==========================================================================
     # Exception Handlers
     # ==========================================================================
+
+    @app.exception_handler(TaxRAGError)
+    async def handle_tax_rag_error(
+        request: Request, exc: TaxRAGError
+    ) -> JSONResponse:
+        """Handle custom TaxRAG exceptions."""
+        request_id = request_id_var.get("unknown")
+
+        logger.error(
+            "tax_rag_error",
+            error_code=exc.error_code,
+            message=exc.message,
+            details=exc.details,
+            status_code=exc.status_code,
+        )
+
+        # Record error in metrics
+        metrics = get_metrics_collector()
+        metrics.record_error(exc.error_code)
+
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "request_id": request_id,
+                "error": exc.error_code,
+                "message": exc.message,
+                "details": exc.details,
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+        )
+
+    @app.exception_handler(RateLimitError)
+    async def handle_rate_limit_error(
+        request: Request, exc: RateLimitError
+    ) -> JSONResponse:
+        """Handle rate limit exceeded errors with Retry-After header."""
+        request_id = request_id_var.get("unknown")
+
+        logger.warning(
+            "rate_limit_error",
+            message=exc.message,
+            client_ip=request.client.host if request.client else "unknown",
+        )
+
+        # Record error in metrics
+        metrics = get_metrics_collector()
+        metrics.record_error("RATE_LIMIT_EXCEEDED")
+
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "request_id": request_id,
+                "error": exc.error_code,
+                "message": exc.message,
+                "details": exc.details,
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+            headers={"Retry-After": str(exc.details.get("retry_after_seconds", 60))},
+        )
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
         """Handle Pydantic validation errors."""
+        request_id = request_id_var.get("unknown")
+
         errors = []
         for error in exc.errors():
             errors.append(
@@ -121,11 +204,17 @@ def create_app() -> FastAPI:
                 }
             )
 
+        logger.warning(
+            "validation_error",
+            errors=errors,
+        )
+
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
-                "request_id": request.headers.get("X-Request-ID", "unknown"),
-                "error": "Validation failed",
+                "request_id": request_id,
+                "error": "VALIDATION_ERROR",
+                "message": "Request validation failed",
                 "details": errors,
                 "timestamp": datetime.utcnow().isoformat(),
             },
@@ -136,14 +225,25 @@ def create_app() -> FastAPI:
         request: Request, exc: Exception
     ) -> JSONResponse:
         """Handle unexpected exceptions."""
-        logger.exception(f"Unhandled exception: {exc}")
+        request_id = request_id_var.get("unknown")
+
+        logger.exception(
+            "unhandled_exception",
+            error_type=type(exc).__name__,
+            error_message=str(exc),
+        )
+
+        # Record error in metrics
+        metrics = get_metrics_collector()
+        metrics.record_error(type(exc).__name__)
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={
-                "request_id": request.headers.get("X-Request-ID", "unknown"),
-                "error": "Internal server error",
-                "details": [{"code": "INTERNAL_ERROR", "message": str(exc)}],
+                "request_id": request_id,
+                "error": "INTERNAL_ERROR",
+                "message": "An unexpected error occurred",
+                "details": {"error_type": type(exc).__name__},
                 "timestamp": datetime.utcnow().isoformat(),
             },
         )

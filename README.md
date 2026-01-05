@@ -59,11 +59,17 @@ florida_tax_rag/
 │   │   ├── validator.py    # ResponseValidator (hallucination detection)
 │   │   ├── corrector.py    # ResponseCorrector (self-correction)
 │   │   └── models.py       # GeneratedResponse, ValidationResult, etc.
-│   └── api/                # FastAPI REST API
-│       ├── main.py         # FastAPI app with lifespan
-│       ├── routes.py       # API endpoints (6 routes)
-│       ├── models.py       # Request/response Pydantic models
-│       └── dependencies.py # Dependency injection (singletons)
+│   ├── api/                # FastAPI REST API
+│   │   ├── main.py         # FastAPI app with lifespan
+│   │   ├── routes.py       # API endpoints (7 routes)
+│   │   ├── models.py       # Request/response Pydantic models
+│   │   ├── dependencies.py # Dependency injection (singletons)
+│   │   ├── errors.py       # Custom exception hierarchy
+│   │   └── middleware.py   # Request logging, rate limiting
+│   └── observability/      # Logging, metrics, tracing
+│       ├── logging.py      # Centralized structlog configuration
+│       ├── metrics.py      # Thread-safe metrics collection
+│       └── context.py      # Request context propagation
 ├── config/
 │   └── settings.py         # Pydantic settings from environment
 ├── scripts/
@@ -82,7 +88,8 @@ florida_tax_rag/
 │   ├── verify_vector_store.py # Verify Weaviate data
 │   ├── test_retrieval.py   # Test hybrid retrieval
 │   ├── test_decomposition.py # Test query decomposition
-│   └── visualize_agent.py  # Visualize LangGraph agent workflow
+│   ├── visualize_agent.py  # Visualize LangGraph agent workflow
+│   └── test_load.py        # Load testing script
 ├── data/
 │   ├── raw/                # Raw scraped data
 │   │   ├── statutes/       # 742 statute sections
@@ -760,6 +767,7 @@ The API will be available at `http://localhost:8000`. Swagger docs at `/docs`.
 | `/api/v1/sources/{chunk_id}` | GET | Get full chunk by ID |
 | `/api/v1/statute/{section}` | GET | Get statute with implementing rules |
 | `/api/v1/graph/{doc_id}/related` | GET | Get related documents via citations |
+| `/api/v1/metrics` | GET | Get API metrics (queries, latency, errors) |
 | `/api/v1/health` | GET | Check Neo4j and Weaviate health |
 
 ### Query Example
@@ -808,6 +816,202 @@ curl -X POST http://localhost:8000/api/v1/query/stream \
 
 Streams SSE events: `status`, `reasoning`, `chunk`, `answer`, `complete`.
 
+### Metrics Endpoint
+
+```bash
+curl http://localhost:8000/api/v1/metrics
+```
+
+Response:
+```json
+{
+  "total_queries": 150,
+  "successful_queries": 142,
+  "failed_queries": 8,
+  "success_rate_percent": 94.67,
+  "latency_ms": {
+    "avg": 3250.5,
+    "min": 1200.0,
+    "max": 8500.0
+  },
+  "errors_by_type": {
+    "TIMEOUT": 5,
+    "RETRIEVAL_ERROR": 3
+  },
+  "uptime_seconds": 3600,
+  "started_at": "2024-01-15T10:00:00"
+}
+```
+
+## Observability & Error Handling
+
+The system includes production-grade observability features for monitoring, debugging, and performance analysis.
+
+### Structured Logging
+
+All components use structured logging via `structlog` with automatic request context propagation:
+
+```python
+from src.observability.logging import get_logger
+
+logger = get_logger(__name__)
+logger.info("query_started", query=query[:50], timeout=60)
+```
+
+**Log Output (JSON in production):**
+```json
+{
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "level": "info",
+  "event": "query_started",
+  "request_id": "abc-123",
+  "query_id": "q-xyz",
+  "query": "What is the Florida sales tax...",
+  "timeout": 60
+}
+```
+
+**Configuration:**
+- `ENVIRONMENT=production`: JSON output for log aggregation
+- `ENVIRONMENT=development`: Colored console output
+- `LOG_LEVEL`: DEBUG, INFO, WARNING, ERROR (default: INFO)
+
+### Request Tracing
+
+Every request is assigned tracing IDs that propagate through all logs:
+
+| Header | Description |
+|--------|-------------|
+| `X-Request-ID` | Unique request identifier (from client or generated) |
+| `X-Query-ID` | Short 8-character ID for query tracing |
+
+Both IDs are automatically included in all log messages and returned in response headers.
+
+### Rate Limiting
+
+In-memory sliding window rate limiter protects the API:
+
+```bash
+# Default: 60 requests per minute per IP
+# Configure via environment variable
+RATE_LIMIT_PER_MINUTE=100
+```
+
+**Excluded paths** (not rate limited):
+- `/api/v1/health`
+- `/api/v1/metrics`
+- `/docs`, `/redoc`, `/`
+
+**Rate limit response:**
+```json
+{
+  "error": "RATE_LIMIT_EXCEEDED",
+  "message": "Rate limit exceeded: 60 requests per minute",
+  "details": {
+    "limit": 60,
+    "window_seconds": 60,
+    "retry_after_seconds": 60
+  }
+}
+```
+
+### Custom Exceptions
+
+The API uses a structured exception hierarchy for consistent error responses:
+
+| Exception | Error Code | HTTP Status | Use Case |
+|-----------|------------|-------------|----------|
+| `TaxRAGError` | `TAX_RAG_ERROR` | 500 | Base exception |
+| `RetrievalError` | `RETRIEVAL_ERROR` | 503 | Neo4j/Weaviate failures |
+| `GenerationError` | `GENERATION_ERROR` | 502 | Claude API failures |
+| `ValidationError` | `VALIDATION_ERROR` | 400 | Invalid input |
+| `RateLimitError` | `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
+| `QueryTimeoutError` | `TIMEOUT` | 408 | Query exceeded timeout |
+| `NotFoundError` | `NOT_FOUND` | 404 | Resource not found |
+
+**Error response format:**
+```json
+{
+  "request_id": "abc-123",
+  "error": "RETRIEVAL_ERROR",
+  "message": "Neo4j connection failed",
+  "details": {"error_type": "ConnectionError"},
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### Metrics Collection
+
+Thread-safe in-memory metrics collector tracks API performance:
+
+```python
+from src.observability.metrics import get_metrics_collector
+
+metrics = get_metrics_collector()
+stats = metrics.get_stats()
+
+print(f"Total queries: {stats['total_queries']}")
+print(f"Success rate: {stats['success_rate_percent']}%")
+print(f"Avg latency: {stats['latency_ms']['avg']}ms")
+```
+
+**Tracked metrics:**
+- Query counts (total, successful, failed)
+- Latency statistics (avg, min, max)
+- Error breakdown by type
+- Uptime tracking
+
+### Load Testing
+
+Test API performance with the included load testing script:
+
+```bash
+# Basic load test (50 requests, 5 concurrent)
+python scripts/test_load.py
+
+# Custom parameters
+python scripts/test_load.py --num-requests 100 --concurrency 10
+
+# With think time between requests
+python scripts/test_load.py -n 50 -c 5 --think-time 0.5
+
+# Custom endpoint
+python scripts/test_load.py --url http://localhost:8000/api/v1/query
+```
+
+**Sample output:**
+```
+============================================================
+LOAD TEST RESULTS
+============================================================
+
+Summary:
+  Total Requests:     50
+  Successful:         47
+  Failed:             3
+  Success Rate:       94.0%
+  Duration:           45.23s
+  Requests/Second:    1.11
+
+Latency (ms):
+  Average:            3250
+  P50:                2800
+  P95:                6500
+  P99:                8200
+  Min:                1200
+  Max:                8500
+
+Status Codes:
+  200: 47
+  408: 2
+  429: 1
+
+Errors:
+  TIMEOUT: 2
+  RATE_LIMIT_EXCEEDED: 1
+============================================================
+```
+
 ## Key Features
 
 ### Scraper Infrastructure
@@ -851,14 +1055,22 @@ TAAs are distributed as PDFs:
 Create a `.env` file:
 
 ```env
+# API Keys
 ANTHROPIC_API_KEY=your_key
 VOYAGE_API_KEY=your_key
+
+# Database Connections
 WEAVIATE_URL=http://localhost:8080
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=your_password
 REDIS_HOST=localhost
 REDIS_PORT=6379
+
+# Observability (optional)
+ENVIRONMENT=development     # development | production (affects log format)
+LOG_LEVEL=INFO              # DEBUG | INFO | WARNING | ERROR
+RATE_LIMIT_PER_MINUTE=60    # Max requests per IP per minute
 ```
 
 ## Development
@@ -896,6 +1108,10 @@ make verify-weaviate      # Verify vector store
 # API
 make dev                # Start API with hot reload (development)
 make serve              # Start API in production mode
+
+# Load Testing
+python scripts/test_load.py           # Run load test (50 req, 5 concurrent)
+python scripts/test_load.py -n 100    # Custom request count
 
 # Development
 make install            # Install dependencies
@@ -951,8 +1167,18 @@ make format             # Format code
   - [x] Hallucination detection (LLM-based semantic verification)
   - [x] Self-correction (ResponseValidator + ResponseCorrector)
   - [x] Confidence scoring (source quality + verification rate)
-  - [x] FastAPI REST endpoint (6 endpoints)
+  - [x] FastAPI REST endpoint (7 endpoints)
   - [x] Streaming responses (SSE)
+
+- [x] **Phase 7: Observability & Error Handling**
+  - [x] Custom exception hierarchy (`TaxRAGError`, `RetrievalError`, etc.)
+  - [x] Structured logging with structlog (JSON/console output)
+  - [x] Request tracing (`request_id`, `query_id` propagation)
+  - [x] Request logging middleware
+  - [x] Rate limiting middleware (sliding window)
+  - [x] Metrics collection (`/api/v1/metrics` endpoint)
+  - [x] Load testing script (`scripts/test_load.py`)
+  - [x] Observability tests (27 tests)
 
 ## Documentation
 
