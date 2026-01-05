@@ -4,10 +4,12 @@ This directory contains the consolidated Florida Tax Law corpus, ready for downs
 
 ## Files
 
-| File | Description |
-|------|-------------|
-| `corpus.json` | Unified corpus containing all legal documents |
-| `statistics.json` | Consolidation statistics and metrics |
+| File | Size | Description |
+|------|------|-------------|
+| `corpus.json` | 4.16 MB | Unified corpus containing all legal documents |
+| `chunks.json` | 11.18 MB | Hierarchical chunks (parent/child) for retrieval |
+| `citation_graph.json` | 670 KB | Citation relationships between documents |
+| `statistics.json` | - | Consolidation statistics and metrics |
 
 ## Corpus Schema
 
@@ -164,3 +166,97 @@ From the audit (see `data/raw/audit_report.json`):
 - **Cases**: 285 of 308 cases have truncated opinions (<500 chars) - this is a CourtListener API limitation
 - **Cases**: Only 13 cases have `statutes_cited` populated
 - **Cross-references**: 2,469 case-to-case citations preserved
+
+## Chunks Schema (`chunks.json`)
+
+Hierarchical chunks for retrieval with parent/child relationships.
+
+### Top-Level Structure
+
+```json
+{
+  "metadata": {
+    "created_at": "ISO timestamp",
+    "source_file": "data/processed/corpus.json",
+    "total_chunks": 3022,
+    "parent_chunks": 1152,
+    "child_chunks": 1870
+  },
+  "chunks": [...]
+}
+```
+
+### LegalChunk Schema
+
+```json
+{
+  "chunk_id": "chunk:statute:212.05:0",  // Unique chunk ID
+  "doc_id": "statute:212.05",             // Parent document ID
+  "doc_type": "statute",                  // Document type
+  "level": "parent",                      // "parent" or "child"
+  "parent_chunk_id": null,                // Parent chunk ID (for child chunks)
+  "ancestry": "Florida Statutes > Chapter 212 > § 212.05",
+  "subsection_path": "",                  // Subsection identifier (for children)
+  "citation": "Fla. Stat. § 212.05",
+  "text": "...",                          // Raw chunk text
+  "text_with_ancestry": "...",            // Text with ancestry prefix (for embedding)
+  "effective_date": null,
+  "token_count": 500
+}
+```
+
+### Chunk Statistics
+
+| Metric | Value |
+|--------|-------|
+| Total Chunks | 3,022 |
+| Parent Chunks | 1,152 |
+| Child Chunks | 1,870 |
+| Avg Tokens/Chunk | 362 |
+| Chunks <500 tokens | 84% |
+
+## Citation Graph Schema (`citation_graph.json`)
+
+Citation relationships between documents for knowledge graph construction.
+
+### Top-Level Structure
+
+```json
+{
+  "metadata": {
+    "created_at": "ISO timestamp",
+    "total_edges": 1126,
+    "by_relation_type": {
+      "cites": 796,
+      "amends": 148,
+      "authority": 105,
+      "implements": 41,
+      "supersedes": 35
+    }
+  },
+  "edges": [...]
+}
+```
+
+### CitationEdge Schema
+
+```json
+{
+  "source_id": "rule:12A-1.001",           // Citing document
+  "target_id": "statute:212.05",           // Cited document
+  "relation_type": "implements",           // Relationship type
+  "citation_text": "s. 212.05, F.S.",      // Original citation text
+  "context": "...surrounding text...",     // Context window
+  "confidence": 1.0                        // Resolution confidence
+}
+```
+
+### Relation Types
+
+| Type | Count | Description |
+|------|-------|-------------|
+| cites | 796 | General citation reference |
+| amends | 148 | Document amends another |
+| authority | 105 | Rulemaking authority |
+| implements | 41 | Rule implements statute |
+| supersedes | 35 | Document supersedes another |

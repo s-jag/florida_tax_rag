@@ -1,6 +1,9 @@
 """Application settings using pydantic-settings."""
 
+from __future__ import annotations
+
 from functools import lru_cache
+from typing import Optional
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -28,7 +31,7 @@ class Settings(BaseSettings):
 
     # Weaviate (Vector Store)
     weaviate_url: str = "http://localhost:8080"
-    weaviate_api_key: SecretStr | None = None
+    weaviate_api_key: Optional[SecretStr] = None
 
 
 @lru_cache

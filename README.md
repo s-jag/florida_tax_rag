@@ -23,13 +23,23 @@ florida_tax_rag/
 │   │   ├── case_law.py     # CourtListener API case law scraper
 │   │   ├── models.py       # Pydantic models for scraped data
 │   │   └── utils.py        # Citation parsing utilities
-│   └── ingestion/          # Document processing pipeline
-│       ├── models.py       # Unified LegalDocument model
-│       ├── consolidate.py  # Consolidation functions
-│       ├── chunking.py     # Hierarchical chunking (parent/child)
-│       ├── tokenizer.py    # Token counting (tiktoken)
-│       ├── citation_extractor.py  # Citation extraction
-│       └── build_citation_graph.py # Citation graph construction
+│   ├── ingestion/          # Document processing pipeline
+│   │   ├── models.py       # Unified LegalDocument model
+│   │   ├── consolidate.py  # Consolidation functions
+│   │   ├── chunking.py     # Hierarchical chunking (parent/child)
+│   │   ├── tokenizer.py    # Token counting (tiktoken)
+│   │   ├── citation_extractor.py  # Citation extraction
+│   │   └── build_citation_graph.py # Citation graph construction
+│   ├── graph/              # Neo4j knowledge graph
+│   │   ├── schema.py       # Node labels, edge types, constraints
+│   │   ├── client.py       # Neo4jClient with connection pooling
+│   │   ├── loader.py       # Data loading functions
+│   │   └── queries.py      # Graph query functions
+│   └── vector/             # Weaviate vector store
+│       ├── schema.py       # LegalChunk collection schema
+│       └── client.py       # WeaviateClient with hybrid search
+├── config/
+│   └── settings.py         # Pydantic settings from environment
 ├── scripts/
 │   ├── scrape_statutes.py
 │   ├── scrape_admin_code.py
@@ -38,7 +48,9 @@ florida_tax_rag/
 │   ├── audit_raw_data.py   # Data quality audit
 │   ├── consolidate_corpus.py # Corpus consolidation
 │   ├── chunk_corpus.py     # Hierarchical chunking
-│   └── extract_citations.py # Citation graph extraction
+│   ├── extract_citations.py # Citation graph extraction
+│   ├── init_neo4j.py       # Initialize Neo4j schema + load data
+│   └── init_weaviate.py    # Initialize Weaviate schema
 ├── data/
 │   ├── raw/                # Raw scraped data
 │   │   ├── statutes/       # 742 statute sections
@@ -50,6 +62,7 @@ florida_tax_rag/
 │       ├── chunks.json     # Hierarchical chunks (11.18 MB)
 │       ├── citation_graph.json # Citation relationships (670 KB)
 │       └── statistics.json # Consolidation metrics
+├── docker-compose.yml      # Neo4j, Weaviate, Redis services
 └── tests/
 ```
 
@@ -121,6 +134,74 @@ pip install -e .
 # For development
 pip install -e ".[dev]"
 ```
+
+## Docker Services
+
+The system uses three containerized services:
+
+| Service | Image | Ports | Purpose |
+|---------|-------|-------|---------|
+| Neo4j | neo4j:5.15-community | 7474, 7687 | Knowledge graph (citation network) |
+| Weaviate | weaviate:1.28.2 | 8080, 50051 | Vector store (hybrid search) |
+| Redis | redis:7-alpine | 6379 | Embedding cache |
+
+### Starting Services
+
+```bash
+# Start all services
+docker-compose up -d
+
+# Check health status
+docker-compose ps
+
+# View logs
+docker-compose logs -f weaviate
+```
+
+### Neo4j Browser
+
+Access the Neo4j browser at http://localhost:7474
+- Username: `neo4j`
+- Password: `florida_tax_rag_dev`
+
+## Database Setup
+
+### Initialize Neo4j Knowledge Graph
+
+```bash
+# Load schema and data (1,152 documents, 3,022 chunks, 1,126 citations)
+python scripts/init_neo4j.py --verify
+
+# To clear and reload
+python scripts/init_neo4j.py --clear --verify
+```
+
+**Neo4j Statistics:**
+| Metric | Count |
+|--------|-------|
+| Documents | 1,152 |
+| Chunks | 3,022 |
+| HAS_CHUNK edges | 3,022 |
+| CHILD_OF edges | 1,870 |
+| Citation edges | 1,126 |
+
+### Initialize Weaviate Vector Store
+
+```bash
+# Create LegalChunk collection schema
+python scripts/init_weaviate.py --verify
+
+# To delete and recreate
+python scripts/init_weaviate.py --delete --verify
+```
+
+**Weaviate Schema:**
+- Collection: `LegalChunk`
+- Properties: chunk_id, doc_id, doc_type, level, ancestry, citation, text, text_with_ancestry, effective_date, token_count
+- Vector: External (Voyage AI voyage-law-2, 1024 dimensions)
+- BM25: b=0.75, k1=1.2
+
+> **Note**: Weaviate schema is initialized but empty. Data loading requires Voyage AI embeddings (Phase 4).
 
 ## Usage
 
@@ -247,9 +328,10 @@ ruff format src/
   - [x] Citation graph construction (`data/processed/citation_graph.json`)
 
 - [ ] **Phase 3: Knowledge Base**
-  - [ ] Vector embeddings (Voyage AI)
-  - [ ] Neo4j knowledge graph
-  - [ ] Weaviate vector store
+  - [x] Neo4j knowledge graph schema & data loading
+  - [x] Weaviate vector store schema (hybrid search ready)
+  - [ ] Vector embeddings (Voyage AI voyage-law-2)
+  - [ ] Load embeddings into Weaviate
 
 - [ ] **Phase 4: Retrieval & Agents**
   - [ ] Hybrid retrieval (vector + graph)
