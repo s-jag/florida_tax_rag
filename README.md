@@ -37,7 +37,8 @@ florida_tax_rag/
 │   │   └── queries.py      # Graph query functions
 │   └── vector/             # Weaviate vector store
 │       ├── schema.py       # LegalChunk collection schema
-│       └── client.py       # WeaviateClient with hybrid search
+│       ├── client.py       # WeaviateClient with hybrid search
+│       └── embeddings.py   # VoyageEmbedder + Redis cache
 ├── config/
 │   └── settings.py         # Pydantic settings from environment
 ├── scripts/
@@ -50,7 +51,10 @@ florida_tax_rag/
 │   ├── chunk_corpus.py     # Hierarchical chunking
 │   ├── extract_citations.py # Citation graph extraction
 │   ├── init_neo4j.py       # Initialize Neo4j schema + load data
-│   └── init_weaviate.py    # Initialize Weaviate schema
+│   ├── init_weaviate.py    # Initialize Weaviate schema
+│   ├── generate_embeddings.py # Generate Voyage AI embeddings
+│   ├── load_weaviate.py    # Load chunks + embeddings into Weaviate
+│   └── verify_vector_store.py # Verify Weaviate data
 ├── data/
 │   ├── raw/                # Raw scraped data
 │   │   ├── statutes/       # 742 statute sections
@@ -61,6 +65,7 @@ florida_tax_rag/
 │       ├── corpus.json     # Unified document corpus (4.16 MB)
 │       ├── chunks.json     # Hierarchical chunks (11.18 MB)
 │       ├── citation_graph.json # Citation relationships (670 KB)
+│       ├── embeddings.npz  # Voyage AI embeddings (11 MB)
 │       └── statistics.json # Consolidation metrics
 ├── docker-compose.yml      # Neo4j, Weaviate, Redis services
 └── tests/
@@ -94,6 +99,16 @@ florida_tax_rag/
 | **Child Chunks** | 1,870 |
 | **Avg Tokens/Chunk** | 362 |
 | **Chunks <500 tokens** | 84% |
+
+### Embedding Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Model** | voyage-law-2 |
+| **Dimension** | 1,024 |
+| **Total Embeddings** | 3,022 |
+| **File Size** | 11 MB |
+| **Normalized** | Yes (L2 norm = 1.0) |
 
 ### Citation Graph Statistics
 
@@ -195,13 +210,41 @@ python scripts/init_weaviate.py --verify
 python scripts/init_weaviate.py --delete --verify
 ```
 
-**Weaviate Schema:**
-- Collection: `LegalChunk`
-- Properties: chunk_id, doc_id, doc_type, level, ancestry, citation, text, text_with_ancestry, effective_date, token_count
-- Vector: External (Voyage AI voyage-law-2, 1024 dimensions)
-- BM25: b=0.75, k1=1.2
+### Generate Embeddings
 
-> **Note**: Weaviate schema is initialized but empty. Data loading requires Voyage AI embeddings (Phase 4).
+```bash
+# Generate embeddings for all chunks using Voyage AI
+python scripts/generate_embeddings.py --verify
+
+# Test with sample first
+python scripts/generate_embeddings.py --sample 10 --verify
+
+# Resume interrupted run
+python scripts/generate_embeddings.py --resume
+```
+
+### Load Data into Weaviate
+
+```bash
+# Load chunks and embeddings into Weaviate
+python scripts/load_weaviate.py
+
+# Reset and reload from scratch
+python scripts/load_weaviate.py --reset
+
+# Verify the vector store
+python scripts/verify_vector_store.py
+```
+
+**Weaviate Statistics:**
+| Metric | Value |
+|--------|-------|
+| Collection | LegalChunk |
+| Objects | 3,022 |
+| Vector Dimension | 1,024 |
+| BM25 Config | b=0.75, k1=1.2 |
+
+**Properties:** chunk_id, doc_id, doc_type, level, ancestry, citation, text, text_with_ancestry, effective_date, token_count
 
 ## Usage
 
@@ -293,6 +336,8 @@ WEAVIATE_URL=http://localhost:8080
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=your_password
+REDIS_HOST=localhost
+REDIS_PORT=6379
 ```
 
 ## Development
@@ -311,6 +356,29 @@ ruff check src/
 ruff format src/
 ```
 
+## Makefile Commands
+
+```bash
+# Docker services
+make docker-up          # Start Neo4j, Weaviate, Redis
+make docker-down        # Stop services
+make docker-logs        # Tail service logs
+make docker-reset       # Wipe data and restart fresh
+make docker-wait        # Wait for all services to be ready
+
+# Vector store
+make generate-embeddings  # Generate Voyage AI embeddings
+make init-weaviate        # Initialize Weaviate schema
+make load-weaviate        # Load chunks into Weaviate
+make verify-weaviate      # Verify vector store
+
+# Development
+make install            # Install dependencies
+make test               # Run tests
+make lint               # Run linting
+make format             # Format code
+```
+
 ## Roadmap
 
 - [x] **Phase 1: Data Collection**
@@ -327,11 +395,12 @@ ruff format src/
   - [x] Citation extraction (`src/ingestion/citation_extractor.py`)
   - [x] Citation graph construction (`data/processed/citation_graph.json`)
 
-- [ ] **Phase 3: Knowledge Base**
+- [x] **Phase 3: Knowledge Base**
   - [x] Neo4j knowledge graph schema & data loading
   - [x] Weaviate vector store schema (hybrid search ready)
-  - [ ] Vector embeddings (Voyage AI voyage-law-2)
-  - [ ] Load embeddings into Weaviate
+  - [x] Vector embeddings (Voyage AI voyage-law-2)
+  - [x] Load embeddings into Weaviate (3,022 chunks)
+  - [x] Hybrid search verification (keyword + vector + filters)
 
 - [ ] **Phase 4: Retrieval & Agents**
   - [ ] Hybrid retrieval (vector + graph)

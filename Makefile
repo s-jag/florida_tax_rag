@@ -1,5 +1,6 @@
 .PHONY: install test lint scrape ingest serve clean \
-       docker-up docker-down docker-logs docker-reset docker-wait
+       docker-up docker-down docker-logs docker-reset docker-wait \
+       generate-embeddings load-weaviate verify-weaviate init-weaviate
 
 # Install dependencies
 install:
@@ -65,3 +66,23 @@ docker-reset:
 # Wait for all services to be ready
 docker-wait:
 	python scripts/wait_for_services.py
+
+# =============================================================================
+# Vector Store Commands
+# =============================================================================
+
+# Generate embeddings for all chunks using Voyage AI
+generate-embeddings:
+	python scripts/generate_embeddings.py --verify
+
+# Initialize Weaviate schema
+init-weaviate:
+	python scripts/init_weaviate.py
+
+# Load chunks and embeddings into Weaviate
+load-weaviate:
+	python scripts/load_weaviate.py
+
+# Verify Weaviate vector store
+verify-weaviate:
+	python scripts/verify_vector_store.py
