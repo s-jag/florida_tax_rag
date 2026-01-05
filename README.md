@@ -35,10 +35,18 @@ florida_tax_rag/
 │   │   ├── client.py       # Neo4jClient with connection pooling
 │   │   ├── loader.py       # Data loading functions
 │   │   └── queries.py      # Graph query functions
-│   └── vector/             # Weaviate vector store
-│       ├── schema.py       # LegalChunk collection schema
-│       ├── client.py       # WeaviateClient with hybrid search
-│       └── embeddings.py   # VoyageEmbedder + Redis cache
+│   ├── vector/             # Weaviate vector store
+│   │   ├── schema.py       # LegalChunk collection schema
+│   │   ├── client.py       # WeaviateClient with hybrid search
+│   │   └── embeddings.py   # VoyageEmbedder + Redis cache
+│   └── retrieval/          # Hybrid retrieval system
+│       ├── models.py       # RetrievalResult, CitationContext
+│       ├── hybrid.py       # HybridRetriever (vector + keyword + graph)
+│       ├── graph_expander.py # Neo4j graph expansion
+│       ├── reranker.py     # Legal-specific reranking
+│       ├── query_decomposer.py # Claude-powered query decomposition
+│       ├── multi_retriever.py  # Multi-query parallel retrieval
+│       └── prompts.py      # LLM prompts for decomposition
 ├── config/
 │   └── settings.py         # Pydantic settings from environment
 ├── scripts/
@@ -54,7 +62,9 @@ florida_tax_rag/
 │   ├── init_weaviate.py    # Initialize Weaviate schema
 │   ├── generate_embeddings.py # Generate Voyage AI embeddings
 │   ├── load_weaviate.py    # Load chunks + embeddings into Weaviate
-│   └── verify_vector_store.py # Verify Weaviate data
+│   ├── verify_vector_store.py # Verify Weaviate data
+│   ├── test_retrieval.py   # Test hybrid retrieval
+│   └── test_decomposition.py # Test query decomposition
 ├── data/
 │   ├── raw/                # Raw scraped data
 │   │   ├── statutes/       # 742 statute sections
@@ -287,6 +297,144 @@ taa.metadata.full_citation      # "Fla. DOR TAA 25A-009"
 case.metadata.full_citation     # "Case Name, 215 So. 3d 46"
 ```
 
+## Retrieval System
+
+The retrieval system combines vector search, keyword search, and graph traversal for comprehensive legal document retrieval.
+
+### Hybrid Retrieval
+
+```python
+from src.retrieval import create_retriever
+
+retriever = create_retriever()
+
+# Basic retrieval
+results = retriever.retrieve(
+    "What is the Florida sales tax rate?",
+    top_k=10,
+    alpha=0.5,  # Balance: 0=keyword, 1=vector
+)
+
+for r in results:
+    print(f"{r.citation} (score: {r.score:.3f})")
+    print(f"  Type: {r.doc_type}, Text: {r.text[:100]}...")
+```
+
+### Query Decomposition
+
+Complex queries are automatically decomposed into sub-queries for better coverage:
+
+```python
+from src.retrieval import create_decomposer
+import asyncio
+
+decomposer = create_decomposer()
+
+result = asyncio.run(decomposer.decompose(
+    "Do I owe sales tax on software consulting services in Miami?"
+))
+
+print(f"Is Simple: {result.is_simple}")
+print(f"Sub-queries: {result.query_count}")
+for sq in result.sub_queries:
+    print(f"  [{sq.priority}] {sq.type}: {sq.text}")
+```
+
+**Example Decomposition:**
+```
+Query: "Do I owe sales tax on software consulting services in Miami?"
+
+Sub-queries (6):
+  [1] definition: Florida sales tax definition of software consulting services
+  [1] statute: Florida Statutes Chapter 212 taxability of professional services
+  [1] statute: Florida sales tax on computer software services and consulting
+  [2] rule: Florida Administrative Code 12A-1 rules on software services taxation
+  [2] local: Miami-Dade County sales tax surtax rates and application
+  [3] exemption: Florida sales tax exemptions for professional services
+```
+
+### Multi-Query Retrieval
+
+Run decomposed queries in parallel and merge results:
+
+```python
+from src.retrieval import create_multi_retriever
+import asyncio
+
+multi_retriever = create_multi_retriever()
+
+result = asyncio.run(multi_retriever.retrieve(
+    "Is there sales tax on SaaS products delivered to Florida customers?",
+    top_k=10,
+))
+
+print(f"Unique documents: {result.unique_doc_ids}")
+print(f"Merged results: {len(result.merged_results)}")
+```
+
+### Testing Retrieval
+
+```bash
+# Test hybrid retrieval
+python scripts/test_retrieval.py --query "sales tax exemptions"
+
+# Test query decomposition
+python scripts/test_decomposition.py --query "Is SaaS taxable in Florida?"
+
+# Run all decomposition tests
+python scripts/test_decomposition.py --all
+
+# Test multi-query retrieval (requires services)
+python scripts/test_decomposition.py --query "..." --multi
+```
+
+### Retrieval Architecture
+
+```
+User Query
+    │
+    ▼
+┌─────────────────────────────────────┐
+│        QueryDecomposer              │
+│  • Heuristic complexity check       │
+│  • Claude LLM decomposition         │
+│  • Returns list[SubQuery]           │
+└─────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────┐
+│        MultiQueryRetriever          │
+│  • Parallel sub-query execution     │
+│  • Uses HybridRetriever per query   │
+└─────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────┐
+│        HybridRetriever              │
+│  1. Embed query (Voyage AI)         │
+│  2. Hybrid search (Weaviate)        │
+│  3. Graph expansion (Neo4j)         │
+│  4. Legal reranking                 │
+└─────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────┐
+│        Result Merging               │
+│  • Deduplicate by chunk_id          │
+│  • Boost multi-match chunks         │
+│  • Return top_k results             │
+└─────────────────────────────────────┘
+```
+
+### Reranking Weights
+
+| Document Type | Weight | Description |
+|--------------|--------|-------------|
+| Statute | 1.0 | Primary authority (highest) |
+| Rule | 0.9 | Implementing authority |
+| Case | 0.8 | Interpretive authority |
+| TAA | 0.7 | Advisory only |
+
 ## Key Features
 
 ### Scraper Infrastructure
@@ -402,10 +550,12 @@ make format             # Format code
   - [x] Load embeddings into Weaviate (3,022 chunks)
   - [x] Hybrid search verification (keyword + vector + filters)
 
-- [ ] **Phase 4: Retrieval & Agents**
-  - [ ] Hybrid retrieval (vector + graph)
-  - [ ] Multi-agent orchestration
-  - [ ] Query decomposition
+- [x] **Phase 4: Retrieval System**
+  - [x] Hybrid retrieval (vector + keyword + graph)
+  - [x] Legal-specific reranking (primary authority boost, recency)
+  - [x] Query decomposition (Claude-powered)
+  - [x] Multi-query parallel retrieval
+  - [ ] Multi-agent orchestration (LangGraph)
   - [ ] Citation verification
 
 ## Documentation
