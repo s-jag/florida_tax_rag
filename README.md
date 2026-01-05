@@ -47,11 +47,16 @@ florida_tax_rag/
 │   │   ├── query_decomposer.py # Claude-powered query decomposition
 │   │   ├── multi_retriever.py  # Multi-query parallel retrieval
 │   │   └── prompts.py      # LLM prompts for decomposition/scoring
-│   └── agent/              # LangGraph agentic workflow
-│       ├── state.py        # TaxAgentState TypedDict
-│       ├── nodes.py        # 7 node functions (decompose, retrieve, etc.)
-│       ├── edges.py        # Conditional routing logic
-│       └── graph.py        # StateGraph definition
+│   ├── agent/              # LangGraph agentic workflow
+│   │   ├── state.py        # TaxAgentState TypedDict
+│   │   ├── nodes.py        # 7 node functions (decompose, retrieve, etc.)
+│   │   ├── edges.py        # Conditional routing logic
+│   │   └── graph.py        # StateGraph definition
+│   └── generation/         # LLM response generation with citations
+│       ├── prompts.py      # Tax attorney system prompt
+│       ├── formatter.py    # Chunk formatting for context
+│       ├── generator.py    # TaxLawGenerator class
+│       └── models.py       # GeneratedResponse, ValidatedCitation
 ├── config/
 │   └── settings.py         # Pydantic settings from environment
 ├── scripts/

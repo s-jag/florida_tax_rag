@@ -486,11 +486,13 @@ async def check_temporal_validity(state: TaxAgentState) -> dict[str, Any]:
 
 
 async def synthesize_answer(state: TaxAgentState) -> dict[str, Any]:
-    """Generate final answer with citations.
+    """Generate final answer with validated citations.
 
-    Uses Claude to synthesize answer from filtered chunks.
-    Includes proper legal citations.
-    Sets confidence score based on source quality.
+    Uses TaxLawGenerator to:
+    1. Format chunks into structured context
+    2. Generate answer with Claude using tax attorney system prompt
+    3. Extract and validate citations against source chunks
+    4. Calculate confidence based on source quality and verification
 
     Args:
         state: Current agent state with temporally_valid_chunks
@@ -498,59 +500,85 @@ async def synthesize_answer(state: TaxAgentState) -> dict[str, Any]:
     Returns:
         State updates with final_answer, citations, confidence
     """
+    from src.generation import TaxLawGenerator, format_chunks_for_context
+
     valid_chunks = state.get("temporally_valid_chunks", [])
-    graph_context = state.get("graph_context", [])
+    reasoning_steps = state.get("reasoning_steps", [])
+    query = state["original_query"]
 
     logger.info(
         "node_started",
         node="synthesize_answer",
         chunk_count=len(valid_chunks),
-        graph_context_count=len(graph_context),
+        query=query[:50],
     )
 
-    # Build context for LLM (to be used in next prompt)
-    context_parts: list[str] = []
-    citations: list[dict[str, Any]] = []
+    # Initialize generator (it will create its own client)
+    generator = TaxLawGenerator()
 
-    for i, chunk in enumerate(valid_chunks[:10]):  # Top 10 chunks
-        citation_str = chunk.get("citation", f"Source {i+1}")
-        context_parts.append(f"[{i+1}] {citation_str}\n{chunk.get('text', '')}")
-        citations.append({
-            "doc_id": chunk.get("doc_id", ""),
-            "citation": citation_str,
-            "doc_type": chunk.get("doc_type", "unknown"),
-            "text_snippet": chunk.get("text", "")[:200],
-        })
-
-    # Calculate confidence based on source quality
-    confidence = 0.0
-    if valid_chunks:
-        # Higher confidence for statutes/rules vs cases/TAAs
-        doc_type_weights = {"statute": 1.0, "rule": 0.9, "case": 0.7, "taa": 0.6}
-        total_weight = sum(
-            doc_type_weights.get(c.get("doc_type", ""), 0.5)
-            for c in valid_chunks[:5]
+    try:
+        # Generate response with citations
+        response = await generator.generate(
+            query=query,
+            chunks=valid_chunks[:10],  # Top 10 chunks
+            reasoning_steps=reasoning_steps,
         )
-        confidence = min(total_weight / 5, 1.0)
 
-    # For now, just mark as ready (full generation in next prompt)
-    formatted_context = "\n\n---\n\n".join(context_parts)
+        # Convert ValidatedCitation to state Citation format
+        citations: list[dict[str, Any]] = [
+            {
+                "doc_id": c.chunk_id or "",
+                "citation": c.citation_text,
+                "doc_type": c.doc_type,
+                "text_snippet": c.raw_text[:200] if c.raw_text else "",
+            }
+            for c in response.citations
+        ]
 
-    logger.info(
-        "node_completed",
-        node="synthesize_answer",
-        citation_count=len(citations),
-        confidence=round(confidence, 2),
-    )
+        # Count verified citations
+        verified_count = sum(1 for c in response.citations if c.verified)
+        total_count = len(response.citations)
 
-    return {
-        "final_answer": None,  # Will be populated in next prompt
-        "citations": citations,
-        "confidence": confidence,
-        "reasoning_steps": [
-            f"Prepared {len(context_parts)} sources for synthesis. "
-            f"Confidence: {confidence:.2f}"
-        ],
-        # Store formatted context for next prompt's LLM call
-        "_synthesis_context": formatted_context,
-    }
+        logger.info(
+            "node_completed",
+            node="synthesize_answer",
+            citation_count=total_count,
+            verified_count=verified_count,
+            confidence=round(response.confidence, 2),
+        )
+
+        return {
+            "final_answer": response.answer,
+            "citations": citations,
+            "confidence": response.confidence,
+            "reasoning_steps": [
+                f"Generated answer with {total_count} citations. "
+                f"Verified: {verified_count}/{total_count}. "
+                f"Confidence: {response.confidence:.2f}"
+            ],
+            "_synthesis_context": format_chunks_for_context(valid_chunks[:10]),
+        }
+
+    except Exception as e:
+        logger.error("node_failed", node="synthesize_answer", error=str(e))
+
+        # Fallback: return context without generation
+        # Prepare basic citations from chunks
+        fallback_citations: list[dict[str, Any]] = [
+            {
+                "doc_id": c.get("doc_id", ""),
+                "citation": c.get("citation", f"Source {i+1}"),
+                "doc_type": c.get("doc_type", "unknown"),
+                "text_snippet": c.get("text", "")[:200],
+            }
+            for i, c in enumerate(valid_chunks[:10])
+        ]
+
+        return {
+            "final_answer": None,
+            "citations": fallback_citations,
+            "confidence": 0.0,
+            "errors": [f"Generation failed: {str(e)}"],
+            "reasoning_steps": [f"Generation failed: {str(e)}"],
+            "_synthesis_context": format_chunks_for_context(valid_chunks[:10]),
+        }

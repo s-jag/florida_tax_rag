@@ -373,7 +373,9 @@ class TestSynthesizeAnswer:
 
     @pytest.mark.asyncio
     async def test_prepare_citations(self):
-        """Test citation preparation."""
+        """Test citation preparation with mocked generator."""
+        from src.generation.models import GeneratedResponse, ValidatedCitation
+
         state: TaxAgentState = {
             "original_query": "Test",
             "temporally_valid_chunks": [
@@ -388,55 +390,100 @@ class TestSynthesizeAnswer:
             "graph_context": [],
         }
 
-        result = await synthesize_answer(state)
+        # Mock response with a citation
+        mock_response = GeneratedResponse(
+            answer="Tax is imposed [Source: § 212.05].",
+            citations=[
+                ValidatedCitation(
+                    citation_text="§ 212.05",
+                    chunk_id="chunk:1",
+                    verified=True,
+                    raw_text="Sales tax is imposed on...",
+                    doc_type="statute",
+                )
+            ],
+            chunks_used=["chunk:1"],
+            confidence=0.9,
+        )
+
+        with patch("src.generation.TaxLawGenerator") as mock_gen_cls:
+            mock_gen = MagicMock()
+            mock_gen.generate = AsyncMock(return_value=mock_response)
+            mock_gen_cls.return_value = mock_gen
+
+            result = await synthesize_answer(state)
 
         assert len(result["citations"]) == 1
-        assert result["citations"][0]["citation"] == "Fla. Stat. 212.05"
+        assert "212.05" in result["citations"][0]["citation"]
         assert result["citations"][0]["doc_type"] == "statute"
+        assert result["final_answer"] is not None
 
     @pytest.mark.asyncio
     async def test_confidence_calculation(self):
-        """Test confidence score calculation based on source types.
+        """Test confidence from generator response.
 
-        Confidence is calculated as: sum(weights for top 5 chunks) / 5
-        Weights: statute=1.0, rule=0.9, case=0.7, taa=0.6
+        Confidence is now calculated by TaxLawGenerator based on:
+        - Source type weights (statute=1.0, rule=0.9, case=0.7, taa=0.6)
+        - Citation verification rate
         """
-        # All statutes (5 chunks) = high confidence (5 * 1.0 / 5 = 1.0)
+        from src.generation.models import GeneratedResponse
+
+        # High confidence mock (statutes, verified citations)
         state_high: TaxAgentState = {
             "original_query": "Test",
             "temporally_valid_chunks": [
                 {"doc_type": "statute", "citation": "Stat 1", "text": "...", "doc_id": "s1"},
-                {"doc_type": "statute", "citation": "Stat 2", "text": "...", "doc_id": "s2"},
-                {"doc_type": "statute", "citation": "Stat 3", "text": "...", "doc_id": "s3"},
-                {"doc_type": "statute", "citation": "Stat 4", "text": "...", "doc_id": "s4"},
-                {"doc_type": "statute", "citation": "Stat 5", "text": "...", "doc_id": "s5"},
             ],
             "graph_context": [],
         }
 
-        result_high = await synthesize_answer(state_high)
-        assert result_high["confidence"] == 1.0  # 5 * 1.0 / 5 = 1.0
+        mock_response_high = GeneratedResponse(
+            answer="Answer with citations.",
+            citations=[],
+            chunks_used=["s1"],
+            confidence=0.95,
+        )
 
-        # All TAAs (5 chunks) = lower confidence (5 * 0.6 / 5 = 0.6)
+        with patch("src.generation.TaxLawGenerator") as mock_gen_cls:
+            mock_gen = MagicMock()
+            mock_gen.generate = AsyncMock(return_value=mock_response_high)
+            mock_gen_cls.return_value = mock_gen
+
+            result_high = await synthesize_answer(state_high)
+
+        assert result_high["confidence"] == 0.95
+
+        # Low confidence mock (TAAs, unverified)
         state_low: TaxAgentState = {
             "original_query": "Test",
             "temporally_valid_chunks": [
                 {"doc_type": "taa", "citation": "TAA 1", "text": "...", "doc_id": "t1"},
-                {"doc_type": "taa", "citation": "TAA 2", "text": "...", "doc_id": "t2"},
-                {"doc_type": "taa", "citation": "TAA 3", "text": "...", "doc_id": "t3"},
-                {"doc_type": "taa", "citation": "TAA 4", "text": "...", "doc_id": "t4"},
-                {"doc_type": "taa", "citation": "TAA 5", "text": "...", "doc_id": "t5"},
             ],
             "graph_context": [],
         }
 
-        result_low = await synthesize_answer(state_low)
-        assert result_low["confidence"] == 0.6  # 5 * 0.6 / 5 = 0.6
+        mock_response_low = GeneratedResponse(
+            answer="Answer with low confidence.",
+            citations=[],
+            chunks_used=["t1"],
+            confidence=0.4,
+        )
+
+        with patch("src.generation.TaxLawGenerator") as mock_gen_cls:
+            mock_gen = MagicMock()
+            mock_gen.generate = AsyncMock(return_value=mock_response_low)
+            mock_gen_cls.return_value = mock_gen
+
+            result_low = await synthesize_answer(state_low)
+
+        assert result_low["confidence"] == 0.4
         assert result_low["confidence"] < result_high["confidence"]
 
     @pytest.mark.asyncio
     async def test_synthesis_context_created(self):
-        """Test that synthesis context is prepared."""
+        """Test that synthesis context is prepared using format_chunks_for_context."""
+        from src.generation.models import GeneratedResponse
+
         state: TaxAgentState = {
             "original_query": "Test",
             "temporally_valid_chunks": [
@@ -446,9 +493,23 @@ class TestSynthesizeAnswer:
             "graph_context": [],
         }
 
-        result = await synthesize_answer(state)
+        mock_response = GeneratedResponse(
+            answer="Generated answer.",
+            citations=[],
+            chunks_used=["s1", "r1"],
+            confidence=0.8,
+        )
+
+        with patch("src.generation.TaxLawGenerator") as mock_gen_cls:
+            mock_gen = MagicMock()
+            mock_gen.generate = AsyncMock(return_value=mock_response)
+            mock_gen_cls.return_value = mock_gen
+
+            result = await synthesize_answer(state)
 
         assert "_synthesis_context" in result
-        assert "[1] Source 1" in result["_synthesis_context"]
-        assert "[2] Source 2" in result["_synthesis_context"]
-        assert result["final_answer"] is None  # Stub - not implemented yet
+        # New format uses format_chunks_for_context
+        assert "Document 1" in result["_synthesis_context"]
+        assert "Source 1" in result["_synthesis_context"]
+        assert "STATUTE" in result["_synthesis_context"]
+        assert result["final_answer"] == "Generated answer."
