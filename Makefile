@@ -1,6 +1,7 @@
 .PHONY: install test lint scrape ingest serve dev clean \
        docker-up docker-down docker-logs docker-reset docker-wait \
-       generate-embeddings load-weaviate verify-weaviate init-weaviate
+       generate-embeddings load-weaviate verify-weaviate init-weaviate \
+       eval eval-quick eval-no-judge
 
 # Install dependencies
 install:
@@ -90,3 +91,19 @@ load-weaviate:
 # Verify Weaviate vector store
 verify-weaviate:
 	python scripts/verify_vector_store.py
+
+# =============================================================================
+# Evaluation Commands
+# =============================================================================
+
+# Run full evaluation (all 20 questions with GPT-4 judge)
+eval:
+	python scripts/run_evaluation.py
+
+# Run quick evaluation (5 questions, no judge - for testing)
+eval-quick:
+	python scripts/run_evaluation.py --limit 5 --no-judge
+
+# Run evaluation without LLM judge (metrics only)
+eval-no-judge:
+	python scripts/run_evaluation.py --no-judge

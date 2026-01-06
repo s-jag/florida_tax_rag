@@ -1,0 +1,121 @@
+{
+  "run_id": "8c84e789",
+  "timestamp": "2026-01-06 02:48:14.786788",
+  "dataset_version": "1.0.0",
+  "total_questions": 2,
+  "successful_evaluations": 2,
+  "failed_evaluations": 0,
+  "avg_citation_precision": 0.0,
+  "avg_citation_recall": 0.0,
+  "avg_citation_f1": 0.0,
+  "avg_answer_contains": 0.5,
+  "avg_overall_score": 0.0,
+  "avg_latency_ms": 47774.5,
+  "total_hallucinations": 0,
+  "pass_rate": 0.0,
+  "metrics_by_category": {
+    "sales_tax": {
+      "category": "sales_tax",
+      "count": 1,
+      "avg_precision": 0.0,
+      "avg_recall": 0.0,
+      "avg_score": 0.0,
+      "pass_rate": 0.0,
+      "total_hallucinations": 0
+    },
+    "exemptions": {
+      "category": "exemptions",
+      "count": 1,
+      "avg_precision": 0.0,
+      "avg_recall": 0.0,
+      "avg_score": 0.0,
+      "pass_rate": 0.0,
+      "total_hallucinations": 0
+    }
+  },
+  "metrics_by_difficulty": {
+    "easy": {
+      "difficulty": "easy",
+      "count": 2,
+      "avg_precision": 0.0,
+      "avg_recall": 0.0,
+      "avg_score": 0.0,
+      "pass_rate": 0.0,
+      "avg_latency_ms": 47774.5
+    }
+  },
+  "results": [
+    {
+      "question_id": "eval_001",
+      "generated_answer": "**Direct Answer:** The Florida state sales tax rate is 6 percent.\n\n**Legal Basis:** \nFlorida imposes sales tax \"at the rate of 6 percent of the sales price of each item or article of tangible personal property when sold at retail in this state\" [Source: \u00a7 212.05(1)(a)1.a.]. This same 6 percent rate applies to:\n\n- Use tax on tangible personal property used, consumed, distributed, or stored for use in Florida [Source: \u00a7 212.05(1)(b)]\n- Rental or lease of tangible personal property [Source: \u00a7 212.05(1)(c)]\n- Various services including prepaid calling arrangements, telecommunication equipment installation, detective/security services, and cleaning services [Source: \u00a7 212.05(1)(e) and (i)]\n\n**Regulatory Guidance:**\nThe Department of Revenue's Technical Assistance Advisement confirms this rate, stating that \"In Volusia County, the applicable sales tax rate is 6.5%\" - with the 6% being the state rate and the additional 0.5% being the local discretionary sales surtax [Source: TAA 25A-009].\n\n**Exceptions/Exemptions:**\nThere are specific lower rates for certain items:\n- Electrical power or energy: 4.35 percent [Source: \u00a7 212.05(1)(e)1.c.]\n- Coin-operated amusement machines: 4 percent [Source: \u00a7 212.05(1)(h)1.]\n- New mobile homes: 3 percent [Source: \u00a7 212.05(1)(n)]\n\n**Caveats:**\nThe 6 percent rate is the state-only rate. Total sales tax paid by consumers will be higher in counties that impose discretionary sales surtaxes, which can add 0.5% to 2% to the total rate [Source: TAA 25A-009 and Form DR-15DSS]. The state rate has remained consistent at 6 percent throughout the statutory provisions provided, though there have been reductions in specific categories like real property rentals in recent years.",
+      "generated_citations": [
+        "212.05(1)(a)",
+        "212.05(1)(c)",
+        "212.05(1)(e)",
+        "212.05(1)(h)",
+        "212.05(1)(b)",
+        "212.05(1)(n)"
+      ],
+      "citation_precision": 0.0,
+      "citation_recall": 0.0,
+      "answer_contains_score": 0.5,
+      "judgment": null,
+      "latency_ms": 37630,
+      "evaluated_at": "2026-01-06 02:47:16.865520",
+      "model_version": ""
+    },
+    {
+      "question_id": "eval_002",
+      "generated_answer": "**Direct Answer:** Yes, groceries (food products for human consumption) are generally exempt from Florida sales tax, but significant exceptions apply for prepared foods, meals, and foods sold for immediate consumption.\n\n**Legal Basis:**\n\nFood products for human consumption are exempt under [Source: \u00a7 212.08(1)(a)] which states: \"Food products for human consumption are exempt from the tax imposed by this chapter.\"\n\nThe statute defines \"food products\" broadly as \"edible commodities, whether processed, cooked, raw, canned, or in any other form, which are generally regarded as food,\" including cereals, baked goods, meat, fish, poultry, eggs, vegetables, fruits, dairy products, natural fruit juices, coffee, tea, and bakery products sold by establishments without eating facilities. [Source: \u00a7 212.08(1)(b)]\n\n**Major Exceptions:**\n\nHowever, the exemption does NOT apply to numerous categories under [Source: \u00a7 212.08(1)(c)], including:\n\n1. **Prepared meals and restaurant food**: Food sold as meals, furnished/prepared/served for consumption at tables, chairs, counters, or from tableware [Source: \u00a7 212.08(1)(c)(1)-(2)]\n\n2. **Ready-to-eat foods**: Food ordinarily sold for immediate consumption on or near the seller's premises, including \"take out\" orders [Source: \u00a7 212.08(1)(c)(3)]\n\n3. **Sandwiches**: All sandwiches sold ready for immediate consumption [Source: \u00a7 212.08(1)(c)(4)]\n\n4. **Hot prepared foods**: Any food prepared and sold in a heated condition above room temperature [Source: \u00a7 212.08(1)(c)(6)]\n\n5. **Soft drinks**: All soft drinks, nonalcoholic beverages, and drinks made from milk derivatives or tea sold in cans or similar containers [Source: \u00a7 212.08(1)(c)(7)]\n\n6. **Ice cream and frozen treats**: Ice cream, frozen yogurt, popsicles, and similar items in cones, cups, pints, or as novelty items [Source: \u00a7 212.08(1)(c)(8)]\n\n7. **Candy**: All candy and confections based on normal use as indicated by labeling/advertising [Source: \u00a7 212.08(1)(c)(11)]\n\n8. **Vending machine sales**: All food sold through vending machines, pushcarts, or motor vehicles [Source: \u00a7 212.08(1)(c)(10)]\n\n9. **Restaurant/food service establishments**: Food served by restaurants, cafeterias, hotels, taverns, and similar businesses [Source: \u00a7 212.08(1)(c)(13)]\n\n**Regulatory Guidance:**\n\nRule 12A-1.011 provides additional implementation guidance for grocery stores, convenience stores, and supermarkets regarding the application of these exemptions and exceptions. [Source: Rule 12A-1.011]\n\n**Caveats:**\n\nThe distinction between exempt groceries and taxable prepared foods often depends on factors like:\n- Whether food is sold for immediate consumption\n- The location and manner of sale\n- Whether eating facilities are provided\n- The temperature at which food is sold\n- Customary consumption practices at the selling facility\n\nThe law broadly construes \"premises\" to include areas like theater lobbies, stadium seating areas, and drive-in parking areas when determining immediate consumption. [Source: \u00a7 212.08(1)(d)(3)]",
+      "generated_citations": [
+        "212.08(1)(c)(13)",
+        "212.08(1)(d)(3)",
+        "212.08(1)(c)(7)",
+        "212.08(1)(b)",
+        "212.08(1)(c)(8)",
+        "212.08(1)(a)",
+        "212.08(1)(c)(4)",
+        "212.08(1)(c)(6)",
+        "212.08(1)(c)(11)",
+        "212.08(1)(c)(3)",
+        "212.08(1)(c)(10)",
+        "212.08(1)(c)",
+        "212.08(1)(c)(1)",
+        "12A-1.011"
+      ],
+      "citation_precision": 0.0,
+      "citation_recall": 0.0,
+      "answer_contains_score": 0.5,
+      "judgment": null,
+      "latency_ms": 57919,
+      "evaluated_at": "2026-01-06 02:48:14.785675",
+      "model_version": ""
+    }
+  ],
+  "question_summaries": [
+    {
+      "question_id": "eval_001",
+      "question_text": "What is the Florida state sales tax rate?",
+      "category": "sales_tax",
+      "difficulty": "easy",
+      "score": null,
+      "passed": false,
+      "hallucinations": [],
+      "missing_concepts": [],
+      "latency_ms": 37630
+    },
+    {
+      "question_id": "eval_002",
+      "question_text": "Are groceries exempt from Florida sales tax?",
+      "category": "exemptions",
+      "difficulty": "easy",
+      "score": null,
+      "passed": false,
+      "hallucinations": [],
+      "missing_concepts": [],
+      "latency_ms": 57919
+    }
+  ],
+  "failed_questions": [],
+  "errors": []
+}

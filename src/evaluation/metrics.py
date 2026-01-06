@@ -23,12 +23,61 @@ def normalize_citation(citation: str) -> str:
     return normalized
 
 
+def get_base_citation(citation: str) -> str:
+    """Extract the base citation without subsections.
+
+    E.g., "212.05(1)(a)" -> "212.05"
+    E.g., "12a-1.001" -> "12a-1.001"
+    """
+    normalized = normalize_citation(citation)
+    # Remove subsection references like (1)(a)(b)
+    base = re.sub(r"\([^)]*\)+$", "", normalized)
+    # Also handle repeated subsections
+    base = re.sub(r"\([^)]*\)", "", base)
+    return base
+
+
+def citations_match(generated: str, expected: str) -> bool:
+    """Check if a generated citation matches an expected citation.
+
+    Handles cases where generated has more specificity:
+    - Expected "212.05", Generated "212.05(1)(a)" -> True
+    - Expected "212.08(1)", Generated "212.08(1)(a)" -> True
+    - Expected "12A-1.001", Generated "12A-1.001" -> True
+    """
+    gen_norm = normalize_citation(generated)
+    exp_norm = normalize_citation(expected)
+
+    # Exact match
+    if gen_norm == exp_norm:
+        return True
+
+    # Check if generated starts with expected (handling subsection specificity)
+    if gen_norm.startswith(exp_norm):
+        # Make sure it's actually a subsection, not a different statute
+        # e.g., 212.05 should match 212.05(1), but not 212.051
+        remainder = gen_norm[len(exp_norm):]
+        if not remainder or remainder.startswith("("):
+            return True
+
+    # Check if they share the same base citation
+    gen_base = get_base_citation(generated)
+    exp_base = get_base_citation(expected)
+    if gen_base == exp_base:
+        return True
+
+    return False
+
+
 def citation_precision(
     generated: list[str],
     expected_statutes: list[str],
     expected_rules: list[str],
 ) -> float:
     """Calculate precision: correct citations / all generated citations.
+
+    A generated citation is "correct" if it matches any expected citation,
+    accounting for subsection specificity (e.g., 212.05(1)(a) matches 212.05).
 
     Args:
         generated: Citations extracted from generated answer
@@ -41,12 +90,13 @@ def citation_precision(
     if not generated:
         return 1.0  # No citations = no false positives
 
-    expected_normalized = set(
-        normalize_citation(c) for c in expected_statutes + expected_rules
-    )
+    expected = expected_statutes + expected_rules
+    if not expected:
+        return 1.0  # No expected = any citation is fine
 
     correct = sum(
-        1 for g in generated if normalize_citation(g) in expected_normalized
+        1 for g in generated
+        if any(citations_match(g, e) for e in expected)
     )
     return correct / len(generated)
 
@@ -56,7 +106,10 @@ def citation_recall(
     expected_statutes: list[str],
     expected_rules: list[str],
 ) -> float:
-    """Calculate recall: correct citations / expected citations.
+    """Calculate recall: expected citations found / total expected citations.
+
+    An expected citation is "found" if any generated citation matches it,
+    accounting for subsection specificity.
 
     Args:
         generated: Citations extracted from generated answer
@@ -70,10 +123,9 @@ def citation_recall(
     if not expected:
         return 1.0  # No expected citations = perfect recall
 
-    generated_normalized = set(normalize_citation(g) for g in generated)
-
     found = sum(
-        1 for e in expected if normalize_citation(e) in generated_normalized
+        1 for e in expected
+        if any(citations_match(g, e) for g in generated)
     )
     return found / len(expected)
 

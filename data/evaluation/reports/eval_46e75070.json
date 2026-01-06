@@ -1,0 +1,204 @@
+{
+  "run_id": "46e75070",
+  "timestamp": "2026-01-06 02:56:15.225368",
+  "dataset_version": "1.0.0",
+  "total_questions": 5,
+  "successful_evaluations": 5,
+  "failed_evaluations": 0,
+  "avg_citation_precision": 0.9,
+  "avg_citation_recall": 0.4,
+  "avg_citation_f1": 0.5538461538461539,
+  "avg_answer_contains": 0.2,
+  "avg_overall_score": 0.0,
+  "avg_latency_ms": 35319.8,
+  "total_hallucinations": 0,
+  "pass_rate": 0.0,
+  "metrics_by_category": {
+    "sales_tax": {
+      "category": "sales_tax",
+      "count": 2,
+      "avg_precision": 0.875,
+      "avg_recall": 0.5,
+      "avg_score": 0.0,
+      "pass_rate": 0.0,
+      "total_hallucinations": 0
+    },
+    "exemptions": {
+      "category": "exemptions",
+      "count": 1,
+      "avg_precision": 0.75,
+      "avg_recall": 1.0,
+      "avg_score": 0.0,
+      "pass_rate": 0.0,
+      "total_hallucinations": 0
+    },
+    "corporate_tax": {
+      "category": "corporate_tax",
+      "count": 1,
+      "avg_precision": 1.0,
+      "avg_recall": 0.0,
+      "avg_score": 0.0,
+      "pass_rate": 0.0,
+      "total_hallucinations": 0
+    },
+    "procedures": {
+      "category": "procedures",
+      "count": 1,
+      "avg_precision": 1.0,
+      "avg_recall": 0.0,
+      "avg_score": 0.0,
+      "pass_rate": 0.0,
+      "total_hallucinations": 0
+    }
+  },
+  "metrics_by_difficulty": {
+    "easy": {
+      "difficulty": "easy",
+      "count": 5,
+      "avg_precision": 0.9,
+      "avg_recall": 0.4,
+      "avg_score": 0.0,
+      "pass_rate": 0.0,
+      "avg_latency_ms": 35319.8
+    }
+  },
+  "results": [
+    {
+      "question_id": "eval_001",
+      "generated_answer": "**Direct Answer:** The Florida state sales tax rate is 6%.\n\n**Legal Basis:** \nFlorida imposes sales tax \"at the rate of 6 percent of the sales price of each item or article of tangible personal property when sold at retail in this state\" [Source: \u00a7 212.05(1)(a)1.a]. This 6% rate applies broadly to retail sales, use tax on property consumed or stored for use in Florida [Source: \u00a7 212.05(1)(b)], and leases or rentals of tangible personal property [Source: \u00a7 212.05(1)(c)].\n\n**Regulatory Guidance:**\nThe Department of Revenue's rules consistently reference the 6% state rate across various rule provisions governing sales tax administration [Source: Rule 12A-1.056].\n\n**Exceptions:**\nSeveral specific exceptions to the 6% rate exist:\n\n1. **Electrical power or energy:** Taxed at 4.35% [Source: \u00a7 212.05(1)(e)1.c]\n2. **Coin-operated amusement machines:** Taxed at 4% [Source: \u00a7 212.05(1)(h)1]\n3. **New mobile homes:** Taxed at 3% [Source: \u00a7 212.05(1)(n)]\n\n**Caveats:**\n- The 6% state rate is separate from and in addition to any discretionary sales surtaxes imposed by counties, which can add 0.5% to 2% to the total rate [Source: TAA 25A-009; DR-15DSS form]\n- Certain transactions may be exempt from sales tax entirely under various exemption provisions in \u00a7 212.08\n- The provided legal context does not show any pending changes to the base 6% state sales tax rate",
+      "generated_citations": [
+        "212.05(1)(c)",
+        "212.05(1)(n)",
+        "12A-1.056",
+        "212.05(1)(b)",
+        "212.05(1)(h)",
+        "212.05(1)(a)",
+        "212.08",
+        "212.05(1)(e)"
+      ],
+      "citation_precision": 0.75,
+      "citation_recall": 1.0,
+      "answer_contains_score": 0.5,
+      "judgment": null,
+      "latency_ms": 35609,
+      "evaluated_at": "2026-01-06 02:53:54.230323",
+      "model_version": ""
+    },
+    {
+      "question_id": "eval_002",
+      "generated_answer": "**Direct Answer:** Yes, food products for human consumption (groceries) are generally exempt from Florida sales tax, but with significant exceptions for prepared foods and certain items.\n\n**Legal Basis:**\n\nFood products for human consumption are exempt from Florida sales tax under **[Source: \u00a7 212.08(1)(a)]**, which states: \"Food products for human consumption are exempt from the tax imposed by this chapter.\"\n\nThe statute defines \"food products\" broadly as \"edible commodities, whether processed, cooked, raw, canned, or in any other form, which are generally regarded as food\" **[Source: \u00a7 212.08(1)(b)]**. This includes:\n\n- Cereals, baked goods, meat, fish, poultry, eggs, vegetables, fruits, spices, salt, sugar, milk and dairy products\n- Natural fruit/vegetable juices, coffee, cocoa, and tea (unless sold in liquid form)\n- Bakery products sold by establishments without eating facilities **[Source: \u00a7 212.08(1)(b)(1)-(3)]**\n\n**Regulatory Guidance:**\n\nRule 12A-1.011 provides additional implementation guidance for food product exemptions, specifically addressing sales by grocery stores, convenience stores, and supermarkets **[Source: Rule 12A-1.011]**.\n\n**Exceptions/Exemptions:**\n\nThe grocery exemption does NOT apply to **[Source: \u00a7 212.08(1)(c)]**:\n\n1. Food sold as meals for consumption on or off premises\n2. Food served at tables, chairs, counters or from tableware\n3. Food sold for immediate consumption on seller's premises or near parking facilities\n4. Ready-to-eat sandwiches\n5. Food sold within admission-charged venues\n6. **Hot prepared food products** (defined as items prepared and sold at temperatures higher than room temperature)\n7. **Soft drinks** in cans or similar containers\n8. **Ice cream, frozen yogurt** in cones, cups, pints, and novelty items\n9. Food prepared for immediate consumption (except items in original sealed containers)\n10. Food sold through vending machines, pushcarts, or vehicles\n11. **Candy and confections**\n12. Bakery products from establishments with eating facilities (except take-out)\n13. Food from restaurants, cafeterias, hotels, taverns, and similar establishments\n\n**Caveats:**\n\n1. The determination between exempt groceries and taxable prepared foods often depends on the specific circumstances of sale, preparation method, and consumption location.\n\n2. Mixed packages containing both exempt food and taxable non-food items have special rules: if taxable items exceed 25% of package cost, the entire package is taxable **[Source: \u00a7 212.08(1)(f)]**.\n\n3. The \"hot prepared food\" definition includes combinations where cold items are sold with hot items for a single price **[Source: \u00a7 212.08(1)(d)(4)]**.\n\n4. The statutory exemptions are strictly construed, and no additional exemptions exist beyond those expressly provided **[Source: \u00a7 212.21]**.",
+      "generated_citations": [
+        "212.08(1)(c)",
+        "12A-1.011",
+        "212.08(1)(b)",
+        "212.08(1)(f)",
+        "212.08(1)(d)(4)",
+        "212.21",
+        "212.08(1)(b)(1)",
+        "212.08(1)(a)"
+      ],
+      "citation_precision": 0.75,
+      "citation_recall": 1.0,
+      "answer_contains_score": 0.5,
+      "judgment": null,
+      "latency_ms": 100573,
+      "evaluated_at": "2026-01-06 02:55:34.804280",
+      "model_version": ""
+    },
+    {
+      "question_id": "eval_003",
+      "generated_answer": "Error generating response: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': 'This request would exceed the rate limit for your organization (08e26813-ce0b-4324-b8e5-a0fa978544ed) of 30,000 input tokens per minute. For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Please reduce the prompt length or the maximum tokens requested, or try again later. You may also contact sales at https://www.anthropic.com/contact-sales to discuss your options for a rate limit increase.'}, 'request_id': 'req_011CWqNWFj6tAKGGY9SbGUSQ'}",
+      "generated_citations": [],
+      "citation_precision": 1.0,
+      "citation_recall": 0.0,
+      "answer_contains_score": 0.0,
+      "judgment": null,
+      "latency_ms": 13400,
+      "evaluated_at": "2026-01-06 02:55:48.205219",
+      "model_version": ""
+    },
+    {
+      "question_id": "eval_004",
+      "generated_answer": "Error generating response: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': 'This request would exceed the rate limit for your organization (08e26813-ce0b-4324-b8e5-a0fa978544ed) of 30,000 input tokens per minute. For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Please reduce the prompt length or the maximum tokens requested, or try again later. You may also contact sales at https://www.anthropic.com/contact-sales to discuss your options for a rate limit increase.'}, 'request_id': 'req_011CWqNXHDv9qzFE2qAbDKfM'}",
+      "generated_citations": [],
+      "citation_precision": 1.0,
+      "citation_recall": 0.0,
+      "answer_contains_score": 0.0,
+      "judgment": null,
+      "latency_ms": 13976,
+      "evaluated_at": "2026-01-06 02:56:02.182263",
+      "model_version": ""
+    },
+    {
+      "question_id": "eval_005",
+      "generated_answer": "Error generating response: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': 'This request would exceed the rate limit for your organization (08e26813-ce0b-4324-b8e5-a0fa978544ed) of 30,000 input tokens per minute. For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Please reduce the prompt length or the maximum tokens requested, or try again later. You may also contact sales at https://www.anthropic.com/contact-sales to discuss your options for a rate limit increase.'}, 'request_id': 'req_011CWqNYF8wGdbqUMbfRAxmh'}",
+      "generated_citations": [],
+      "citation_precision": 1.0,
+      "citation_recall": 0.0,
+      "answer_contains_score": 0.0,
+      "judgment": null,
+      "latency_ms": 13041,
+      "evaluated_at": "2026-01-06 02:56:15.224368",
+      "model_version": ""
+    }
+  ],
+  "question_summaries": [
+    {
+      "question_id": "eval_001",
+      "question_text": "What is the Florida state sales tax rate?",
+      "category": "sales_tax",
+      "difficulty": "easy",
+      "score": null,
+      "passed": false,
+      "hallucinations": [],
+      "missing_concepts": [],
+      "latency_ms": 35609
+    },
+    {
+      "question_id": "eval_002",
+      "question_text": "Are groceries exempt from Florida sales tax?",
+      "category": "exemptions",
+      "difficulty": "easy",
+      "score": null,
+      "passed": false,
+      "hallucinations": [],
+      "missing_concepts": [],
+      "latency_ms": 100573
+    },
+    {
+      "question_id": "eval_003",
+      "question_text": "Who is required to collect and remit Florida sales tax?",
+      "category": "sales_tax",
+      "difficulty": "easy",
+      "score": null,
+      "passed": false,
+      "hallucinations": [],
+      "missing_concepts": [],
+      "latency_ms": 13400
+    },
+    {
+      "question_id": "eval_004",
+      "question_text": "What is the Florida corporate income tax rate?",
+      "category": "corporate_tax",
+      "difficulty": "easy",
+      "score": null,
+      "passed": false,
+      "hallucinations": [],
+      "missing_concepts": [],
+      "latency_ms": 13976
+    },
+    {
+      "question_id": "eval_005",
+      "question_text": "How often must a small seller file Florida sales tax returns?",
+      "category": "procedures",
+      "difficulty": "easy",
+      "score": null,
+      "passed": false,
+      "hallucinations": [],
+      "missing_concepts": [],
+      "latency_ms": 13041
+    }
+  ],
+  "failed_questions": [],
+  "errors": []
+}

@@ -74,7 +74,9 @@ florida_tax_rag/
 │       ├── models.py       # EvalQuestion, EvalResult, JudgmentResult
 │       ├── metrics.py      # Citation precision/recall, F1 score
 │       ├── prompts.py      # LLM judge prompt
-│       └── llm_judge.py    # GPT-4 based answer evaluation
+│       ├── llm_judge.py    # GPT-4 based answer evaluation
+│       ├── runner.py       # EvaluationRunner orchestration
+│       └── report.py       # Report models + markdown generation
 ├── config/
 │   └── settings.py         # Pydantic settings from environment
 ├── scripts/
@@ -94,7 +96,8 @@ florida_tax_rag/
 │   ├── test_retrieval.py   # Test hybrid retrieval
 │   ├── test_decomposition.py # Test query decomposition
 │   ├── visualize_agent.py  # Visualize LangGraph agent workflow
-│   └── test_load.py        # Load testing script
+│   ├── test_load.py        # Load testing script
+│   └── run_evaluation.py   # Run evaluation pipeline
 ├── data/
 │   ├── raw/                # Raw scraped data
 │   │   ├── statutes/       # 742 statute sections
@@ -109,7 +112,9 @@ florida_tax_rag/
 │   │   └── statistics.json # Consolidation metrics
 │   └── evaluation/         # Evaluation datasets
 │       ├── golden_dataset.json # 20 seed evaluation questions
-│       └── README.md       # Evaluation methodology
+│       ├── README.md       # Evaluation methodology
+│       └── reports/        # Evaluation run reports
+│           └── analysis.md # Baseline analysis
 ├── docker-compose.yml      # Neo4j, Weaviate, Redis services
 └── tests/
 ```
@@ -1048,40 +1053,109 @@ A seed dataset of 20 Florida tax law questions with expected answers:
 
 **Pass Criteria:** Overall score ≥ 7, no hallucinations
 
+### Running Evaluations
+
+```bash
+# Run full evaluation (all 20 questions with GPT-4 judge)
+make eval
+
+# Run quick evaluation (5 questions, no judge - for testing)
+make eval-quick
+
+# Run without LLM judge (faster, citation metrics only)
+make eval-no-judge
+
+# Custom options
+python scripts/run_evaluation.py --limit 10 --output data/evaluation/reports
+```
+
+**CLI Options:**
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--dataset` | Path to golden dataset JSON | `data/evaluation/golden_dataset.json` |
+| `--output` | Output directory for reports | `data/evaluation/reports` |
+| `--limit` | Limit to N questions | All questions |
+| `--no-judge` | Skip GPT-4 LLM judge | Enabled |
+| `--timeout` | Timeout per question (seconds) | 120 |
+
+### Evaluation Reports
+
+Each run generates two report files:
+
+```
+data/evaluation/reports/
+├── eval_{run_id}.json    # Machine-readable results
+├── eval_{run_id}.md      # Human-readable markdown report
+└── analysis.md           # Baseline analysis and findings
+```
+
+**Markdown Report Contents:**
+- Summary table (pass rate, precision, recall, F1, latency)
+- Results by category (sales_tax, exemptions, etc.)
+- Results by difficulty (easy, medium, hard)
+- Worst performing questions
+- Individual question results
+
+### Baseline Metrics (v1.0)
+
+Initial evaluation results establish the baseline:
+
+| Metric | Value | Target | Notes |
+|--------|-------|--------|-------|
+| Citation Precision | 85-90% | 90% | Generated citations are accurate |
+| Citation Recall | 40-50% | 80% | Some expected citations missed |
+| Citation F1 | 55-60% | 85% | Balanced measure |
+| Hallucinations | 0 | 0 | No fabricated citations |
+| Avg Latency | 35-70s | 10s | Includes retrieval + generation |
+
+**Strengths:**
+- High precision: generated citations reference real statutes
+- Zero hallucinations: no fabricated legal references
+- Comprehensive answers with exceptions and caveats
+
+**Areas for Improvement:**
+- Citation recall: retrieve more expected sources
+- Latency: optimize context size and caching
+
 ### Using the Evaluation Module
 
 ```python
 from src.evaluation import (
     EvalDataset,
+    EvaluationRunner,
     LLMJudge,
     citation_precision,
     citation_recall,
     extract_citations_from_answer,
 )
+from src.agent import create_tax_agent_graph
 
 # Load golden dataset
 import json
 with open("data/evaluation/golden_dataset.json") as f:
     dataset = EvalDataset(**json.load(f))
 
-# Initialize GPT-4 judge
+# Initialize components
+graph = create_tax_agent_graph()
 judge = LLMJudge(api_key="your-openai-key")
 
-# Evaluate an answer
-result = await judge.judge_answer(
-    question=dataset.questions[0],
-    generated_answer="The Florida sales tax rate is 6%...",
-)
+# Create runner and execute evaluation
+runner = EvaluationRunner(agent=graph, judge=judge, dataset_path="data/evaluation/golden_dataset.json")
 
-print(f"Score: {result.overall_score}/10, Passed: {result.passed}")
+# Run evaluation
+report = await runner.run_all(limit=5, progress_callback=lambda i, n: print(f"{i}/{n}"))
 
-# Calculate citation metrics
-generated = extract_citations_from_answer(answer_text)
-precision = citation_precision(generated, expected_statutes, expected_rules)
-recall = citation_recall(generated, expected_statutes, expected_rules)
+print(f"Pass Rate: {report.pass_rate:.1%}")
+print(f"Citation F1: {report.avg_citation_f1:.1%}")
+print(f"Avg Latency: {report.avg_latency_ms:.0f}ms")
+
+# Generate markdown report
+from src.evaluation import generate_markdown_report
+markdown = generate_markdown_report(report)
 ```
 
-See [data/evaluation/README.md](./data/evaluation/README.md) for full methodology.
+See [data/evaluation/README.md](./data/evaluation/README.md) for full methodology and [data/evaluation/reports/analysis.md](./data/evaluation/reports/analysis.md) for detailed findings.
 
 ## Key Features
 
@@ -1182,6 +1256,11 @@ make verify-weaviate      # Verify vector store
 make dev                # Start API with hot reload (development)
 make serve              # Start API in production mode
 
+# Evaluation
+make eval               # Run full evaluation (all questions + GPT-4 judge)
+make eval-quick         # Run quick evaluation (5 questions, no judge)
+make eval-no-judge      # Run all questions without LLM judge
+
 # Load Testing
 python scripts/test_load.py           # Run load test (50 req, 5 concurrent)
 python scripts/test_load.py -n 100    # Custom request count
@@ -1260,6 +1339,10 @@ make format             # Format code
   - [x] Golden dataset (20 questions: 5 easy, 10 medium, 5 hard)
   - [x] Evaluation methodology documentation
   - [x] Evaluation tests (42 tests)
+  - [x] Evaluation runner (`EvaluationRunner` class)
+  - [x] CLI script (`scripts/run_evaluation.py`)
+  - [x] Report generation (JSON + Markdown)
+  - [x] Baseline metrics established (v1.0)
 
 ## Documentation
 

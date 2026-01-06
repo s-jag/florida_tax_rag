@@ -1,0 +1,150 @@
+{
+  "run_id": "d4ec68cf",
+  "timestamp": "2026-01-06 02:53:05.471344",
+  "dataset_version": "1.0.0",
+  "total_questions": 3,
+  "successful_evaluations": 3,
+  "failed_evaluations": 0,
+  "avg_citation_precision": 0.7666666666666666,
+  "avg_citation_recall": 0.5,
+  "avg_citation_f1": 0.6052631578947368,
+  "avg_answer_contains": 0.38888888888888884,
+  "avg_overall_score": 0.0,
+  "avg_latency_ms": 71549.66666666667,
+  "total_hallucinations": 0,
+  "pass_rate": 0.0,
+  "metrics_by_category": {
+    "sales_tax": {
+      "category": "sales_tax",
+      "count": 2,
+      "avg_precision": 0.65,
+      "avg_recall": 0.75,
+      "avg_score": 0.0,
+      "pass_rate": 0.0,
+      "total_hallucinations": 0
+    },
+    "exemptions": {
+      "category": "exemptions",
+      "count": 1,
+      "avg_precision": 1.0,
+      "avg_recall": 0.0,
+      "avg_score": 0.0,
+      "pass_rate": 0.0,
+      "total_hallucinations": 0
+    }
+  },
+  "metrics_by_difficulty": {
+    "easy": {
+      "difficulty": "easy",
+      "count": 3,
+      "avg_precision": 0.7666666666666666,
+      "avg_recall": 0.5,
+      "avg_score": 0.0,
+      "pass_rate": 0.0,
+      "avg_latency_ms": 71549.66666666667
+    }
+  },
+  "results": [
+    {
+      "question_id": "eval_001",
+      "generated_answer": "## Direct Answer\n\nThe Florida state sales tax rate is **6 percent**.\n\n## Legal Basis\n\nThe fundamental Florida state sales tax rate is established in Florida Statute \u00a7 212.05(1)(a)1.a., which states:\n\n> \"At the rate of 6 percent of the sales price of each item or article of tangible personal property when sold at retail in this state, computed on each taxable sale for the purpose of remitting the amount of tax due the state, and including each and every retail sale.\"\n\n[Source: \u00a7 212.05(1)(a)1.a.]\n\nThis 6% rate applies broadly to most taxable transactions, including:\n- Sales of tangible personal property at retail [Source: \u00a7 212.05(1)(a)1.a.]\n- Use tax on tangible personal property [Source: \u00a7 212.05(1)(b)]\n- Lease or rental of tangible personal property [Source: \u00a7 212.05(1)(c)]\n- Various services enumerated in the statute [Source: \u00a7 212.05(1)(i)]\n\n## Regulatory Guidance\n\nThe Department of Revenue has repealed the previous sales tax brackets rule (Rule 12A-1.004), which was repealed effective June 14, 2022. [Source: Rule 12A-1.004 (Repealed)]\n\n## Exceptions/Exemptions\n\nWhile the standard rate is 6%, the statute provides for different rates in specific circumstances:\n\n1. **Electrical power or energy**: 4.35% [Source: \u00a7 212.05(1)(e)1.c.]\n2. **Coin-operated amusement machines**: 4% [Source: \u00a7 212.05(1)(h)1.]\n3. **New mobile homes**: 3% [Source: \u00a7 212.05(1)(n)]\n4. **Vending machines**: Complex divisor system based on county surtax rates [Source: \u00a7 212.0515]\n\n## Caveats\n\n1. **Local Surtaxes**: The 6% state rate does not include discretionary sales surtaxes that counties may impose, which can add 0.5% to 2% additional tax. The Technical Assistance Advisement provides an example showing Volusia County's total rate of 6.5% (6% state + 0.5% county surtax). [Source: TAA 25A-009]\n\n2. **Boat Tax Cap**: There is a maximum tax cap of $18,000 per boat sale and $60,000 per boat repair. [Source: \u00a7 212.05(5)]\n\n3. **Rate Changes**: The statute establishes the current 6% rate, but this analysis is based on the provided legal context and does not account for any potential future legislative changes not reflected in these documents.",
+      "generated_citations": [
+        "212.05(1)(h)",
+        "212.05(1)(e)",
+        "212.05(1)(i)",
+        "212.05(1)(b)",
+        "212.05(1)(a)",
+        "212.05(1)(n)",
+        "212.05(5)",
+        "12A-1.004",
+        "212.05(1)(c)",
+        "212.0515"
+      ],
+      "citation_precision": 0.8,
+      "citation_recall": 1.0,
+      "answer_contains_score": 0.5,
+      "judgment": null,
+      "latency_ms": 100950,
+      "evaluated_at": "2026-01-06 02:51:11.762271",
+      "model_version": ""
+    },
+    {
+      "question_id": "eval_002",
+      "generated_answer": "Error generating response: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': 'This request would exceed the rate limit for your organization (08e26813-ce0b-4324-b8e5-a0fa978544ed) of 30,000 input tokens per minute. For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Please reduce the prompt length or the maximum tokens requested, or try again later. You may also contact sales at https://www.anthropic.com/contact-sales to discuss your options for a rate limit increase.'}, 'request_id': 'req_011CWqNAgXJD4MhgkREkBUR2'}",
+      "generated_citations": [],
+      "citation_precision": 1.0,
+      "citation_recall": 0.0,
+      "answer_contains_score": 0.0,
+      "judgment": null,
+      "latency_ms": 11082,
+      "evaluated_at": "2026-01-06 02:51:22.845370",
+      "model_version": ""
+    },
+    {
+      "question_id": "eval_003",
+      "generated_answer": "## Direct Answer\n\nMultiple categories of persons are required to collect and remit Florida sales tax, including dealers, marketplace providers, lessors/lessees of certain property, and persons providing taxable services.\n\n## Legal Basis\n\nThe primary collection obligation is established in **\u00a7 212.05**: \"The tax shall be collected by the dealer, as defined herein, and remitted by the dealer to the state at the time and in the manner as hereinafter provided.\" [Source: \u00a7 212.05]\n\nThe statutory definition of \"dealer\" is comprehensive and includes various categories of persons under **\u00a7 212.06(2)**:\n\n### Core Dealer Categories:\n1. **Manufacturers/Producers**: \"every person who manufactures or produces tangible personal property for sale at retail; for use, consumption, or distribution; or for storage to be used or consumed in this state\" [Source: \u00a7 212.06(2)(a)]\n\n2. **Importers**: \"every person...who imports, or causes to be imported, tangible personal property from any state or foreign country for sale at retail; for use, consumption, or distribution; or for storage to be used or consumed in this state\" [Source: \u00a7 212.06(2)(b)]\n\n3. **Retailers**: \"every person...who sells at retail or who offers for sale at retail...tangible personal property...including a retailer who transacts a substantial number of remote sales or a marketplace provider that has a physical presence in this state or that makes or facilitates through its marketplace a substantial number of remote sales\" [Source: \u00a7 212.06(2)(c)]\n\n4. **Service Providers**: \"any person who sells, provides, or performs a service taxable under this chapter\" [Source: \u00a7 212.06(2)(k)]\n\n5. **Property Lessors**: \"any person...who leases or rents tangible personal property...for a consideration\" [Source: \u00a7 212.06(2)(e)]\n\n### Remote Sales and Marketplace Providers:\n**\u00a7 212.0596(2)** establishes that \"Every person making a substantial number of remote sales is a dealer for purposes of this chapter.\" A \"substantial number of remote sales\" means sales exceeding $100,000 in the previous calendar year. [Source: \u00a7 212.0596(1)(b), (2)]\n\nFor marketplace transactions, **\u00a7 212.05965(3)** requires \"A marketplace provider that is a dealer under this chapter shall certify to its marketplace sellers that it will collect and remit the tax imposed under this chapter on taxable retail sales made through the marketplace.\" [Source: \u00a7 212.05965(3)]\n\n### Rental/Accommodation Providers:\n**\u00a7 212.03** requires that \"The owner, lessor, or person receiving the rent shall remit the tax to the department\" for various rental arrangements including hotels, apartment houses, roominghouses, tourist and trailer camps, and condominium units. [Source: \u00a7 212.03]\n\n## Collection Obligations\n\n**\u00a7 212.06(3)(a)** mandates: \"every dealer making sales...shall, at the time of making sales, collect the tax imposed by this chapter from the purchaser.\" [Source: \u00a7 212.06(3)(a)]\n\n**\u00a7 212.07** requires dealers to \"add the amount of the tax imposed under this chapter to the sale price, and the amount of the tax shall be separately stated as Florida tax on any charge ticket, sales slip, invoice, or other tangible evidence of sale.\" [Source: \u00a7 212.07]\n\n## Registration Requirements\n\n**\u00a7 212.18(3)(a)** requires persons engaging in business as dealers to \"file with the department an application for a certificate of registration for each place of business.\" [Source: \u00a7 212.18(3)(a)]\n\n## Exceptions/Exemptions\n\nLimited exceptions exist, such as for certain printed materials delivered by mail under specific conditions [Source: \u00a7 212.06(3)(b)], and marketplace sellers when the marketplace provider certifies it will collect the tax [Source: \u00a7 212.05965(4)(a)].\n\n## Caveats\n\nThe definition of \"dealer\" is intentionally broad and encompasses various business activities. The specific collection obligations may vary depending on the type of transaction, location of delivery, and relationship between parties. Recent marketplace facilitator legislation has created complex allocation of responsibilities between marketplace providers and sellers that requires careful analysis of the specific business arrangement.",
+      "generated_citations": [
+        "212.0596(1)(b)",
+        "212.06(2)(a)",
+        "212.06(3)(b)",
+        "212.18(3)(a)",
+        "212.0596(2)",
+        "212.06(2)(k)",
+        "212.07",
+        "212.06(2)(e)",
+        "212.03",
+        "212.05",
+        "212.06(2)(b)",
+        "212.06(3)(a)",
+        "212.06(2)(c)",
+        "212.05965(4)(a)",
+        "212.05965(3)",
+        "212.06(2)"
+      ],
+      "citation_precision": 0.5,
+      "citation_recall": 0.5,
+      "answer_contains_score": 0.6666666666666666,
+      "judgment": null,
+      "latency_ms": 102617,
+      "evaluated_at": "2026-01-06 02:53:05.467023",
+      "model_version": ""
+    }
+  ],
+  "question_summaries": [
+    {
+      "question_id": "eval_001",
+      "question_text": "What is the Florida state sales tax rate?",
+      "category": "sales_tax",
+      "difficulty": "easy",
+      "score": null,
+      "passed": false,
+      "hallucinations": [],
+      "missing_concepts": [],
+      "latency_ms": 100950
+    },
+    {
+      "question_id": "eval_002",
+      "question_text": "Are groceries exempt from Florida sales tax?",
+      "category": "exemptions",
+      "difficulty": "easy",
+      "score": null,
+      "passed": false,
+      "hallucinations": [],
+      "missing_concepts": [],
+      "latency_ms": 11082
+    },
+    {
+      "question_id": "eval_003",
+      "question_text": "Who is required to collect and remit Florida sales tax?",
+      "category": "sales_tax",
+      "difficulty": "easy",
+      "score": null,
+      "passed": false,
+      "hallucinations": [],
+      "missing_concepts": [],
+      "latency_ms": 102617
+    }
+  ],
+  "failed_questions": [],
+  "errors": []
+}
