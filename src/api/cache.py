@@ -4,12 +4,25 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
+from datetime import date, datetime
 from typing import Any, Optional
 
 import redis
 
-logger = logging.getLogger(__name__)
+from src.observability.logging import get_logger
+
+logger = get_logger(__name__)
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    """JSON encoder that handles datetime objects."""
+
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        if isinstance(obj, date):
+            return obj.isoformat()
+        return super().default(obj)
 
 
 class QueryCache:
@@ -142,7 +155,7 @@ class QueryCache:
                 return False
 
             # Serialize and cache
-            data = json.dumps(response)
+            data = json.dumps(response, cls=DateTimeEncoder)
             self.redis.setex(key, self.ttl, data)
             logger.debug("cache_set", key=key, ttl=self.ttl)
             return True
