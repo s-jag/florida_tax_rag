@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     redis_port: int = 6379
     redis_db: int = 0
 
+    # OpenAI (GPT-4 Evaluation Judge)
+    openai_api_key: Optional[SecretStr] = None
+
 
 @lru_cache
 def get_settings() -> Settings:

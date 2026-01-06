@@ -1,0 +1,236 @@
+{
+  "metadata": {
+    "name": "Florida Tax RAG Golden Dataset",
+    "version": "1.0.0",
+    "description": "Seed evaluation dataset for measuring RAG system accuracy",
+    "created_at": "2025-01-05",
+    "total_questions": 20,
+    "distribution": {
+      "easy": 5,
+      "medium": 10,
+      "hard": 5
+    }
+  },
+  "questions": [
+    {
+      "id": "eval_001",
+      "question": "What is the Florida state sales tax rate?",
+      "category": "sales_tax",
+      "difficulty": "easy",
+      "expected_statutes": ["212.05"],
+      "expected_rules": [],
+      "expected_answer_contains": ["6%", "six percent"],
+      "expected_answer_type": "numeric",
+      "notes": "Direct statutory answer. The base state rate is 6% per § 212.05."
+    },
+    {
+      "id": "eval_002",
+      "question": "Are groceries exempt from Florida sales tax?",
+      "category": "exemptions",
+      "difficulty": "easy",
+      "expected_statutes": ["212.08(1)"],
+      "expected_rules": [],
+      "expected_answer_contains": ["exempt", "food for human consumption"],
+      "expected_answer_type": "yes/no",
+      "notes": "Basic exemption. Food for human consumption is exempt under § 212.08(1)."
+    },
+    {
+      "id": "eval_003",
+      "question": "Who is required to collect and remit Florida sales tax?",
+      "category": "sales_tax",
+      "difficulty": "easy",
+      "expected_statutes": ["212.06"],
+      "expected_rules": ["12A-1.001"],
+      "expected_answer_contains": ["dealer", "seller", "register"],
+      "expected_answer_type": "explanation",
+      "notes": "Dealers making taxable sales must register and collect tax."
+    },
+    {
+      "id": "eval_004",
+      "question": "What is the Florida corporate income tax rate?",
+      "category": "corporate_tax",
+      "difficulty": "easy",
+      "expected_statutes": ["220.11"],
+      "expected_rules": [],
+      "expected_answer_contains": ["5.5%"],
+      "expected_answer_type": "numeric",
+      "notes": "Florida corporate income tax rate is 5.5% per § 220.11."
+    },
+    {
+      "id": "eval_005",
+      "question": "How often must a small seller file Florida sales tax returns?",
+      "category": "procedures",
+      "difficulty": "easy",
+      "expected_statutes": ["212.11"],
+      "expected_rules": ["12A-1.056"],
+      "expected_answer_contains": ["quarterly", "annual"],
+      "expected_answer_type": "explanation",
+      "notes": "Filing frequency depends on tax liability. Small sellers may file quarterly or annually."
+    },
+    {
+      "id": "eval_006",
+      "question": "Is SaaS (Software as a Service) taxable in Florida?",
+      "category": "sales_tax",
+      "difficulty": "medium",
+      "expected_statutes": ["212.05(1)(i)"],
+      "expected_rules": ["12A-1.032"],
+      "expected_answer_contains": ["remotely accessed", "software", "communication services"],
+      "expected_answer_type": "it_depends",
+      "notes": "SaaS taxability depends on how it's delivered and accessed. Remotely accessed software may be taxed as communication services."
+    },
+    {
+      "id": "eval_007",
+      "question": "What equipment qualifies for the manufacturing machinery exemption in Florida?",
+      "category": "exemptions",
+      "difficulty": "medium",
+      "expected_statutes": ["212.08(5)(b)"],
+      "expected_rules": ["12A-1.096"],
+      "expected_answer_contains": ["manufacturing", "processing", "production"],
+      "expected_answer_type": "explanation",
+      "notes": "Equipment used directly in manufacturing process may qualify for exemption."
+    },
+    {
+      "id": "eval_008",
+      "question": "When does an out-of-state seller have nexus for Florida sales tax purposes?",
+      "category": "sales_tax",
+      "difficulty": "medium",
+      "expected_statutes": ["212.0596"],
+      "expected_rules": [],
+      "expected_answer_contains": ["$100,000", "200 transactions", "economic nexus"],
+      "expected_answer_type": "explanation",
+      "notes": "Economic nexus threshold: $100,000 in sales or 200 transactions in Florida."
+    },
+    {
+      "id": "eval_009",
+      "question": "What is the Florida homestead exemption amount for property tax?",
+      "category": "property_tax",
+      "difficulty": "medium",
+      "expected_statutes": ["196.031"],
+      "expected_rules": [],
+      "expected_answer_contains": ["$50,000", "assessed value"],
+      "expected_answer_type": "numeric",
+      "notes": "Standard homestead exemption is up to $50,000 of assessed value."
+    },
+    {
+      "id": "eval_010",
+      "question": "What are the requirements for a valid Florida resale certificate?",
+      "category": "exemptions",
+      "difficulty": "medium",
+      "expected_statutes": ["212.18"],
+      "expected_rules": ["12A-1.038"],
+      "expected_answer_contains": ["resale", "certificate", "good faith"],
+      "expected_answer_type": "explanation",
+      "notes": "Resale certificates require valid registration number and must be accepted in good faith."
+    },
+    {
+      "id": "eval_011",
+      "question": "Are digital goods like e-books and downloaded music taxable in Florida?",
+      "category": "sales_tax",
+      "difficulty": "medium",
+      "expected_statutes": ["212.05"],
+      "expected_rules": ["12A-1.032"],
+      "expected_answer_contains": ["digital", "tangible personal property"],
+      "expected_answer_type": "it_depends",
+      "notes": "Digital goods are generally not taxable as they are not tangible personal property."
+    },
+    {
+      "id": "eval_012",
+      "question": "What is Florida's voluntary disclosure program for sales tax?",
+      "category": "procedures",
+      "difficulty": "medium",
+      "expected_statutes": ["213.21"],
+      "expected_rules": [],
+      "expected_answer_contains": ["voluntary disclosure", "penalty", "lookback"],
+      "expected_answer_type": "explanation",
+      "notes": "VDA allows sellers to come forward with limited lookback and waived penalties."
+    },
+    {
+      "id": "eval_013",
+      "question": "How does Florida distinguish between taxable services and non-taxable services?",
+      "category": "sales_tax",
+      "difficulty": "medium",
+      "expected_statutes": ["212.05", "212.08"],
+      "expected_rules": ["12A-1.006"],
+      "expected_answer_contains": ["enumerated", "specifically listed"],
+      "expected_answer_type": "explanation",
+      "notes": "Only specifically enumerated services are taxable in Florida."
+    },
+    {
+      "id": "eval_014",
+      "question": "What documentation is required for the agricultural exemption in Florida?",
+      "category": "exemptions",
+      "difficulty": "medium",
+      "expected_statutes": ["212.08(5)(a)"],
+      "expected_rules": ["12A-1.087"],
+      "expected_answer_contains": ["agricultural", "certificate", "bona fide"],
+      "expected_answer_type": "explanation",
+      "notes": "Requires Consumer Certificate of Exemption for agricultural use."
+    },
+    {
+      "id": "eval_015",
+      "question": "How are contractors taxed on materials in Florida?",
+      "category": "sales_tax",
+      "difficulty": "medium",
+      "expected_statutes": ["212.06(14)"],
+      "expected_rules": ["12A-1.051"],
+      "expected_answer_contains": ["real property", "contractor", "end user"],
+      "expected_answer_type": "explanation",
+      "notes": "Contractors are generally taxed as end users on materials incorporated into real property."
+    },
+    {
+      "id": "eval_016",
+      "question": "How is cloud computing infrastructure (IaaS/PaaS) taxed in Florida?",
+      "category": "sales_tax",
+      "difficulty": "hard",
+      "expected_statutes": ["212.05(1)(i)"],
+      "expected_rules": ["12A-1.032"],
+      "expected_answer_contains": ["infrastructure", "platform", "communication services"],
+      "expected_answer_type": "it_depends",
+      "notes": "Cloud computing taxation is complex and depends on specific services provided."
+    },
+    {
+      "id": "eval_017",
+      "question": "What are the requirements to qualify for Florida's data center exemption?",
+      "category": "exemptions",
+      "difficulty": "hard",
+      "expected_statutes": ["212.08(5)(p)"],
+      "expected_rules": [],
+      "expected_answer_contains": ["data center", "cumulative investment", "jobs"],
+      "expected_answer_type": "explanation",
+      "notes": "Data center exemption requires minimum investment thresholds and job creation."
+    },
+    {
+      "id": "eval_018",
+      "question": "Does Florida require combined reporting for corporate income tax?",
+      "category": "corporate_tax",
+      "difficulty": "hard",
+      "expected_statutes": ["220.131"],
+      "expected_rules": [],
+      "expected_answer_contains": ["separate", "combined", "unitary"],
+      "expected_answer_type": "explanation",
+      "notes": "Florida generally requires separate company reporting, not combined/unitary."
+    },
+    {
+      "id": "eval_019",
+      "question": "How are bundled transactions taxed for Florida sales tax purposes?",
+      "category": "sales_tax",
+      "difficulty": "hard",
+      "expected_statutes": ["212.02"],
+      "expected_rules": ["12A-1.002"],
+      "expected_answer_contains": ["bundled", "true object", "incidental"],
+      "expected_answer_type": "it_depends",
+      "notes": "Bundled transactions use the 'true object' test to determine taxability."
+    },
+    {
+      "id": "eval_020",
+      "question": "What is the process for claiming a refund of Florida sales tax paid in error?",
+      "category": "procedures",
+      "difficulty": "hard",
+      "expected_statutes": ["215.26"],
+      "expected_rules": ["12-26.003"],
+      "expected_answer_contains": ["refund", "application", "three years"],
+      "expected_answer_type": "explanation",
+      "notes": "Refund claims must be filed within 3 years with documentation of tax paid."
+    }
+  ]
+}

@@ -66,10 +66,15 @@ florida_tax_rag/
 │   │   ├── dependencies.py # Dependency injection (singletons)
 │   │   ├── errors.py       # Custom exception hierarchy
 │   │   └── middleware.py   # Request logging, rate limiting
-│   └── observability/      # Logging, metrics, tracing
-│       ├── logging.py      # Centralized structlog configuration
-│       ├── metrics.py      # Thread-safe metrics collection
-│       └── context.py      # Request context propagation
+│   ├── observability/      # Logging, metrics, tracing
+│   │   ├── logging.py      # Centralized structlog configuration
+│   │   ├── metrics.py      # Thread-safe metrics collection
+│   │   └── context.py      # Request context propagation
+│   └── evaluation/         # RAG quality evaluation
+│       ├── models.py       # EvalQuestion, EvalResult, JudgmentResult
+│       ├── metrics.py      # Citation precision/recall, F1 score
+│       ├── prompts.py      # LLM judge prompt
+│       └── llm_judge.py    # GPT-4 based answer evaluation
 ├── config/
 │   └── settings.py         # Pydantic settings from environment
 ├── scripts/
@@ -96,12 +101,15 @@ florida_tax_rag/
 │   │   ├── admin_code/     # 101 administrative rules
 │   │   ├── taa/            # Technical Assistance Advisements + PDFs
 │   │   └── case_law/       # 308 Florida Supreme Court cases
-│   └── processed/          # Processed data
-│       ├── corpus.json     # Unified document corpus (4.16 MB)
-│       ├── chunks.json     # Hierarchical chunks (11.18 MB)
-│       ├── citation_graph.json # Citation relationships (670 KB)
-│       ├── embeddings.npz  # Voyage AI embeddings (11 MB)
-│       └── statistics.json # Consolidation metrics
+│   ├── processed/          # Processed data
+│   │   ├── corpus.json     # Unified document corpus (4.16 MB)
+│   │   ├── chunks.json     # Hierarchical chunks (11.18 MB)
+│   │   ├── citation_graph.json # Citation relationships (670 KB)
+│   │   ├── embeddings.npz  # Voyage AI embeddings (11 MB)
+│   │   └── statistics.json # Consolidation metrics
+│   └── evaluation/         # Evaluation datasets
+│       ├── golden_dataset.json # 20 seed evaluation questions
+│       └── README.md       # Evaluation methodology
 ├── docker-compose.yml      # Neo4j, Weaviate, Redis services
 └── tests/
 ```
@@ -1012,6 +1020,69 @@ Errors:
 ============================================================
 ```
 
+## Evaluation Framework
+
+The system includes a comprehensive evaluation framework for measuring RAG quality with citation accuracy metrics and LLM-based judging.
+
+### Golden Dataset
+
+A seed dataset of 20 Florida tax law questions with expected answers:
+
+| Difficulty | Count | Description |
+|------------|-------|-------------|
+| Easy | 5 | Direct statutory answers (sales tax rate, basic exemptions) |
+| Medium | 10 | Requires connecting statute + rule |
+| Hard | 5 | Nuanced "it depends" answers, case law interpretation |
+
+**Categories:** sales_tax, property_tax, corporate_tax, exemptions, procedures
+
+### Evaluation Metrics
+
+**Citation Metrics:**
+- **Precision** = Correct Citations / Generated Citations
+- **Recall** = Found Citations / Expected Citations
+- **F1 Score** = Harmonic mean of precision and recall
+
+**Answer Quality (LLM Judge, 0-10 scale):**
+- Correctness, Completeness, Clarity, Citation Accuracy
+
+**Pass Criteria:** Overall score ≥ 7, no hallucinations
+
+### Using the Evaluation Module
+
+```python
+from src.evaluation import (
+    EvalDataset,
+    LLMJudge,
+    citation_precision,
+    citation_recall,
+    extract_citations_from_answer,
+)
+
+# Load golden dataset
+import json
+with open("data/evaluation/golden_dataset.json") as f:
+    dataset = EvalDataset(**json.load(f))
+
+# Initialize GPT-4 judge
+judge = LLMJudge(api_key="your-openai-key")
+
+# Evaluate an answer
+result = await judge.judge_answer(
+    question=dataset.questions[0],
+    generated_answer="The Florida sales tax rate is 6%...",
+)
+
+print(f"Score: {result.overall_score}/10, Passed: {result.passed}")
+
+# Calculate citation metrics
+generated = extract_citations_from_answer(answer_text)
+precision = citation_precision(generated, expected_statutes, expected_rules)
+recall = citation_recall(generated, expected_statutes, expected_rules)
+```
+
+See [data/evaluation/README.md](./data/evaluation/README.md) for full methodology.
+
 ## Key Features
 
 ### Scraper Infrastructure
@@ -1040,6 +1111,7 @@ TAAs are distributed as PDFs:
 - `neo4j` - Graph database
 - `voyageai` - Legal embeddings
 - `anthropic` - Claude LLM
+- `openai` - GPT-4 evaluation judge
 
 ### Scraping
 - `httpx` - Async HTTP client
@@ -1058,6 +1130,7 @@ Create a `.env` file:
 # API Keys
 ANTHROPIC_API_KEY=your_key
 VOYAGE_API_KEY=your_key
+OPENAI_API_KEY=your_key          # For GPT-4 evaluation judge (optional)
 
 # Database Connections
 WEAVIATE_URL=http://localhost:8080
@@ -1180,10 +1253,19 @@ make format             # Format code
   - [x] Load testing script (`scripts/test_load.py`)
   - [x] Observability tests (27 tests)
 
+- [x] **Phase 8: Evaluation Framework**
+  - [x] Evaluation models (`EvalQuestion`, `EvalResult`, `JudgmentResult`)
+  - [x] Citation metrics (precision, recall, F1 score)
+  - [x] LLM judge with GPT-4 (`LLMJudge` class)
+  - [x] Golden dataset (20 questions: 5 easy, 10 medium, 5 hard)
+  - [x] Evaluation methodology documentation
+  - [x] Evaluation tests (42 tests)
+
 ## Documentation
 
 - [SCRAPING_NOTES.md](./SCRAPING_NOTES.md) - Detailed scraping documentation
 - [data/processed/README.md](./data/processed/README.md) - Unified corpus schema documentation
+- [data/evaluation/README.md](./data/evaluation/README.md) - Evaluation methodology and metrics
 
 ## License
 
