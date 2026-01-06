@@ -1,4 +1,4 @@
-.PHONY: install test lint scrape ingest serve dev clean \
+.PHONY: install test test-integration test-all coverage test-quick lint scrape ingest serve dev clean \
        docker-up docker-down docker-logs docker-reset docker-wait \
        generate-embeddings load-weaviate verify-weaviate init-weaviate \
        eval eval-quick eval-no-judge
@@ -7,9 +7,25 @@
 install:
 	pip install -e ".[dev]"
 
-# Run tests
+# Run unit tests only (exclude integration)
 test:
+	pytest tests/ -v -m "not integration"
+
+# Run integration tests (requires Docker)
+test-integration:
+	pytest tests/ -v -m "integration"
+
+# Run all tests
+test-all:
 	pytest tests/ -v
+
+# Run with coverage
+coverage:
+	pytest tests/ -v --cov=src --cov-report=html --cov-report=term-missing
+
+# Run quick tests (exclude slow)
+test-quick:
+	pytest tests/ -v -m "not integration and not slow"
 
 # Run linting and type checking
 lint:

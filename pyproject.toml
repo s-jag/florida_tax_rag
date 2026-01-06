@@ -45,6 +45,7 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
     "ragas>=0.2.0",
     "ruff>=0.8.0",
     "mypy>=1.13.0",
@@ -64,6 +65,25 @@ select = ["E", "F", "I", "N", "W", "UP"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "integration: marks tests as integration tests (require Docker services)",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/__init__.py", "*/models.py"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+fail_under = 70
+show_missing = true
 
 [tool.mypy]
 python_version = "3.11"
