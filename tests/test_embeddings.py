@@ -123,7 +123,7 @@ class TestVoyageEmbedder:
             embedder = VoyageEmbedder()
 
         assert embedder.model == "voyage-law-2"
-        assert embedder.batch_size == 128
+        assert embedder.batch_size == 72  # Conservative default to stay under 120K token limit
         assert embedder.dimension == VOYAGE_LAW_2_DIMENSION
         assert embedder.cache is None
 

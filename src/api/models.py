@@ -143,6 +143,9 @@ class QueryResponse(BaseModel):
     )
     validation_passed: bool = Field(..., description="Whether validation passed")
     processing_time_ms: int = Field(..., description="Processing time in milliseconds")
+    stage_timings: Optional[dict[str, float]] = Field(
+        default=None, description="Per-stage timing breakdown in milliseconds"
+    )
 
     model_config = {
         "json_schema_extra": {

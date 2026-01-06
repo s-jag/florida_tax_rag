@@ -63,11 +63,13 @@ florida_tax_rag/
 │   │   ├── models.py       # Request/response Pydantic models
 │   │   ├── dependencies.py # Dependency injection (singletons)
 │   │   ├── errors.py       # Custom exception hierarchy
-│   │   └── middleware.py   # Request logging, rate limiting
-│   ├── observability/      # Logging, metrics, tracing
+│   │   ├── middleware.py   # Request logging, rate limiting
+│   │   └── cache.py        # Query result caching (Redis)
+│   ├── observability/      # Logging, metrics, tracing, profiling
 │   │   ├── logging.py      # Centralized structlog configuration
 │   │   ├── metrics.py      # Thread-safe metrics collection
-│   │   └── context.py      # Request context propagation
+│   │   ├── context.py      # Request context propagation
+│   │   └── profiler.py     # Pipeline stage profiling
 │   └── evaluation/         # RAG quality evaluation
 │       ├── models.py       # EvalQuestion, EvalResult, JudgmentResult
 │       ├── metrics.py      # Citation precision/recall, F1 score
@@ -113,7 +115,9 @@ florida_tax_rag/
 │   ├── test_load.py        # Load testing script
 │   ├── run_evaluation.py   # Run evaluation pipeline
 │   ├── analyze_retrieval.py # Retrieval analysis and alpha tuning
-│   └── validate_config.py  # Configuration validation script
+│   ├── validate_config.py  # Configuration validation script
+│   ├── benchmark.py        # Performance benchmarking
+│   └── analyze_neo4j.py    # Neo4j query analysis and index optimization
 ├── data/
 │   ├── raw/                # Raw scraped data
 │   │   ├── statutes/       # 742 statute sections
@@ -818,7 +822,15 @@ Response:
   "sources": [...],
   "confidence": 0.85,
   "validation_passed": true,
-  "processing_time_ms": 3200
+  "processing_time_ms": 3200,
+  "stage_timings": {
+    "decompose": 250,
+    "retrieve": 800,
+    "expand_graph": 150,
+    "score_relevance": 1200,
+    "synthesize": 900,
+    "validate": 200
+  }
 }
 ```
 
@@ -989,6 +1001,54 @@ print(f"Avg latency: {stats['latency_ms']['avg']}ms")
 - Latency statistics (avg, min, max)
 - Error breakdown by type
 - Uptime tracking
+
+### Pipeline Profiling
+
+The system includes per-stage profiling to identify performance bottlenecks:
+
+```python
+from src.observability.profiler import profile_request
+
+async with profile_request(request_id) as profiler:
+    with profiler.stage("decompose"):
+        result = await decomposer.decompose(query)
+    with profiler.stage("retrieve"):
+        results = await retriever.retrieve(query)
+
+    summary = profiler.get_summary()
+    # {"request_id": "...", "total_ms": 1234, "stages": {"decompose": 150, "retrieve": 800}}
+```
+
+**Stage Timings in API Response:**
+```json
+{
+  "stage_timings": {
+    "decompose": 250,
+    "retrieve": 800,
+    "expand_graph": 150,
+    "score_relevance": 1200,
+    "synthesize": 900,
+    "validate": 200
+  }
+}
+```
+
+### Query Result Caching
+
+Redis-backed cache for query responses with 1-hour TTL:
+
+```python
+from src.api.cache import get_query_cache
+
+cache = get_query_cache()
+stats = cache.get_stats()
+# {"hits": 150, "misses": 50, "hit_rate": 0.75}
+```
+
+**Benefits:**
+- Repeated identical queries return in <10ms
+- Reduces LLM API costs
+- Cache key based on normalized query + options
 
 ### Load Testing
 
@@ -1406,6 +1466,12 @@ make eval-no-judge      # Run all questions without LLM judge
 python scripts/test_load.py           # Run load test (50 req, 5 concurrent)
 python scripts/test_load.py -n 100    # Custom request count
 
+# Performance Benchmarking
+python scripts/benchmark.py           # Run 50-query benchmark
+python scripts/benchmark.py --save-json before.json  # Save for comparison
+python scripts/benchmark.py --compare-before before.json  # Compare results
+python scripts/analyze_neo4j.py --explain  # Analyze Neo4j queries
+
 # Configuration
 python scripts/validate_config.py     # Validate settings and test connections
 python scripts/validate_config.py --quick  # Validate settings only
@@ -1497,6 +1563,15 @@ make format             # Format code
   - [x] Production fail-fast startup behavior
   - [x] Configuration documentation (`docs/configuration.md`)
 
+- [x] **Phase 10: Performance Optimization**
+  - [x] Pipeline profiler (`src/observability/profiler.py`)
+  - [x] Per-stage timing in API responses (`stage_timings`)
+  - [x] Query result caching with Redis (`src/api/cache.py`)
+  - [x] Parallel sub-query retrieval (`asyncio.gather`)
+  - [x] Neo4j index optimization (`scripts/analyze_neo4j.py`)
+  - [x] Comprehensive benchmark script (`scripts/benchmark.py`)
+  - [x] Performance documentation (`docs/performance.md`)
+
 ## Documentation
 
 ### Guides
@@ -1509,6 +1584,7 @@ make format             # Format code
 | [Deployment](./docs/deployment.md) | Docker setup, production configuration |
 | [Development](./docs/development.md) | Dev setup, testing, contributing |
 | [Evaluation](./docs/evaluation.md) | Metrics, LLM judge, running evaluations |
+| [Performance](./docs/performance.md) | Pipeline profiling, caching, optimization |
 | [Troubleshooting](./docs/troubleshooting.md) | Common issues, debugging, FAQ |
 
 ### Additional Resources

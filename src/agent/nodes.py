@@ -9,6 +9,7 @@ from datetime import date
 from typing import Any
 
 from src.observability.logging import get_logger
+from src.observability.profiler import get_profiler
 
 from .state import TaxAgentState
 
@@ -32,9 +33,16 @@ async def decompose_query(state: TaxAgentState) -> dict[str, Any]:
     query = state["original_query"]
     logger.info("node_started", node="decompose_query", query=query[:50])
 
+    profiler = get_profiler()
+
     try:
         decomposer = create_decomposer()
-        result = await decomposer.decompose(query)
+
+        if profiler:
+            with profiler.stage("decompose", query_length=len(query)):
+                result = await decomposer.decompose(query)
+        else:
+            result = await decomposer.decompose(query)
 
         # Convert SubQuery objects to dicts for state storage
         sub_queries = [sq.model_dump() for sq in result.sub_queries]
@@ -76,10 +84,11 @@ async def decompose_query(state: TaxAgentState) -> dict[str, Any]:
 
 
 async def retrieve_for_subquery(state: TaxAgentState) -> dict[str, Any]:
-    """Run hybrid retrieval for current sub-query.
+    """Run hybrid retrieval for all remaining sub-queries in parallel.
 
-    Uses HybridRetriever with current sub-query or original query.
-    Accumulates results in retrieved_chunks.
+    Uses HybridRetriever with asyncio.gather() to parallelize retrieval
+    across all sub-queries. This significantly reduces latency compared
+    to sequential retrieval.
 
     Args:
         state: Current agent state with sub_queries and current_sub_query_idx
@@ -90,50 +99,98 @@ async def retrieve_for_subquery(state: TaxAgentState) -> dict[str, Any]:
     from src.retrieval import create_retriever
 
     sub_queries = state.get("sub_queries", [])
-    idx = state.get("current_sub_query_idx", 0)
+    start_idx = state.get("current_sub_query_idx", 0)
 
-    if idx >= len(sub_queries):
+    # Get all remaining sub-queries to process
+    remaining_queries = sub_queries[start_idx:]
+
+    if not remaining_queries:
         # No more sub-queries, use original
-        query_text = state["original_query"]
-    else:
-        query_text = sub_queries[idx].get("text", state["original_query"])
+        remaining_queries = [{"text": state["original_query"], "type": "general"}]
 
     logger.info(
         "node_started",
         node="retrieve_for_subquery",
-        query=query_text[:50],
-        sub_query_idx=idx,
+        query_count=len(remaining_queries),
+        start_idx=start_idx,
     )
 
+    profiler = get_profiler()
+    retriever = create_retriever()
+
+    async def retrieve_one(query_info: dict, idx: int) -> list[dict]:
+        """Retrieve for a single sub-query."""
+        query_text = query_info.get("text", state["original_query"])
+        try:
+            results = await asyncio.to_thread(
+                retriever.retrieve,
+                query_text,
+                top_k=20,
+                expand_graph=False,  # We expand separately in expand_with_graph
+                rerank=True,
+            )
+            return [r.model_dump() for r in results]
+        except Exception as e:
+            logger.warning(
+                "retrieval_failed_for_subquery",
+                sub_query_idx=idx,
+                error=str(e),
+            )
+            return []
+
     try:
-        retriever = create_retriever()
+        # Run all retrievals in parallel
+        if profiler:
+            with profiler.stage("retrieve", query_count=len(remaining_queries)):
+                tasks = [
+                    retrieve_one(q, start_idx + i)
+                    for i, q in enumerate(remaining_queries)
+                ]
+                all_results = await asyncio.gather(*tasks)
+        else:
+            tasks = [
+                retrieve_one(q, start_idx + i)
+                for i, q in enumerate(remaining_queries)
+            ]
+            all_results = await asyncio.gather(*tasks)
 
-        # HybridRetriever.retrieve() is synchronous - wrap in to_thread
-        results = await asyncio.to_thread(
-            retriever.retrieve,
-            query_text,
-            top_k=20,
-            expand_graph=False,  # We expand separately in expand_with_graph
-            rerank=True,
-        )
+        # Flatten and deduplicate results by chunk_id
+        seen_chunk_ids: set[str] = set()
+        results_dicts: list[dict] = []
 
-        # Convert RetrievalResult objects to dicts for state
-        results_dicts = [r.model_dump() for r in results]
+        for batch in all_results:
+            for result in batch:
+                chunk_id = result.get("chunk_id")
+                if chunk_id and chunk_id not in seen_chunk_ids:
+                    seen_chunk_ids.add(chunk_id)
+                    results_dicts.append(result)
+
+        total_before_dedup = sum(len(batch) for batch in all_results)
 
         logger.info(
             "node_completed",
             node="retrieve_for_subquery",
-            result_count=len(results),
-            sub_query_idx=idx,
+            result_count=len(results_dicts),
+            queries_processed=len(remaining_queries),
+            deduplicated_from=total_before_dedup,
+        )
+
+        # Build reasoning steps
+        reasoning_steps = []
+        for i, (q, batch) in enumerate(zip(remaining_queries, all_results)):
+            query_text = q.get("text", "")[:50]
+            reasoning_steps.append(
+                f"Retrieved {len(batch)} chunks for: {query_text}..."
+            )
+        reasoning_steps.append(
+            f"Combined {total_before_dedup} results, deduplicated to {len(results_dicts)}"
         )
 
         return {
             "current_retrieval_results": results_dicts,
             "retrieved_chunks": results_dicts,  # Accumulates via Annotated[list, add]
-            "current_sub_query_idx": idx + 1,
-            "reasoning_steps": [
-                f"Retrieved {len(results)} chunks for: {query_text[:50]}..."
-            ],
+            "current_sub_query_idx": len(sub_queries),  # Mark all as processed
+            "reasoning_steps": reasoning_steps,
         }
 
     except Exception as e:
@@ -141,8 +198,8 @@ async def retrieve_for_subquery(state: TaxAgentState) -> dict[str, Any]:
         return {
             "current_retrieval_results": [],
             "retrieved_chunks": [],
-            "current_sub_query_idx": idx + 1,
-            "reasoning_steps": [f"Retrieval failed for sub-query {idx}: {e}"],
+            "current_sub_query_idx": len(sub_queries),
+            "reasoning_steps": [f"Parallel retrieval failed: {e}"],
             "errors": [f"Retrieval error: {e}"],
         }
 
@@ -168,27 +225,24 @@ async def expand_with_graph(state: TaxAgentState) -> dict[str, Any]:
         "node_started", node="expand_with_graph", result_count=len(results)
     )
 
+    profiler = get_profiler()
     graph_context: list[dict[str, Any]] = []
     interpretation_chains: dict[str, Any] = {}
 
-    try:
-        client = Neo4jClient()
-
+    async def _do_expand(client: "Neo4jClient") -> None:
+        nonlocal graph_context, interpretation_chains
         for result in results:
             doc_id = result.get("doc_id", "")
             doc_type = result.get("doc_type", "")
 
             try:
                 if doc_type == "statute":
-                    # Extract section number (e.g., "statute:212.05" -> "212.05")
                     section = doc_id.split(":")[-1] if ":" in doc_id else doc_id
-
                     chain = await asyncio.to_thread(
                         get_interpretation_chain, client, section
                     )
                     if chain:
                         interpretation_chains[doc_id] = chain.model_dump()
-                        # Add related docs to context
                         for rule in chain.implementing_rules:
                             graph_context.append({
                                 "target_doc_id": rule.id,
@@ -212,11 +266,10 @@ async def expand_with_graph(state: TaxAgentState) -> dict[str, Any]:
                             })
 
                 elif doc_type in ("rule", "case", "taa"):
-                    # Find citing/cited documents
                     citing = await asyncio.to_thread(
                         get_citing_documents, client, doc_id
                     )
-                    for doc in citing[:5]:  # Limit to 5
+                    for doc in citing[:5]:
                         graph_context.append({
                             "target_doc_id": doc.id,
                             "target_citation": doc.full_citation,
@@ -230,6 +283,15 @@ async def expand_with_graph(state: TaxAgentState) -> dict[str, Any]:
                     doc_id=doc_id,
                     error=str(e),
                 )
+
+    try:
+        client = Neo4jClient()
+
+        if profiler:
+            with profiler.stage("expand_graph", result_count=len(results)):
+                await _do_expand(client)
+        else:
+            await _do_expand(client)
 
         logger.info(
             "node_completed",
@@ -280,6 +342,7 @@ async def score_relevance(state: TaxAgentState) -> dict[str, Any]:
         "node_started", node="score_relevance", chunk_count=len(results)
     )
 
+    profiler = get_profiler()
     settings = get_settings()
     client = anthropic.Anthropic(
         api_key=settings.anthropic_api_key.get_secret_value()
@@ -329,11 +392,18 @@ async def score_relevance(state: TaxAgentState) -> dict[str, Any]:
         async with semaphore:
             return await score_one(chunk)
 
-    tasks = [limited_score(chunk) for chunk in results]
-    scored = await asyncio.gather(*tasks)
+    async def _do_scoring() -> None:
+        nonlocal relevance_scores
+        tasks = [limited_score(chunk) for chunk in results]
+        scored = await asyncio.gather(*tasks)
+        for chunk_id, score, _reasoning in scored:
+            relevance_scores[chunk_id] = score
 
-    for chunk_id, score, _reasoning in scored:
-        relevance_scores[chunk_id] = score
+    if profiler:
+        with profiler.stage("score_relevance", chunk_count=len(results)):
+            await _do_scoring()
+    else:
+        await _do_scoring()
 
     # Calculate average score for logging
     avg_score = sum(relevance_scores.values()) / len(relevance_scores) if relevance_scores else 0
@@ -376,21 +446,31 @@ async def filter_irrelevant(state: TaxAgentState) -> dict[str, Any]:
         threshold=threshold,
     )
 
-    # Score and sort chunks
-    scored_chunks: list[tuple[dict, float]] = []
-    for chunk in results:
-        chunk_id = chunk.get("chunk_id")
-        score = scores.get(chunk_id, 0.5)  # Default to 0.5 if not scored
-        scored_chunks.append((chunk, score))
+    profiler = get_profiler()
 
-    # Sort by score descending
-    scored_chunks.sort(key=lambda x: x[1], reverse=True)
+    def _do_filter() -> list[dict]:
+        # Score and sort chunks
+        scored_chunks: list[tuple[dict, float]] = []
+        for chunk in results:
+            chunk_id = chunk.get("chunk_id")
+            score = scores.get(chunk_id, 0.5)  # Default to 0.5 if not scored
+            scored_chunks.append((chunk, score))
 
-    # Filter: keep those above threshold OR top 10 (whichever is more)
-    filtered: list[dict] = []
-    for chunk, score in scored_chunks:
-        if score >= threshold or len(filtered) < 10:
-            filtered.append(chunk)
+        # Sort by score descending
+        scored_chunks.sort(key=lambda x: x[1], reverse=True)
+
+        # Filter: keep those above threshold OR top 10 (whichever is more)
+        filtered: list[dict] = []
+        for chunk, score in scored_chunks:
+            if score >= threshold or len(filtered) < 10:
+                filtered.append(chunk)
+        return filtered
+
+    if profiler:
+        with profiler.stage("filter", chunk_count=len(results)):
+            filtered = _do_filter()
+    else:
+        filtered = _do_filter()
 
     # Log what was filtered
     removed = len(results) - len(filtered)
@@ -432,35 +512,45 @@ async def check_temporal_validity(state: TaxAgentState) -> dict[str, Any]:
         chunk_count=len(filtered),
     )
 
+    profiler = get_profiler()
+
     # Extract year from query (e.g., "2023", "tax year 2024")
     year_match = re.search(r"\b(20\d{2})\b", query)
     query_tax_year = int(year_match.group(1)) if year_match else date.today().year
 
-    # Check each chunk's effective date
-    valid_chunks: list[dict] = []
-    warnings: list[str] = []
+    def _do_temporal_check() -> tuple[list[dict], list[str]]:
+        valid_chunks: list[dict] = []
+        warnings: list[str] = []
 
-    for chunk in filtered:
-        effective_date = chunk.get("effective_date")
+        for chunk in filtered:
+            effective_date = chunk.get("effective_date")
 
-        if effective_date:
-            # Parse date if string
-            if isinstance(effective_date, str):
-                try:
-                    effective_date = date.fromisoformat(effective_date)
-                except ValueError:
-                    effective_date = None
+            if effective_date:
+                # Parse date if string
+                if isinstance(effective_date, str):
+                    try:
+                        effective_date = date.fromisoformat(effective_date)
+                    except ValueError:
+                        effective_date = None
 
-            if effective_date and effective_date.year > query_tax_year:
-                # Document is from after the query year - may not be applicable
-                citation = chunk.get("citation", chunk.get("chunk_id"))
-                warnings.append(
-                    f"Document {citation} effective {effective_date} "
-                    f"may not apply to {query_tax_year}"
-                )
-                continue
+                if effective_date and effective_date.year > query_tax_year:
+                    # Document is from after the query year - may not be applicable
+                    citation = chunk.get("citation", chunk.get("chunk_id"))
+                    warnings.append(
+                        f"Document {citation} effective {effective_date} "
+                        f"may not apply to {query_tax_year}"
+                    )
+                    continue
 
-        valid_chunks.append(chunk)
+            valid_chunks.append(chunk)
+
+        return valid_chunks, warnings
+
+    if profiler:
+        with profiler.stage("temporal_check", chunk_count=len(filtered)):
+            valid_chunks, warnings = _do_temporal_check()
+    else:
+        valid_chunks, warnings = _do_temporal_check()
 
     # Set needs_more_info if too few valid chunks
     needs_more_info = len(valid_chunks) < 3
@@ -513,16 +603,26 @@ async def synthesize_answer(state: TaxAgentState) -> dict[str, Any]:
         query=query[:50],
     )
 
+    profiler = get_profiler()
+
     # Initialize generator (it will create its own client)
     generator = TaxLawGenerator()
 
     try:
         # Generate response with citations
-        response = await generator.generate(
-            query=query,
-            chunks=valid_chunks[:10],  # Top 10 chunks
-            reasoning_steps=reasoning_steps,
-        )
+        if profiler:
+            with profiler.stage("synthesize", chunk_count=len(valid_chunks)):
+                response = await generator.generate(
+                    query=query,
+                    chunks=valid_chunks[:10],  # Top 10 chunks
+                    reasoning_steps=reasoning_steps,
+                )
+        else:
+            response = await generator.generate(
+                query=query,
+                chunks=valid_chunks[:10],
+                reasoning_steps=reasoning_steps,
+            )
 
         # Convert ValidatedCitation to state Citation format
         citations: list[dict[str, Any]] = [
@@ -611,6 +711,8 @@ async def validate_response(state: TaxAgentState) -> dict[str, Any]:
         answer_length=len(final_answer) if final_answer else 0,
     )
 
+    profiler = get_profiler()
+
     # Skip validation if no answer was generated
     if not final_answer:
         return {
@@ -621,11 +723,20 @@ async def validate_response(state: TaxAgentState) -> dict[str, Any]:
 
     try:
         validator = ResponseValidator()
-        result = await validator.validate_response(
-            response_text=final_answer,
-            query=query,
-            chunks=chunks[:10],  # Use same chunks as generation
-        )
+
+        if profiler:
+            with profiler.stage("validate"):
+                result = await validator.validate_response(
+                    response_text=final_answer,
+                    query=query,
+                    chunks=chunks[:10],  # Use same chunks as generation
+                )
+        else:
+            result = await validator.validate_response(
+                response_text=final_answer,
+                query=query,
+                chunks=chunks[:10],
+            )
 
         # Store original answer before any corrections
         original_answer = state.get("original_answer") or final_answer
@@ -686,6 +797,8 @@ async def correct_response(state: TaxAgentState) -> dict[str, Any]:
 
     logger.info("node_started", node="correct_response")
 
+    profiler = get_profiler()
+
     if not validation_data:
         return {
             "reasoning_steps": ["Correction skipped: no validation result"],
@@ -695,11 +808,19 @@ async def correct_response(state: TaxAgentState) -> dict[str, Any]:
         validation_result = ValidationResult(**validation_data)
         corrector = ResponseCorrector()
 
-        result = await corrector.correct(
-            response_text=final_answer,
-            validation_result=validation_result,
-            chunks=chunks[:10],
-        )
+        if profiler:
+            with profiler.stage("correct"):
+                result = await corrector.correct(
+                    response_text=final_answer,
+                    validation_result=validation_result,
+                    chunks=chunks[:10],
+                )
+        else:
+            result = await corrector.correct(
+                response_text=final_answer,
+                validation_result=validation_result,
+                chunks=chunks[:10],
+            )
 
         # Apply confidence adjustment
         new_confidence = max(0.0, current_confidence + result.confidence_adjustment)

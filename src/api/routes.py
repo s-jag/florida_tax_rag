@@ -19,6 +19,9 @@ from src.graph.queries import (
 )
 from src.observability.logging import get_logger
 from src.observability.metrics import get_metrics_collector
+from src.observability.profiler import profile_request
+
+from .cache import get_query_cache
 
 from .dependencies import (
     AgentGraphDep,
@@ -96,6 +99,35 @@ async def query(
     """Execute a tax law query through the RAG agent."""
     start_time = time.perf_counter()
 
+    # Check cache first
+    cache = get_query_cache()
+    cache_options = {
+        "tax_year": request.options.tax_year,
+        "include_reasoning": request.options.include_reasoning,
+    }
+
+    if cache:
+        cached = await cache.get(request.query, cache_options)
+        if cached:
+            logger.info("cache_hit", query_preview=request.query[:50])
+            processing_time_ms = int((time.perf_counter() - start_time) * 1000)
+            return QueryResponse(
+                request_id=request_id,
+                answer=cached.get("answer", ""),
+                citations=[
+                    CitationResponse(**c) for c in cached.get("citations", [])
+                ],
+                sources=[
+                    SourceResponse(**s) for s in cached.get("sources", [])
+                ],
+                confidence=cached.get("confidence", 0.0),
+                warnings=cached.get("warnings", []) + ["Response from cache"],
+                reasoning_steps=None,  # Don't return reasoning from cache
+                validation_passed=cached.get("validation_passed", False),
+                processing_time_ms=processing_time_ms,
+                stage_timings={"cache_hit": float(processing_time_ms)},
+            )
+
     # Build initial state
     initial_state: TaxAgentState = {
         "original_query": request.query,
@@ -108,6 +140,8 @@ async def query(
     if request.options.tax_year:
         initial_state["query_tax_year"] = request.options.tax_year
 
+    stage_timings: dict[str, float] = {}
+
     try:
         logger.info(
             "query_execution_started",
@@ -115,11 +149,14 @@ async def query(
             timeout_seconds=request.options.timeout_seconds,
         )
 
-        # Execute with timeout
-        result = await asyncio.wait_for(
-            graph.ainvoke(initial_state),
-            timeout=request.options.timeout_seconds,
-        )
+        # Execute with timeout and profiling
+        with profile_request(request_id) as profiler:
+            result = await asyncio.wait_for(
+                graph.ainvoke(initial_state),
+                timeout=request.options.timeout_seconds,
+            )
+            stage_timings = profiler.get_stage_timings()
+
     except asyncio.TimeoutError:
         logger.warning(
             "query_timeout",
@@ -191,7 +228,7 @@ async def query(
                 f"Found {len(validation['hallucinations'])} potential issues in response"
             )
 
-    return QueryResponse(
+    response = QueryResponse(
         request_id=request_id,
         answer=result.get("final_answer") or "Unable to generate answer",
         citations=citations,
@@ -201,7 +238,22 @@ async def query(
         reasoning_steps=reasoning_steps,
         validation_passed=result.get("validation_passed", False),
         processing_time_ms=processing_time_ms,
+        stage_timings=stage_timings if stage_timings else None,
     )
+
+    # Cache successful response
+    if cache and response.answer and response.answer != "Unable to generate answer":
+        cache_data = {
+            "answer": response.answer,
+            "citations": [c.model_dump() for c in response.citations],
+            "sources": [s.model_dump() for s in response.sources],
+            "confidence": response.confidence,
+            "warnings": response.warnings,
+            "validation_passed": response.validation_passed,
+        }
+        await cache.set(request.query, cache_options, cache_data)
+
+    return response
 
 
 @router.post(

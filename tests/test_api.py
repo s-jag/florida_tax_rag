@@ -80,7 +80,9 @@ def client(mock_neo4j, mock_weaviate, mock_agent_graph):
     app.dependency_overrides[get_weaviate_client] = lambda: mock_weaviate
     app.dependency_overrides[get_agent_graph] = lambda: mock_agent_graph
 
-    return TestClient(app)
+    # Disable query cache for tests to ensure fresh results
+    with patch("src.api.routes.get_query_cache", return_value=None):
+        yield TestClient(app)
 
 
 class TestRootEndpoint:

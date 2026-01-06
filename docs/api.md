@@ -153,7 +153,15 @@ Execute a tax law query through the RAG agent.
   "warnings": [],
   "reasoning_steps": [],
   "validation_passed": true,
-  "processing_time_ms": 3250
+  "processing_time_ms": 3250,
+  "stage_timings": {
+    "decompose": 250,
+    "retrieve": 800,
+    "expand_graph": 150,
+    "score_relevance": 1200,
+    "synthesize": 900,
+    "validate": 200
+  }
 }
 ```
 
@@ -168,6 +176,7 @@ Execute a tax law query through the RAG agent.
 | `reasoning_steps` | array | Agent reasoning steps (if requested) |
 | `validation_passed` | boolean | Whether response passed validation |
 | `processing_time_ms` | integer | Total processing time |
+| `stage_timings` | object | Per-stage timing breakdown in milliseconds |
 
 **Error Responses:**
 - `408 Request Timeout` - Query exceeded timeout
@@ -662,9 +671,41 @@ streamQuery("What is the sales tax rate?");
 
 ---
 
+## Performance Features
+
+### Query Result Caching
+
+Identical queries are cached in Redis with a 1-hour TTL. Cache hits return in <10ms.
+
+**Cache Behavior:**
+- Cache key is based on normalized query text + options (doc_types, tax_year, include_reasoning)
+- Low confidence responses (<0.3) are not cached
+- Failed responses are not cached
+
+### Stage Timings
+
+API responses include a `stage_timings` object showing milliseconds spent in each pipeline stage:
+
+| Stage | Description |
+|-------|-------------|
+| `decompose` | Query analysis and decomposition |
+| `retrieve` | Vector + keyword search |
+| `expand_graph` | Neo4j graph traversal |
+| `score_relevance` | LLM-based relevance scoring |
+| `filter` | Relevance filtering |
+| `temporal_check` | Temporal validity check |
+| `synthesize` | Answer generation |
+| `validate` | Hallucination detection |
+| `correct` | Self-correction (if needed) |
+
+See [Performance Guide](./performance.md) for optimization details.
+
+---
+
 ## See Also
 
 - [Architecture](./architecture.md) - System architecture overview
 - [Deployment](./deployment.md) - Deployment instructions
 - [Configuration](./configuration.md) - Environment variables
+- [Performance](./performance.md) - Optimization and profiling
 - [Troubleshooting](./troubleshooting.md) - Common issues

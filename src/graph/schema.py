@@ -44,10 +44,12 @@ INDEXES: list[str] = [
     "CREATE INDEX doc_type_idx IF NOT EXISTS FOR (d:Document) ON (d.doc_type)",
     "CREATE INDEX doc_section_idx IF NOT EXISTS FOR (d:Document) ON (d.section)",
     "CREATE INDEX doc_chapter_idx IF NOT EXISTS FOR (d:Document) ON (d.chapter)",
+    "CREATE INDEX doc_citation_idx IF NOT EXISTS FOR (d:Document) ON (d.full_citation)",
     # Chunk indexes
     "CREATE INDEX chunk_doc_id_idx IF NOT EXISTS FOR (c:Chunk) ON (c.doc_id)",
     "CREATE INDEX chunk_level_idx IF NOT EXISTS FOR (c:Chunk) ON (c.level)",
     "CREATE INDEX chunk_doc_type_idx IF NOT EXISTS FOR (c:Chunk) ON (c.doc_type)",
+    "CREATE INDEX chunk_citation_idx IF NOT EXISTS FOR (c:Chunk) ON (c.citation)",
 ]
 
 

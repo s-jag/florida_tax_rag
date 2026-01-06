@@ -175,6 +175,18 @@ FastAPI REST API.
 | `dependencies.py` | Dependency injection |
 | `errors.py` | Custom exception hierarchy |
 | `middleware.py` | Logging, rate limiting |
+| `cache.py` | Redis-backed query result caching |
+
+### Observability Layer (`src/observability/`)
+
+Logging, metrics, and performance monitoring.
+
+| Component | Purpose |
+|-----------|---------|
+| `logging.py` | Centralized structlog configuration |
+| `metrics.py` | Thread-safe metrics collection |
+| `context.py` | Request context propagation |
+| `profiler.py` | Pipeline stage profiling |
 
 ---
 
@@ -186,6 +198,21 @@ FastAPI REST API.
 User Query
     │
     ▼
+┌───────────────────┐
+│   Query Cache     │  Redis-backed cache (1h TTL)
+│   Check           │  Key: hash(query + options)
+└─────────┬─────────┘
+          │
+    ┌─────┴─────┐
+    │           │
+  Cache       Cache
+   Hit         Miss
+    │           │
+    ▼           ▼
+  Return    Continue
+  Cached    Processing
+  Response      │
+                ▼
 ┌───────────────────┐
 │ Query Decomposer  │  Claude LLM analyzes complexity
 └─────────┬─────────┘  Returns: is_simple, sub_queries[]
@@ -759,3 +786,4 @@ Detected Hallucinations
 - [Deployment Guide](./deployment.md) - Deployment instructions
 - [Configuration Guide](./configuration.md) - Environment variables
 - [Evaluation Guide](./evaluation.md) - Quality metrics
+- [Performance Guide](./performance.md) - Optimization and profiling
