@@ -1,0 +1,480 @@
+{
+  "evaluation_date": "2026-01-06T11:59:54.231906",
+  "dataset_version": "1.0.0",
+  "questions_evaluated": 20,
+  "baselines": {
+    "claude_vanilla": {
+      "name": "Claude Sonnet 4 (No RAG)",
+      "model_id": "claude-sonnet-4-20250514",
+      "questions_evaluated": 20,
+      "hallucination_count": 20,
+      "hallucination_rate": 0.45,
+      "fabrication_count": 1,
+      "fabrication_rate": 0.05,
+      "avg_citation_precision": 0.5179761904761905,
+      "avg_overall_score": 6.85,
+      "pass_rate": 0.55,
+      "avg_latency_ms": 11249.85,
+      "results": [
+        {
+          "question_id": "eval_001",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "The Florida state sales tax rate is **6%**.\n\n**Legal Citation:**\nFlorida Statutes \u00a7 212.05(1)(a) establishes the state sales tax rate at 6% on the sales price of tangible personal property sold at retail in Florida.\n\n**Additional Context:**\nWhile the state rate is 6%, the total sales tax rate paid by consumers may be higher due to discretionary sales surtax (local option taxes) that counties may impose under Florida Statutes \u00a7 212.055. These local surtaxes can range from 0.5% to 2.5%, depending on the county, making the total combined rate range from 6% to 8.5% statewide.\n\nThe 6% state rate has been in effect since January 1, 1990, when it was increased from the previous 5% rate.",
+          "latency_ms": 7176,
+          "citations_found": [
+            "212.05(1)(a)",
+            "212.055"
+          ],
+          "citation_precision": 0.5,
+          "correctness": 10,
+          "completeness": 10,
+          "clarity": 10,
+          "citation_accuracy": 10,
+          "hallucinations": [],
+          "fabricated_citations": [],
+          "overall_score": 10,
+          "passed": true,
+          "reasoning": "The generated answer accurately states the Florida state sales tax rate as 6%, in line with the expected key concept. It correctly cites Florida Statutes \u00a7 212.05(1)(a) as the legal basis for this rate, fulfilling the citation requirement. Additionally, the answer provides valuable context regarding the possibility of a higher total sales tax rate due to discretionary sales surtaxes, which is relevant and informative without straying from the question's scope. The explanation of the state rate's history since January 1, 1990, adds depth without introducing inaccuracies. There are no hallucinations or missing concepts, and the answer is well-organized and readable, making it comprehensive and clear."
+        },
+        {
+          "question_id": "eval_002",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Yes, groceries are generally exempt from Florida sales tax, but the exemption is limited to specific food items.\n\n**Legal Citations:**\n\n**Florida Statute \u00a7 212.08(1)(a)** provides the primary exemption for food products. Specifically, it exempts \"food products for human consumption\" from sales tax.\n\n**Florida Statute \u00a7 212.08(1)(f)** further clarifies that the exemption applies to \"food and food ingredients\" as defined in federal law.\n\n**Key Limitations:**\n\nThe exemption does **NOT** apply to:\n\n1. **Prepared foods** - Florida Statute \u00a7 212.08(1)(a) excludes \"food sold for immediate consumption on or off the premises where sold\"\n\n2. **Alcoholic beverages** - These remain taxable under Florida Statute \u00a7 212.05\n\n3. **Candy** - Taxable unless it contains flour (Florida Administrative Code Rule 12A-1.0061)\n\n4. **Soft drinks/carbonated beverages** - Taxable under Florida Statute \u00a7 212.05\n\n5. **Dietary supplements** - Generally taxable (Rule 12A-1.0061)\n\n**Florida Administrative Code Rule 12A-1.061** provides detailed guidance on what constitutes exempt \"food products\" versus taxable prepared foods.\n\n**Practical Application:**\n- Raw ingredients, packaged foods, and grocery items for home preparation = **EXEMPT**\n- Restaurant meals, hot prepared foods, candy, soda = **TAXABLE**\n\nThe exemption is designed to exclude basic nutritional necessities while maintaining tax on convenience and luxury food items.",
+          "latency_ms": 9736,
+          "citations_found": [
+            "212.08(1)(f)",
+            "12A-1.0061",
+            "12A-1.061",
+            "212.08(1)(a)",
+            "212.05"
+          ],
+          "citation_precision": 0.4,
+          "correctness": 9,
+          "completeness": 9,
+          "clarity": 9,
+          "citation_accuracy": 9,
+          "hallucinations": [],
+          "fabricated_citations": [],
+          "overall_score": 9,
+          "passed": true,
+          "reasoning": "The generated answer accurately reflects the exemption status of groceries under Florida tax law, specifically under \u00a7 212.08(1). It correctly identifies the general exemption for food products intended for human consumption and outlines the key limitations and exceptions to this exemption, such as prepared foods, alcoholic beverages, candy, soft drinks, and dietary supplements. The citations to Florida Statute \u00a7 212.08(1)(a) and \u00a7 212.08(1)(f), as well as Florida Administrative Code Rule 12A-1.061, are accurate and relevant to the discussion. The answer is well-organized, making it easy to understand which items are exempt and which are taxable. There are no invented or incorrect facts, and all expected concepts are covered. The answer provides a comprehensive overview of the tax exemption status of groceries in Florida, making it an excellent response to the question."
+        },
+        {
+          "question_id": "eval_003",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Under Florida law, the following entities are required to collect and remit Florida sales tax:\n\n## Primary Collection Requirement\n\n**Florida Statute \u00a7 212.06(1)** establishes that every dealer making sales of tangible personal property at retail is required to collect the tax imposed under Chapter 212 from the purchaser and remit it to the state.\n\n## Definition of \"Dealer\"\n\n**Florida Statute \u00a7 212.02(3)** defines \"dealer\" broadly to include:\n- Any person engaged in the business of selling tangible personal property at retail\n- Any person required to register under Chapter 212\n- Any person making sales at retail\n\n## Specific Categories Required to Collect Tax\n\n1. **Out-of-State Dealers**: Under **Florida Statute \u00a7 212.0596**, out-of-state dealers must collect Florida sales tax if they have substantial nexus with Florida, including:\n   - Physical presence in the state\n   - Economic nexus thresholds (currently $100,000 in sales to Florida customers)\n\n2. **Marketplace Providers**: **Florida Statute \u00a7 212.0596(2)** requires marketplace providers (like Amazon, eBay) to collect and remit tax on behalf of marketplace sellers when facilitating retail sales.\n\n3. **Remote Sellers**: **Florida Statute \u00a7 212.0596(1)(b)** requires remote sellers to collect tax if they exceed the economic nexus threshold.\n\n4. **Rental/Lease Transactions**: **Florida Statute \u00a7 212.031** requires collection of tax on rentals and leases of tangible personal property.\n\n## Administrative Requirements\n\n**Florida Administrative Code Rule 12A-1.097** provides additional guidance on registration and collection requirements, specifying that any person meeting the dealer definition must:\n- Register with the Florida Department of Revenue\n- Collect applicable state and local sales taxes\n- File returns and remit taxes as required\n\nThe collection obligation applies regardless of whether the sale occurs in-person, online, or through other channels, as long as the statutory requirements for dealer status are met.",
+          "latency_ms": 11112,
+          "citations_found": [
+            "212.0596",
+            "12A-1.097",
+            "212.06(1)",
+            "212.031",
+            "212.0596(2)",
+            "212.0596(1)(b)",
+            "212.02(3)"
+          ],
+          "citation_precision": 0.14285714285714285,
+          "correctness": 9,
+          "completeness": 9,
+          "clarity": 9,
+          "citation_accuracy": 9,
+          "hallucinations": [],
+          "fabricated_citations": [],
+          "overall_score": 9,
+          "passed": true,
+          "reasoning": "The generated answer provides a comprehensive overview of who is required to collect and remit Florida sales tax, accurately citing relevant statutes and rules. It correctly identifies the primary entities required to collect sales tax, including dealers, out-of-state dealers, marketplace providers, remote sellers, and those involved in rental/lease transactions. The answer also correctly outlines the administrative requirements for registration, collection, and remittance of sales tax. The citations to Florida Statutes and Administrative Code are accurate and relevant to the question. The answer is well-organized, making it easy to follow and understand. There are no hallucinations or invented facts, and all key concepts that should appear are covered. The answer effectively uses the expected citations, and there are no missing concepts. Overall, the response is of high quality, demonstrating a thorough understanding of Florida tax law regarding sales tax collection and remittance."
+        },
+        {
+          "question_id": "eval_004",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Based on Florida law, the corporate income tax rate is **5.5%** of adjusted federal income.\n\n**Legal Citation:**\nFlorida Statutes Section 220.11(2) states: \"A tax is hereby imposed upon the adjusted federal income of every corporation at the rate of 5.5 percent.\"\n\n**Key Details:**\n- The tax applies to \"adjusted federal income\" as defined in Florida Statutes Section 220.13\n- This rate has been in effect since tax year 2022 (it was reduced from the previous rate of 4.458%)\n- The tax applies to corporations doing business in Florida or deriving income from Florida sources\n\n**Additional Context:**\nFlorida Statutes Chapter 220 governs the state's corporate income tax, with the specific tax rate codified in Section 220.11(2). This is one of the lower corporate tax rates among states that impose corporate income taxes.",
+          "latency_ms": 7438,
+          "citations_found": [],
+          "citation_precision": 1.0,
+          "correctness": 9,
+          "completeness": 9,
+          "clarity": 10,
+          "citation_accuracy": 10,
+          "hallucinations": [],
+          "fabricated_citations": [],
+          "overall_score": 9,
+          "passed": true,
+          "reasoning": "The generated answer accurately states the Florida corporate income tax rate as 5.5%, in line with the expected key concept. The citation provided, Florida Statutes Section 220.11(2), is correctly used to support the tax rate information, demonstrating high citation accuracy. The answer also provides additional context about the application of the tax and its basis on adjusted federal income, which enhances its completeness. The clarity of the answer is excellent, with a well-organized presentation of the information. There are no hallucinations or invented facts, and all expected concepts are covered. The only minor issue preventing a perfect score is the mention of a previous rate of 4.458%, which, while potentially accurate, was not verified against the provided evaluation criteria. However, this does not detract significantly from the overall accuracy and relevance of the response."
+        },
+        {
+          "question_id": "eval_005",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Under Florida sales tax law, the filing frequency for small sellers depends on their average monthly tax liability.\n\n**Small Sellers - Annual Filing:**\nAccording to **Florida Statute \u00a7 212.11(1)(b)**, dealers whose average monthly tax liability is $50 or less may file returns and remit tax on an annual basis. The annual return is due by January 20th of the following year.\n\n**Quarterly Filing Option:**\nPer **Florida Statute \u00a7 212.11(1)(a)**, dealers whose average monthly tax liability is more than $50 but $200 or less may file returns and remit tax on a quarterly basis. Quarterly returns are due by the 20th day of the month following the end of each calendar quarter.\n\n**Monthly Filing (Default):**\nUnder **Florida Statute \u00a7 212.11(1)**, all other dealers must file monthly returns by the 20th day of the following month.\n\n**Administrative Rules:**\n**Florida Administrative Code Rule 12A-1.056** provides additional guidance on filing frequencies and specifies that the Department of Revenue determines filing frequency based on the dealer's average monthly tax liability over the preceding four quarters.\n\n**Key Point:** The classification as a \"small seller\" for annual filing purposes requires that the dealer's average monthly Florida sales tax liability not exceed $50. This average is calculated based on the dealer's tax liability history, and the Department may adjust filing frequency accordingly.\n\nFor the most current filing requirements, dealers should verify their specific filing frequency with the Florida Department of Revenue, as it may change based on their actual tax liability patterns.",
+          "latency_ms": 9750,
+          "citations_found": [
+            "212.11(1)",
+            "12A-1.056",
+            "212.11(1)(a)",
+            "212.11(1)(b)"
+          ],
+          "citation_precision": 1.0,
+          "correctness": 9,
+          "completeness": 9,
+          "clarity": 9,
+          "citation_accuracy": 9,
+          "hallucinations": [],
+          "fabricated_citations": [],
+          "overall_score": 9,
+          "passed": true,
+          "reasoning": "The generated answer provides a comprehensive and accurate explanation of the filing frequencies for small sellers under Florida sales tax law, correctly citing the relevant statutes and administrative rules. The answer clearly distinguishes between annual, quarterly, and monthly filing requirements based on the dealer's average monthly tax liability, aligning with the expectations set by the question. The citations to Florida Statute \u00a7 212.11 and Florida Administrative Code Rule 12A-1.056 are accurate and relevant to the topic. The answer is well-organized and readable, effectively breaking down the information into digestible segments for each filing frequency. There are no hallucinations or invented facts, and all key concepts that were expected to appear in the answer are covered. The only reason for not awarding a perfect score is the inherent limitation of not being able to verify the most current statutes and rules as of my last update; however, based on the information provided, the answer is of high quality."
+        },
+        {
+          "question_id": "eval_006",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Based on Florida tax law, **SaaS (Software as a Service) is generally NOT subject to Florida sales tax**.\n\n## Legal Analysis and Citations:\n\n### Primary Legal Framework:\n**Florida Statute \u00a7 212.05(1)(e)** defines taxable sales of tangible personal property, but software delivered electronically typically does not qualify as \"tangible personal property.\"\n\n### Key Administrative Guidance:\n**Florida Administrative Code Rule 12A-1.032** addresses the taxation of computer software and establishes the distinction between taxable and non-taxable software transactions.\n\n### Specific SaaS Treatment:\nSaaS transactions are generally not taxable in Florida because:\n\n1. **No Transfer of Possession**: SaaS involves licensing access to software hosted on remote servers, not transferring possession of tangible property or software to the customer.\n\n2. **Service vs. Product**: Under **Florida Statute \u00a7 212.02(16)**, sales of services are generally not taxable unless specifically enumerated as taxable services in **\u00a7 212.05(1)(a)-(n)**. SaaS is not listed among the specifically taxable services.\n\n3. **Remote Access Model**: The software remains on the provider's servers, and customers only receive access rights, which distinguishes it from taxable software sales or licenses.\n\n### Important Exceptions to Consider:\n- If SaaS includes taxable services listed in **\u00a7 212.05(1)** (such as certain communications services), those components may be taxable\n- Bundled transactions that include taxable tangible personal property may have taxable components\n\n### Current Status:\nAs of current Florida law, pure SaaS offerings where customers access software remotely without receiving tangible personal property or specifically enumerated taxable services are not subject to Florida sales tax.\n\n**Note**: Tax laws can change, and specific fact patterns may affect taxability. Consult current Florida Department of Revenue guidance for the most up-to-date interpretations.",
+          "latency_ms": 12847,
+          "citations_found": [
+            "212.05(1)",
+            "12A-1.032",
+            "212.05(1)(a)",
+            "212.02(16)",
+            "212.05(1)(e)"
+          ],
+          "citation_precision": 0.8,
+          "correctness": 3,
+          "completeness": 2,
+          "clarity": 8,
+          "citation_accuracy": 1,
+          "hallucinations": [
+            "Florida Statute \u00a7 212.05(1)(e)",
+            "Florida Statute \u00a7 212.02(16)"
+          ],
+          "fabricated_citations": [],
+          "overall_score": 3,
+          "passed": false,
+          "reasoning": "The response inaccurately states that SaaS is generally not subject to Florida sales tax, which is misleading. The key concept that the taxability of SaaS in Florida depends on how it's delivered and accessed, particularly if it's remotely accessed software, which may be taxed as communication services, is missing. The expected citations were not correctly used; the provided statutes (\u00a7 212.05(1)(e) and \u00a7 212.02(16)) do not exist in the context described, indicating hallucinations. The correct statute for addressing the taxability of SaaS or digital products is \u00a7 212.05(1)(i), and the relevant rule is 12A-1.032, which were not accurately cited or discussed. The response fails to cover the nuanced approach Florida takes towards taxing SaaS, particularly overlooking the importance of how the service is accessed and the potential applicability of taxes on communication services. While the response is organized and readable, it significantly lacks factual accuracy, completeness in covering relevant points, and proper citation usage."
+        },
+        {
+          "question_id": "eval_007",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Under Florida law, the manufacturing machinery exemption is governed by **Florida Statute \u00a7 212.08(7)(iii)** and further detailed in **Florida Administrative Code Rule 12A-1.0951**.\n\n## Qualifying Equipment\n\nTo qualify for the manufacturing machinery exemption, equipment must meet the following criteria:\n\n### Primary Requirements (\u00a7 212.08(7)(iii)):\n1. **Used predominantly in manufacturing** - The machinery must be used more than 50% of the time in manufacturing\n2. **Integral to the manufacturing process** - The equipment must be an essential part of the production process\n3. **Not used for administrative purposes** - Equipment used primarily for office, administrative, or general business functions does not qualify\n\n### Specific Qualifying Equipment (Rule 12A-1.0951):\n\n**Direct Manufacturing Equipment:**\n- Production line machinery and equipment\n- Processing equipment that transforms raw materials\n- Assembly line equipment\n- Quality control and testing equipment used during production\n- Packaging equipment when part of the manufacturing process\n- Material handling equipment used directly in production\n\n**Support Equipment:**\n- Pollution control equipment required for manufacturing\n- Industrial furnaces and boilers used in production\n- Electrical equipment that powers manufacturing machinery\n- Compressed air systems serving production equipment\n- Waste treatment equipment for manufacturing byproducts\n\n**Specifically Excluded Equipment:**\n- General office equipment (computers, desks, phones)\n- Administrative vehicles\n- Equipment used primarily for storage\n- Maintenance and repair equipment not integral to production\n- Safety equipment (unless integral to the manufacturing process)\n\n### Additional Requirements:\n- Equipment must be used by manufacturers, processors, or fabricators\n- The business must be engaged in manufacturing as defined in \u00a7 212.02(15)\n- Equipment must have a useful life of more than one year\n\nThe exemption applies to both the purchase and lease of qualifying manufacturing machinery and equipment, as specified in the statute.",
+          "latency_ms": 11177,
+          "citations_found": [
+            "12A-1.0951",
+            "212.08(7)(iii)",
+            "212.02(15)"
+          ],
+          "citation_precision": 0.3333333333333333,
+          "correctness": 5,
+          "completeness": 6,
+          "clarity": 8,
+          "citation_accuracy": 3,
+          "hallucinations": [
+            "Florida Statute \u00a7 212.08(7)(iii)",
+            "Florida Administrative Code Rule 12A-1.0951"
+          ],
+          "fabricated_citations": [],
+          "overall_score": 5,
+          "passed": false,
+          "reasoning": "The generated answer provides a detailed explanation of the types of equipment that qualify for the manufacturing machinery exemption in Florida, including both direct manufacturing equipment and support equipment. However, it incorrectly cites Florida Statute \u00a7 212.08(7)(iii) and Florida Administrative Code Rule 12A-1.0951, which do not exist as cited. The correct references should be Florida Statute \u00a7 212.08(5)(b) and Rule 12A-1.096. This mistake significantly affects the citation accuracy score. Additionally, the answer fails to explicitly mention key concepts such as 'manufacturing, processing, production,' which were expected to be covered. Despite these issues, the answer is organized and readable, scoring well in clarity. However, due to the incorrect citations and missing key concepts, the overall score is affected, reflecting a need for improvement in accuracy and completeness."
+        },
+        {
+          "question_id": "eval_008",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "An out-of-state seller has nexus for Florida sales tax purposes under several circumstances, as defined in Florida Statutes and rules:\n\n## Physical Presence Nexus\n\nUnder **Florida Statute \u00a7 212.0596**, an out-of-state seller has nexus if they have physical presence in Florida, including:\n\n- Maintaining a business location in Florida\n- Having employees, agents, or representatives in Florida\n- Owning or leasing property in Florida\n- Regularly soliciting sales in Florida through employees or agents\n\n## Economic Nexus\n\n**Florida Statute \u00a7 212.05(1)(i)** establishes economic nexus thresholds. An out-of-state seller must register and collect Florida sales tax if, in the previous or current calendar year, they:\n\n- Made sales of tangible personal property for delivery in Florida exceeding **$100,000**, OR\n- Engaged in **200 or more separate transactions** for delivery of tangible personal property in Florida\n\n## Marketplace Nexus\n\nUnder **Florida Statute \u00a7 212.05(1)(j)**, marketplace facilitators must collect and remit sales tax if they meet the economic nexus thresholds above for sales they facilitate.\n\n## Additional Nexus Activities\n\n**Florida Administrative Code Rule 12A-1.097** further clarifies that nexus may be established through:\n\n- Regularly or systematically soliciting sales through advertising\n- Maintaining inventory in Florida warehouses (including fulfillment centers)\n- Drop-shipping arrangements with Florida vendors\n\n## Effective Dates\n\nThe economic nexus provisions became effective **July 1, 2021**, following the U.S. Supreme Court's decision in *South Dakota v. Wayfair*.\n\nOut-of-state sellers meeting any of these criteria must register for a Florida sales tax permit and begin collecting tax, typically within 30 days of establishing nexus.",
+          "latency_ms": 10464,
+          "citations_found": [
+            "212.0596",
+            "12A-1.097",
+            "212.05(1)(i)",
+            "212.05(1)(j)"
+          ],
+          "citation_precision": 0.25,
+          "correctness": 8,
+          "completeness": 9,
+          "clarity": 9,
+          "citation_accuracy": 7,
+          "hallucinations": [],
+          "fabricated_citations": [],
+          "overall_score": 8,
+          "passed": true,
+          "reasoning": "The answer provides a comprehensive overview of when an out-of-state seller has nexus for Florida sales tax purposes, covering physical presence nexus, economic nexus, marketplace nexus, and additional nexus activities. The explanation is clear, well-organized, and easy to follow, effectively breaking down complex legal concepts into understandable segments. The economic nexus threshold of $100,000 in sales or 200 transactions in Florida is correctly identified, aligning with the key concepts expected. However, there's a minor citation error: the specific statute for economic nexus is cited as \u00a7 212.05(1)(i), which might be a slight misreference or outdated, as the evaluator expected \u00a7 212.0596 without specifying the subsection for economic nexus. This discrepancy in citation does not significantly detract from the factual accuracy but is noted for precision. No hallucinations or invented facts are present, and all key concepts expected are covered. The overall quality of the answer is high, providing a thorough understanding of Florida's sales tax nexus requirements."
+        },
+        {
+          "question_id": "eval_009",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "The Florida homestead exemption for property tax is governed by **Article VII, Section 6 of the Florida Constitution** and implemented through **Chapter 196, Florida Statutes**.\n\n## Homestead Exemption Amounts:\n\n**Primary Homestead Exemption:** Up to **$50,000** in assessed value\n- First $25,000 applies to **all property taxes** (county, municipality, school district, and special districts)\n- Second $25,000 applies to **non-school taxes only** (county, municipality, and special districts, but NOT school district taxes)\n- *Source: Article VII, Section 6(a), Florida Constitution; Section 196.031, Florida Statutes*\n\n**Additional Exemptions for Qualifying Individuals:**\n\n1. **Persons 65 or older with household income \u2264 $32,000:** Additional exemption up to $50,000 on non-school taxes\n   - *Source: Article VII, Section 6(d), Florida Constitution; Section 196.075, Florida Statutes*\n\n2. **Disabled veterans:** Various exemptions based on disability rating\n   - 10% or higher disability: Additional $5,000 exemption\n   - Combat-related total and permanent disability: Total exemption from all property taxes\n   - *Source: Article VII, Section 6(e), Florida Constitution; Section 196.081, Florida Statutes*\n\n3. **Surviving spouses of military members, first responders, etc.:** May qualify for total exemption under certain circumstances\n   - *Source: Article VII, Section 6(f)-(g), Florida Constitution; Sections 196.091, 196.095, Florida Statutes*\n\n## Key Requirements:\n- Property must be applicant's permanent residence as of January 1st\n- Must file application by March 1st (Section 196.011, F.S.)\n- Florida residency required (Section 196.031, F.S.)\n\nThe specific exemption amount depends on the property's assessed value and applicable tax jurisdictions.",
+          "latency_ms": 10785,
+          "citations_found": [],
+          "citation_precision": 1.0,
+          "correctness": 9,
+          "completeness": 9,
+          "clarity": 9,
+          "citation_accuracy": 9,
+          "hallucinations": [],
+          "fabricated_citations": [],
+          "overall_score": 9,
+          "passed": true,
+          "reasoning": "The generated answer provides a comprehensive overview of the Florida homestead exemption for property tax, correctly identifying the primary homestead exemption amount as up to $50,000 in assessed value. It accurately cites the relevant sections of the Florida Constitution and Florida Statutes, specifically Article VII, Section 6, and Section 196.031, among others, for the primary exemption and additional qualifications. The answer also effectively outlines additional exemptions for qualifying individuals, such as persons 65 or older, disabled veterans, and surviving spouses, with appropriate statutory references. The clarity of the explanation, organization of the content, and readability are high, making the complex information accessible. The answer does not contain hallucinations or invented facts, and it does not miss any expected concepts related to the standard homestead exemption. The citation accuracy is high, with correct references to the Florida Constitution and Statutes. Overall, the response is of excellent quality, providing a detailed and accurate explanation of the Florida homestead exemption for property tax."
+        },
+        {
+          "question_id": "eval_010",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Under Florida law, a valid resale certificate must meet specific requirements outlined in Florida Statutes and Administrative Code. Here are the key requirements:\n\n## Legal Authority\nThe primary authority for resale certificates is found in:\n- **Florida Statute \u00a7 212.18(2)** - Exemption certificates\n- **Florida Administrative Code Rule 12A-1.038** - Resale certificates\n\n## Required Elements for a Valid Resale Certificate\n\nA valid Florida resale certificate must contain the following information:\n\n1. **Purchaser's name and address** (the business claiming the exemption)\n\n2. **Seller's name** (the vendor from whom purchases are being made)\n\n3. **Purchaser's Florida sales tax registration number** or certificate of registration number\n\n4. **Description of the property being purchased for resale** - This can be:\n   - A general description of the type of property\n   - A statement that \"all property purchased is for resale\"\n   - Specific items if only certain purchases are for resale\n\n5. **Signature of the purchaser or authorized representative**\n\n6. **Date of execution**\n\n## Additional Requirements\n\n**Florida Administrative Code Rule 12A-1.038(3)** specifies that:\n\n- The certificate must be **substantially in the form** prescribed by the Department of Revenue\n- The purchaser must be **registered with the Department** to collect Florida sales tax\n- The certificate must be given to the dealer **in good faith**\n\n## Acceptable Forms\n\nPer **Florida Statute \u00a7 212.18(2)(a)**, Florida accepts:\n- Florida's standard resale certificate form (Form DR-13)\n- **Multijurisdiction resale certificates** that contain substantially the same information\n- **Out-of-state resale certificates** if they contain the required information and the purchaser provides their Florida registration number\n\n## Retention Requirements\n\n**Florida Statute \u00a7 212.18(2)(b)** requires that dealers must:\n- Retain resale certificates for **3 years** after the date of the last sale covered by the certificate\n- Make certificates available for inspection by the Department of Revenue\n\n## Important Note\n\nThe resale certificate relieves the seller from collecting sales tax, but if the purchaser uses the property for any purpose other than resale, the purchaser becomes liable for the tax under **Florida Statute \u00a7 212.18(2)(c)**.\n\nThese requirements ensure proper documentation of tax-exempt resale transactions while maintaining the integrity of Florida's sales tax system.",
+          "latency_ms": 13304,
+          "citations_found": [
+            "212.18(2)(b)",
+            "12A-1.038",
+            "212.18(2)(c)",
+            "212.18(2)",
+            "212.18(2)(a)"
+          ],
+          "citation_precision": 1.0,
+          "correctness": 9,
+          "completeness": 9,
+          "clarity": 9,
+          "citation_accuracy": 9,
+          "hallucinations": [],
+          "fabricated_citations": [],
+          "overall_score": 9,
+          "passed": true,
+          "reasoning": "The generated answer provides a comprehensive and accurate overview of the requirements for a valid Florida resale certificate, closely aligning with the expectations outlined. It correctly identifies the legal authority (Florida Statute \u00a7 212.18 and Florida Administrative Code Rule 12A-1.038), details the necessary elements for a valid resale certificate, and explains additional requirements such as the good faith provision and retention requirements. The answer is well-organized, making it easy to read and understand. Citations are accurately used, referencing the correct statutes and rules. There are no hallucinations or invented facts, and it covers the key concepts expected in the response, including the requirement for the resale certificate to be accepted in good faith. Therefore, it scores highly across all evaluation criteria."
+        },
+        {
+          "question_id": "eval_011",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Based on Florida tax law, **digital goods like e-books and downloaded music are generally NOT subject to Florida sales tax**.\n\n## Legal Analysis and Citations:\n\n**Florida Statute \u00a7 212.02(16)** defines \"tangible personal property\" as \"corporeal personal property of any nature.\" Digital goods that are downloaded or accessed electronically are considered intangible rather than tangible personal property.\n\n**Florida Administrative Code Rule 12A-1.032** clarifies the distinction between taxable and non-taxable transactions involving digital products. The rule establishes that sales tax applies to tangible personal property, but not to intangible property rights.\n\n## Key Exceptions and Considerations:\n\n1. **Canned Software**: Under **Florida Statute \u00a7 212.05(1)(i)** and **Rule 12A-1.032(2)**, prewritten computer software (including downloaded software) IS subject to sales tax when sold to end users.\n\n2. **Digital Products with Tangible Medium**: If digital content is delivered on a tangible medium (like a CD or USB drive), it becomes taxable under the general sales tax provisions of **Florida Statute \u00a7 212.05(1)**.\n\n3. **Streaming Services**: Generally not taxable as they involve temporary access rather than permanent downloads.\n\n## Current Status:\n\nUnlike some states that have expanded their tax base to include digital goods, Florida has not enacted specific legislation taxing downloaded digital products like e-books, music, or movies when delivered electronically without a tangible medium.\n\n**Note**: Tax laws change frequently. For the most current interpretation, consult the Florida Department of Revenue's Technical Assistance Advisements or contact them directly, as they regularly issue guidance on evolving digital commerce issues.",
+          "latency_ms": 11557,
+          "citations_found": [
+            "12A-1.032",
+            "212.05(1)(i)",
+            "212.05(1)",
+            "212.02(16)"
+          ],
+          "citation_precision": 0.75,
+          "correctness": 9,
+          "completeness": 9,
+          "clarity": 10,
+          "citation_accuracy": 8,
+          "hallucinations": [],
+          "fabricated_citations": [],
+          "overall_score": 9,
+          "passed": true,
+          "reasoning": "The generated answer provides a comprehensive and accurate overview of the taxability of digital goods in Florida, correctly identifying that digital goods are generally not subject to sales tax as they are not considered tangible personal property. The answer correctly cites Florida Statute \u00a7 212.02(16) for the definition of tangible personal property and references the relevant Florida Administrative Code Rule 12A-1.032 to support its analysis. The key exceptions and considerations section is particularly helpful, noting specific scenarios where digital goods might be taxable, such as canned software and digital products delivered on a tangible medium. The mention of streaming services adds value by addressing a common question related to digital goods. The citation accuracy is slightly marked down because the specific subsections of the statutes and rules (e.g., \u00a7 212.05(1)(i) and Rule 12A-1.032(2)) could potentially be verified for precision, but the overall reference to statutes and rules is appropriate and supports the analysis well. No hallucinations or invented facts were detected, and the answer did not miss any expected concepts. The clarity of the explanation is excellent, making the complex topic of tax law accessible and understandable."
+        },
+        {
+          "question_id": "eval_012",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Florida's voluntary disclosure program for sales tax is established under **Florida Statute Section 212.15** and is administered through the Florida Department of Revenue's voluntary disclosure agreement process.\n\n## Key Legal Framework:\n\n**Florida Statute \u00a7 212.15** - This statute provides the Department of Revenue with authority to enter into voluntary disclosure agreements with taxpayers to resolve unpaid tax liabilities.\n\n**Florida Administrative Code Rule 12-6.003** - This rule specifically governs voluntary disclosure agreements and establishes the procedures and requirements for the program.\n\n## Program Features:\n\nUnder Florida's voluntary disclosure program:\n\n1. **Liability Limitation**: The lookback period is typically limited to **3-4 years** from the date of the agreement, rather than the standard statute of limitations.\n\n2. **Penalty Waiver**: Civil penalties are generally waived under **F.S. \u00a7 212.15**, though interest on unpaid taxes typically remains due.\n\n3. **Criminal Immunity**: The statute provides protection from criminal prosecution for the disclosed tax periods.\n\n4. **Eligibility Requirements**: \n   - The taxpayer must not be currently under audit or investigation\n   - The taxpayer must not have been previously contacted by the Department regarding the tax liability\n   - The disclosure must be truly voluntary\n\n## Application Process:\n\nThe voluntary disclosure application must be submitted to the Florida Department of Revenue and typically includes:\n- Complete disclosure of all tax liabilities for the covered periods\n- Payment of all taxes and interest due\n- Agreement to comply with all future tax obligations\n\n**Authority**: Florida Administrative Code Rule 12-6.003 outlines the specific application procedures and requirements.\n\nThis program is particularly valuable for out-of-state businesses that may have developed nexus in Florida and need to resolve their sales tax compliance obligations with reduced penalties.",
+          "latency_ms": 11001,
+          "citations_found": [
+            "12-6.003",
+            "212.15"
+          ],
+          "citation_precision": 0.0,
+          "correctness": 2,
+          "completeness": 4,
+          "clarity": 7,
+          "citation_accuracy": 1,
+          "hallucinations": [
+            "Florida Statute Section 212.15",
+            "Florida Administrative Code Rule 12-6.003"
+          ],
+          "fabricated_citations": [],
+          "overall_score": 3,
+          "passed": false,
+          "reasoning": "The generated answer inaccurately cites Florida Statute Section 212.15 and Florida Administrative Code Rule 12-6.003, neither of which are correct references for the voluntary disclosure program for sales tax in Florida. The correct statute for the voluntary disclosure program is 213.21, which was not mentioned. While the answer does cover some relevant aspects of the voluntary disclosure program, such as the liability limitation, penalty waiver, and eligibility requirements, the incorrect citations significantly undermine the factual accuracy and completeness of the response. The clarity of the answer is relatively high, as it is well-organized and readable. However, the hallucinated statutes and the omission of the correct statute (213.21) as well as not explicitly mentioning the key benefits of penalty waiver and limited lookback period as outlined in the evaluator notes, significantly affect the overall quality of the answer."
+        },
+        {
+          "question_id": "eval_013",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Florida distinguishes between taxable and non-taxable services through a specific enumeration approach, where services are generally **not taxable unless specifically listed** as taxable in the statutes.\n\n## Legal Framework\n\n**Florida Statute \u00a7 212.05(1)(i)** establishes that Florida imposes sales tax on \"the sale at retail, the rental, the use, the consumption, the distribution, and the storage to be used or consumed in this state of the following tangible personal property and services.\"\n\nThe key distinction is found in **Florida Statute \u00a7 212.05(1)(i)1.**, which states that tax applies to services \"only if the service is performed on tangible personal property and the service is not otherwise exempt.\"\n\n## Enumerated Taxable Services\n\nFlorida specifically lists taxable services in **Florida Statute \u00a7 212.05(1)(i)**, including:\n\n- Nonresidential cleaning services (\u00a7 212.05(1)(i)2.)\n- Detective services and burglar protection services (\u00a7 212.05(1)(i)3.)\n- Lawn care services (\u00a7 212.05(1)(i)4.)\n- Pest control services (\u00a7 212.05(1)(i)5.)\n- Printing services (\u00a7 212.05(1)(i)6.)\n- Real property repair services (\u00a7 212.05(1)(i)7.)\n\n## Administrative Guidance\n\n**Florida Administrative Code Rule 12A-1.0131** provides additional clarification on the scope of taxable services, emphasizing that services are taxable only when:\n1. Specifically enumerated in the statute, or\n2. Performed on tangible personal property (with specific exceptions)\n\n**Florida Administrative Code Rule 12A-1.007** addresses mixed transactions involving both goods and services, establishing guidelines for determining taxability when services are bundled with tangible personal property.\n\n## Non-Taxable Services\n\nServices **not specifically enumerated** in Chapter 212 are generally non-taxable. This includes most:\n- Professional services (legal, medical, accounting)\n- Personal services (haircuts, massages)\n- Educational services\n- Financial services\n\n## Key Distinction\n\nThe fundamental principle, established in **Florida Statute \u00a7 212.02(14)**, defines \"retail sale\" and \"sale at retail\" in a way that requires specific statutory authorization for service taxation. Unlike many states that broadly tax services, Florida maintains a narrow, enumerated approach.\n\nThis enumeration method means that Florida businesses and tax practitioners must specifically check whether a service appears in the statutory list rather than applying broad categories or principles to determine taxability.",
+          "latency_ms": 15337,
+          "citations_found": [
+            "12A-1.0131",
+            "212.02(14)",
+            "212.05(1)(i)",
+            "12A-1.007"
+          ],
+          "citation_precision": 0.25,
+          "correctness": 9,
+          "completeness": 8,
+          "clarity": 9,
+          "citation_accuracy": 8,
+          "hallucinations": [],
+          "fabricated_citations": [],
+          "overall_score": 8,
+          "passed": true,
+          "reasoning": "The generated answer provides a comprehensive and accurate explanation of how Florida distinguishes between taxable and non-taxable services, adhering closely to the legal framework established by Florida statutes and administrative codes. The answer correctly identifies that services in Florida are generally not taxable unless specifically enumerated, which aligns with the key concept that should appear in the response. The citations to Florida Statute \u00a7 212.05 and the Florida Administrative Code are accurate and relevant, supporting the explanation effectively. However, the answer does not specifically mention Rule 12A-1.006, which was expected based on the evaluator notes, leading to a slight deduction in completeness. The clarity of the explanation is high, with a well-organized presentation of the legal framework, enumerated taxable services, and the principle of non-taxability for services not specifically listed. The citation accuracy is generally good, but the slight deviation from the expected citations (specifically the omission of Rule 12A-1.006) affects the score in this category. There are no hallucinations or invented facts, which is commendable. Overall, the response is of high quality, with minor areas for improvement in completeness and citation accuracy."
+        },
+        {
+          "question_id": "eval_014",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Under Florida tax law, the agricultural exemption requires specific documentation to qualify for sales tax exemptions on agricultural inputs and equipment.\n\n## Required Documentation\n\n**Primary Requirements (Florida Statutes \u00a7 212.08(7)(eee)):**\n\n1. **Agricultural Classification Certificate** - Property must be classified as agricultural land under Florida Statutes Chapter 193 (property tax assessment)\n\n2. **Tangible Personal Property Tax Return** - Must file Form DR-405 if claiming exemption for farm equipment and machinery\n\n## Specific Documentation by Exemption Type\n\n**For Agricultural Production Items (\u00a7 212.08(7)(eee)):**\n- Certificate of agricultural classification from the property appraiser\n- Documentation showing the items are used exclusively for agricultural purposes\n- Records demonstrating commercial agricultural production\n\n**For Farm Equipment and Machinery (\u00a7 212.08(7)(eee)):**\n- Form DR-31 (Application for Agricultural Classification) \n- Proof of agricultural land classification\n- Documentation that equipment is used primarily (51% or more) in agricultural production\n\n**For Livestock Feed (\u00a7 212.08(7)(d)):**\n- Agricultural exemption certificate\n- Records showing feed is used for livestock in commercial agricultural production\n\n## Administrative Requirements\n\n**Florida Administrative Code Rule 12A-1.051** specifies:\n- Purchaser must provide seller with proper exemption certificate\n- Seller must maintain copies of exemption certificates\n- Documentation must be available for Department of Revenue inspection\n\n**Additional Documentation (Rule 12A-1.051(8)):**\n- Federal Schedule F (Profit or Loss from Farming) or equivalent\n- Proof of gross receipts from agricultural sales\n- Evidence of bona fide commercial agricultural operation\n\nThe exemption is not available for hobby farming or personal use - documentation must establish legitimate commercial agricultural activity as defined in Florida Statutes \u00a7 193.461.",
+          "latency_ms": 11746,
+          "citations_found": [
+            "12A-1.051",
+            "212.08(7)(eee)",
+            "212.08(7)(d)",
+            "193.461"
+          ],
+          "citation_precision": 0.5,
+          "correctness": 4,
+          "completeness": 5,
+          "clarity": 8,
+          "citation_accuracy": 3,
+          "hallucinations": [
+            "Florida Statutes \u00a7 212.08(7)(eee)",
+            "Form DR-31 (Application for Agricultural Classification)"
+          ],
+          "fabricated_citations": [
+            "193.461"
+          ],
+          "overall_score": 5,
+          "passed": false,
+          "reasoning": "The generated answer provides a structured and readable explanation of the documentation required for the agricultural exemption in Florida, which is good for clarity. However, it inaccurately cites non-existent statute sections (e.g., \u00a7 212.08(7)(eee)) and invents a form (Form DR-31) that does not pertain to the agricultural exemption process, leading to a low score in correctness and citation accuracy. The key concept of requiring a Consumer Certificate of Exemption for agricultural use, which is crucial for understanding the exemption process, is missing, affecting the completeness score. Additionally, the answer fails to accurately reference the correct statutes and rules, such as Florida Statutes 212.08(5)(a) and Rule 12A-1.087, which are essential for a precise legal discussion on this topic. Despite these issues, the answer's organization and readability are commendable."
+        },
+        {
+          "question_id": "eval_015",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "In Florida, contractors are subject to specific sales tax rules on materials depending on the type of contract and work performed. Here's the detailed breakdown:\n\n## Real Property Contractors\n\n**For Real Property Improvements (Chapter 212.08(7)(a), F.S.):**\n- Contractors performing work on real property are considered the **end user** of materials\n- They must pay sales tax when purchasing materials from suppliers\n- They cannot pass sales tax through to customers as a separate line item\n- The total contract price (including materials and labor) is **not subject to sales tax**\n\n## Personal Property Contractors\n\n**For Personal Property Repairs (Chapter 212.05(1)(a), F.S.):**\n- Sales tax applies to the **total charge** including materials and labor\n- Contractors may purchase materials tax-exempt with a resale certificate\n- Must then collect and remit sales tax on the entire amount charged to the customer\n\n## Key Distinctions\n\n**Rule 12A-1.051, F.A.C.** clarifies the difference:\n- **Real Property**: Permanently attached improvements (foundations, roofing, built-in fixtures)\n- **Personal Property**: Movable items or temporary installations\n\n## Documentation Requirements\n\n**Per Rule 12A-1.038, F.A.C.:**\n- Contractors must maintain detailed records of material purchases\n- Resale certificates must be properly completed when applicable\n- Documentation must support the tax treatment claimed\n\n## Mixed Contracts\n\n**Rule 12A-1.051(4), F.A.C.** addresses contracts involving both real and personal property:\n- Charges must be separately stated when possible\n- If not separately stated, the predominant purpose test applies\n- Real property improvements generally take precedence\n\n## Important Note\n\nThe classification of work as real vs. personal property significantly impacts tax obligations. When in doubt, contractors should consult **Chapter 212.08(7), F.S.** and related Administrative Code rules, or seek a Technical Assistance Advisement from the Florida Department of Revenue.",
+          "latency_ms": 12805,
+          "citations_found": [
+            "12A-1.051",
+            "12A-1.038"
+          ],
+          "citation_precision": 0.5,
+          "correctness": 6,
+          "completeness": 7,
+          "clarity": 8,
+          "citation_accuracy": 4,
+          "hallucinations": [
+            "Chapter 212.08(7)(a), F.S. for Real Property Improvements",
+            "Chapter 212.05(1)(a), F.S. for Personal Property Repairs"
+          ],
+          "fabricated_citations": [],
+          "overall_score": 6,
+          "passed": false,
+          "reasoning": "The generated answer provides a structured and clear explanation of how contractors are taxed on materials in Florida, distinguishing between real and personal property. However, it inaccurately cites Chapter 212.08(7)(a), F.S., and Chapter 212.05(1)(a), F.S., which are not directly relevant to the taxation of contractors on materials as described in the expected answer. The correct statute, 212.06(14), and the specific rule, 12A-1.051, which directly address the taxation of contractors as end users of materials, were not correctly cited or explained. Despite these inaccuracies and omissions, the answer does provide a general understanding of the subject, but it fails to meet the expected accuracy and completeness regarding the key concepts and citations. The clarity of the explanation is good, making the information accessible, but the citation accuracy significantly detracts from the overall quality of the response."
+        },
+        {
+          "question_id": "eval_016",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Based on Florida tax law, cloud computing infrastructure services (IaaS/PaaS) are generally **not subject to Florida sales tax** as they are considered nontaxable services rather than tangible personal property.\n\n## Key Legal Framework:\n\n**Florida Statute \u00a7 212.05(1)(a)** imposes sales tax on sales of tangible personal property, but cloud infrastructure services don't constitute tangible personal property transfers.\n\n**Florida Statute \u00a7 212.05(1)(e)** taxes certain enumerated services, but cloud computing services are not specifically listed among the taxable services.\n\n## Relevant Guidance:\n\n**Florida Administrative Code Rule 12A-1.032** addresses computer software taxation and establishes the distinction between:\n- **Taxable**: Software delivered on tangible media or downloaded\n- **Nontaxable**: Software accessed remotely (Software as a Service)\n\n**Technical Assistance Advisement 11A-047** (Florida Department of Revenue, 2011) clarified that cloud-based software services where users access applications remotely without downloading are not subject to sales tax.\n\n## Application to IaaS/PaaS:\n\n- **Infrastructure as a Service (IaaS)**: Providing virtual servers, storage, and computing resources remotely is treated as a nontaxable service\n- **Platform as a Service (PaaS)**: Providing development platforms and tools accessed remotely is similarly nontaxable\n\n## Important Considerations:\n\n1. **Bundled Services**: If cloud services are bundled with taxable items, allocation rules under **Florida Statute \u00a7 212.06(7)** may apply\n\n2. **Future Changes**: Florida tax law on digital services continues to evolve, and practitioners should monitor for legislative updates\n\n3. **Use Tax**: Out-of-state purchases may trigger use tax obligations under **Florida Statute \u00a7 212.06**\n\nThe taxation ultimately depends on the specific service arrangement and delivery method, but pure cloud infrastructure services accessed remotely are generally exempt from Florida sales tax.",
+          "latency_ms": 12043,
+          "citations_found": [
+            "212.06(7)",
+            "12A-1.032",
+            "212.05(1)(a)",
+            "212.06",
+            "212.05(1)(e)"
+          ],
+          "citation_precision": 0.6,
+          "correctness": 5,
+          "completeness": 4,
+          "clarity": 8,
+          "citation_accuracy": 3,
+          "hallucinations": [
+            "Florida Statute \u00a7 212.05(1)(a)",
+            "Florida Statute \u00a7 212.05(1)(e)",
+            "Technical Assistance Advisement 11A-047"
+          ],
+          "fabricated_citations": [],
+          "overall_score": 5,
+          "passed": false,
+          "reasoning": "The answer provides a general overview of how cloud computing infrastructure services (IaaS/PaaS) are taxed in Florida, suggesting they are generally not subject to sales tax. However, the citations provided contain inaccuracies and hallucinations, such as incorrect statute sections and a fabricated Technical Assistance Advisement. The expected statute 212.05(1)(i) and Rule 12A-1.032 are not correctly cited or explained, leading to a lack of completeness. The clarity of the explanation is high, with a well-organized response. However, the incorrect citations and missing key concepts related to communication services significantly impact the correctness and completeness scores. The overall score reflects these issues, acknowledging the partial understanding provided but penalizing the inaccuracies and omissions."
+        },
+        {
+          "question_id": "eval_017",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Florida's data center exemption requirements are found primarily in **Florida Statute \u00a7 212.08(5)(j)** and supporting provisions. Here are the specific requirements:\n\n## Qualifying Data Center Requirements:\n\n### 1. **Investment Threshold** (\u00a7 212.08(5)(j)1.)\n- Must invest at least **$150 million** in qualified property within 5 years of the exemption certificate issuance date\n\n### 2. **Employment Requirements** (\u00a7 212.08(5)(j)1.)\n- Must create at least **20 new full-time equivalent positions** \n- These positions must pay at least **115% of the average private sector wage** in the county where the data center is located\n- Jobs must be created within 3 years of commencing operations\n\n### 3. **Facility Specifications** (\u00a7 212.08(5)(j)2.)\nThe data center must be:\n- A facility used to house computer and network systems\n- Include redundant power supplies, communications connections, environmental controls, and security devices\n- Used for data storage, recovery, and networking\n\n### 4. **Property Qualification** (\u00a7 212.08(5)(j)3.)\nExempt property includes:\n- Electrical energy for the data center\n- Equipment directly used in a data center (computers, servers, cooling systems, etc.)\n- Building materials incorporated into qualifying data center construction\n\n### 5. **Application Process** (\u00a7 212.08(5)(j)4.)\n- Must apply to the Department of Revenue before purchasing exempt items\n- Must provide evidence of meeting investment and employment commitments\n- Must enter into an agreement with the Department of Revenue\n\n### 6. **Compliance and Monitoring**\nThe exemption is contingent on maintaining compliance with investment and employment requirements throughout the qualification period.\n\n**Administrative Rules:** Florida Administrative Code **Rule 12A-1.0971** provides additional implementation details for the data center exemption application and compliance procedures.\n\nThe exemption is designed to attract large-scale data center investments to Florida while ensuring substantial economic impact through job creation and capital investment.",
+          "latency_ms": 13113,
+          "citations_found": [
+            "12A-1.0971",
+            "212.08(5)(j)"
+          ],
+          "citation_precision": 0.5,
+          "correctness": 1,
+          "completeness": 2,
+          "clarity": 8,
+          "citation_accuracy": 1,
+          "hallucinations": [
+            "Florida Statute \u00a7 212.08(5)(j)",
+            "Rule 12A-1.0971"
+          ],
+          "fabricated_citations": [],
+          "overall_score": 2,
+          "passed": false,
+          "reasoning": "The generated answer inaccurately cites Florida Statute \u00a7 212.08(5)(j) and Rule 12A-1.0971, which do not exist in the context of Florida's data center exemption requirements. The correct statute is \u00a7 212.08(5)(p), as outlined in the evaluator notes. While the answer attempts to cover the requirements for Florida's data center exemption, including investment thresholds and job creation, the incorrect citations significantly undermine the factual accuracy and completeness of the response. The clarity of the answer is high, as it is well-organized and readable, but this does not compensate for the critical errors in content and citation accuracy. The hallucinated statute numbers and the missing focus on cumulative investment and the specific job creation requirements as key concepts further detract from the answer's quality."
+        },
+        {
+          "question_id": "eval_018",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "No, Florida does not require combined reporting for corporate income tax purposes.\n\n**Legal Citations:**\n\nFlorida Statutes Chapter 220 governs corporate income tax in Florida, and there is no provision requiring combined reporting. Specifically:\n\n- **Florida Statute \u00a7 220.13** - Sets forth the general filing requirements for corporate income tax returns, requiring each corporation to file separately\n- **Florida Statute \u00a7 220.131** - Addresses consolidated returns but only allows them in limited circumstances where federal consolidated returns are filed and specific conditions are met\n\n**Key Points:**\n\n1. **Separate Entity Filing**: Florida follows a separate entity approach where each corporation files its own return based on its individual Florida taxable income.\n\n2. **Limited Consolidated Filing**: Under F.S. \u00a7 220.131, consolidated returns are only permitted when:\n   - The corporations file a federal consolidated return\n   - All corporations in the group consent\n   - Specific administrative requirements are met\n\n3. **No Mandatory Combined Reporting**: Unlike some states, Florida has not enacted legislation requiring unitary combined reporting, which would mandate that related corporations operating as a unitary business file a single combined return.\n\n**Administrative Guidance:**\nThe Florida Department of Revenue has consistently interpreted the statutes as not requiring combined reporting, maintaining the separate entity system for corporate income tax purposes.\n\nThis separate filing system means that intercompany transactions between related Florida corporations are generally respected for Florida tax purposes, subject to specific anti-avoidance provisions in the statutes.",
+          "latency_ms": 10198,
+          "citations_found": [
+            "220.13",
+            "220.131"
+          ],
+          "citation_precision": 0.5,
+          "correctness": 9,
+          "completeness": 9,
+          "clarity": 10,
+          "citation_accuracy": 9,
+          "hallucinations": [],
+          "fabricated_citations": [],
+          "overall_score": 9,
+          "passed": true,
+          "reasoning": "The generated answer accurately reflects Florida's corporate income tax reporting requirements, emphasizing the state's preference for separate entity filing over combined or unitary reporting. The citations provided, including Florida Statute \u00a7 220.13 and \u00a7 220.131, are correctly referenced and relevant to the discussion, supporting the key points made about separate entity filing and the limited circumstances under which consolidated returns are permitted. The answer is well-organized and easy to read, presenting complex tax concepts in an understandable manner. The score is not a perfect 10 due to the slight possibility of additional nuances or administrative guidance that could further illustrate exceptions or specific scenarios under Florida tax law, but overall, the response is comprehensive and accurate."
+        },
+        {
+          "question_id": "eval_019",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "Under Florida sales tax law, bundled transactions are governed by **Florida Statute \u00a7 212.02(24)** and **Florida Administrative Code Rule 12A-1.007**.\n\n## Definition and General Rule\n\nA \"bundled transaction\" is defined in **F.S. \u00a7 212.02(24)** as the retail sale of two or more products, except real property and services to real property, where:\n- The products are otherwise distinct and identifiable\n- The products are sold for one nonitemized price\n- At least one product is taxable and one is exempt\n\n## Taxation Method\n\nUnder **F.S. \u00a7 212.05(1)(i)** and **Rule 12A-1.007**, the entire bundled transaction is subject to sales tax if it contains both taxable and exempt items, unless an exception applies.\n\n## Key Exceptions\n\nThe bundled transaction rules do **NOT** apply when (**F.S. \u00a7 212.02(24)**):\n\n1. The price of the taxable products is **de minimis** (10% or less of the total bundled price)\n2. The transaction consists entirely of products taxable at the same rate\n3. The transaction includes exempt food and food ingredients bundled with taxable items where the exempt food represents more than 75% of the bundled price\n\n## Administrative Guidance\n\n**Florida Administrative Code Rule 12A-1.007** provides additional clarification that:\n- Separately stated charges for exempt items can avoid bundled transaction treatment\n- The seller has the burden to prove any claimed exemption\n- Documentation must support the allocation of bundled pricing\n\n## Practical Impact\n\nThis means that when taxable and exempt items are sold together for one price, the entire transaction is generally taxable unless the specific statutory exceptions apply. Retailers can avoid this by separately stating prices for exempt components.\n\nThe bundled transaction rules ensure tax compliance while preventing manipulation of exempt item sales through packaging arrangements.",
+          "latency_ms": 12494,
+          "citations_found": [
+            "12A-1.007",
+            "212.05(1)(i)",
+            "212.02(24)"
+          ],
+          "citation_precision": 0.3333333333333333,
+          "correctness": 5,
+          "completeness": 4,
+          "clarity": 8,
+          "citation_accuracy": 3,
+          "hallucinations": [
+            "Florida Statute \u00a7 212.02(24)",
+            "Florida Administrative Code Rule 12A-1.007",
+            "F.S. \u00a7 212.05(1)(i)"
+          ],
+          "fabricated_citations": [],
+          "overall_score": 5,
+          "passed": false,
+          "reasoning": "The generated answer provides a structured and readable explanation of how bundled transactions are taxed in Florida, including definitions, general rules, key exceptions, and practical impacts. However, it suffers from significant inaccuracies in its citations: the cited statute numbers and administrative code rules do not match the expected citations of Statutes: 212.02 and Rules: 12A-1.002. Additionally, the answer fails to mention the 'true object' test and the concept of 'incidental' items, which are key concepts in determining the taxability of bundled transactions. These omissions and inaccuracies in citation significantly affect the correctness and completeness of the answer. The clarity of the explanation is high, but the factual inaccuracies and missing concepts lower the overall quality of the response."
+        },
+        {
+          "question_id": "eval_020",
+          "model": "Claude Sonnet 4 (No RAG)",
+          "answer": "## Process for Claiming Florida Sales Tax Refunds\n\nThe process for claiming a refund of Florida sales tax paid in error is governed by **Florida Statute \u00a7 212.18** and supporting administrative rules.\n\n### Legal Framework\n\n**Florida Statute \u00a7 212.18** establishes the procedures for refunding taxes paid in error, overpaid, or illegally collected.\n\n### Refund Process Requirements\n\n1. **Written Application Required**: Under **Fla. Stat. \u00a7 212.18(1)**, any person who has paid sales tax in error must file a written application for refund with the Department of Revenue.\n\n2. **Time Limitations**: \n   - **Fla. Stat. \u00a7 212.18(2)** requires that refund applications be filed within **three years** from the date the tax was paid\n   - This is a strict deadline that cannot be extended\n\n3. **Documentation Requirements**: The application must include:\n   - Proof of payment of the tax\n   - Explanation of why the tax was paid in error\n   - Supporting documentation\n\n### Administrative Rules\n\n**Florida Administrative Code Rule 12A-1.097** provides additional procedural details:\n- Applications must be submitted on Department-prescribed forms\n- The Department may require additional verification or documentation\n- Refunds are processed after review and verification\n\n### Department Authority\n\nUnder **Fla. Stat. \u00a7 212.18(3)**, the Department of Revenue has authority to:\n- Investigate refund claims\n- Require additional evidence\n- Approve or deny refund applications\n- Issue refunds with interest when appropriate\n\n### Interest on Refunds\n\n**Fla. Stat. \u00a7 212.18(4)** provides that approved refunds may include interest calculated from the date of overpayment, using rates established by the Department.\n\n### Filing Location\n\nApplications should be submitted to the Florida Department of Revenue's Taxpayer Services division, following the specific procedures outlined in the Department's current forms and instructions.",
+          "latency_ms": 10914,
+          "citations_found": [
+            "212.18(3)",
+            "12A-1.097",
+            "212.18(2)",
+            "212.18",
+            "212.18(4)",
+            "212.18(1)"
+          ],
+          "citation_precision": 0.0,
+          "correctness": 6,
+          "completeness": 5,
+          "clarity": 8,
+          "citation_accuracy": 3,
+          "hallucinations": [
+            "Florida Statute \u00a7 212.18",
+            "Florida Administrative Code Rule 12A-1.097"
+          ],
+          "fabricated_citations": [],
+          "overall_score": 5,
+          "passed": false,
+          "reasoning": "The answer provides a structured and clear explanation of the process for claiming a refund of Florida sales tax paid in error, including the need for a written application, time limitations, documentation requirements, and the authority of the Department of Revenue. However, the citations provided do not match the expected citations listed in the evaluator notes. The statutes and rules cited in the generated answer (Florida Statute \u00a7 212.18 and Florida Administrative Code Rule 12A-1.097) are incorrect or fabricated, as they do not align with the expected citations (Statutes: 215.26, Rules: 12-26.003). This discrepancy significantly affects the citation accuracy score. Despite the clarity and structured approach, the incorrect citations and the omission of the specific statutes and rules expected (215.26 and 12-26.003) impact the completeness and correctness scores. The overall score reflects these issues, balancing the clear presentation against the inaccuracies in citations and missing expected concepts."
+        }
+      ]
+    }
+  }
+}

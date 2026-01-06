@@ -17,6 +17,14 @@ class Difficulty(str, Enum):
     HARD = "hard"
 
 
+class QuestionType(str, Enum):
+    """Question complexity type."""
+
+    LOOKUP = "lookup"  # Direct statutory answers
+    SYNTHESIS = "synthesis"  # Combining statute + rule
+    MULTI_HOP = "multi_hop"  # Reasoning chains
+
+
 class AnswerType(str, Enum):
     """Expected answer type."""
 
@@ -36,6 +44,13 @@ class Category(str, Enum):
     PROCEDURES = "procedures"
 
 
+class KeyClaim(BaseModel):
+    """A key claim that should appear in the answer with its source."""
+
+    claim: str = Field(..., description="The factual claim")
+    source: str = Field(..., description="Source citation for the claim")
+
+
 class EvalQuestion(BaseModel):
     """A single evaluation question with expected answers."""
 
@@ -43,6 +58,10 @@ class EvalQuestion(BaseModel):
     question: str = Field(..., description="The tax law question to evaluate")
     category: Category = Field(..., description="Tax topic category")
     difficulty: Difficulty = Field(..., description="Question difficulty level")
+    question_type: QuestionType = Field(
+        default=QuestionType.LOOKUP,
+        description="Question complexity type",
+    )
     expected_statutes: list[str] = Field(
         default_factory=list,
         description="Expected statute citations (e.g., ['212.05', '212.08(1)'])",
@@ -51,11 +70,27 @@ class EvalQuestion(BaseModel):
         default_factory=list,
         description="Expected rule citations (e.g., ['12A-1.001'])",
     )
+    expected_authority_order: list[str] = Field(
+        default_factory=list,
+        description="Expected authority type order (e.g., ['statute', 'rule'])",
+    )
     expected_answer_contains: list[str] = Field(
         default_factory=list,
         description="Key phrases that should appear in answer",
     )
     expected_answer_type: AnswerType = Field(..., description="Type of expected answer")
+    golden_answer: str = Field(
+        default="",
+        description="Full reference answer for comparison",
+    )
+    key_claims: list[KeyClaim] = Field(
+        default_factory=list,
+        description="Key claims with their sources for faithfulness checking",
+    )
+    reasoning_chain: list[str] = Field(
+        default_factory=list,
+        description="Expected reasoning steps for multi-hop questions",
+    )
     notes: str = Field(default="", description="Explanation for evaluators")
 
 
@@ -82,6 +117,45 @@ class JudgmentResult(BaseModel):
     def passed(self) -> bool:
         """Whether the answer passes (overall >= 7 and no critical hallucinations)."""
         return self.overall_score >= 7 and len(self.hallucinations) == 0
+
+
+class AuthorityMetricsResult(BaseModel):
+    """Authority-aware evaluation metrics for a single result."""
+
+    authority_ndcg_at_5: float = Field(default=0.0, description="Authority-weighted NDCG@5")
+    authority_ndcg_at_10: float = Field(default=0.0, description="Authority-weighted NDCG@10")
+    hierarchy_alignment_score: float = Field(
+        default=0.0, description="% times higher authority ranked first"
+    )
+    primary_authority_rate_at_5: float = Field(
+        default=0.0, description="% of top-5 that are statutes/rules"
+    )
+    doc_types_retrieved: list[str] = Field(
+        default_factory=list, description="Document types in retrieval order"
+    )
+
+
+class FaithfulnessMetricsResult(BaseModel):
+    """Faithfulness evaluation metrics for a single result."""
+
+    total_claims: int = Field(default=0, description="Number of claims checked")
+    supported_claims: int = Field(default=0, description="Fully supported claims")
+    partially_supported_claims: int = Field(default=0, description="Partially supported")
+    unsupported_claims: int = Field(default=0, description="Unsupported claims")
+    contradicted_claims: int = Field(default=0, description="Contradicted claims")
+    faithfulness_score: float = Field(default=1.0, description="Weighted faithfulness 0-1")
+
+
+class CorrectionMetricsResult(BaseModel):
+    """Self-correction tracking for a single result."""
+
+    action_taken: str = Field(default="none", description="none/corrected/regenerated/failed")
+    issues_detected: int = Field(default=0, description="Number of issues found")
+    issues_corrected: int = Field(default=0, description="Number successfully corrected")
+    severity_scores: list[float] = Field(default_factory=list, description="Issue severities")
+    hallucination_types: list[str] = Field(default_factory=list, description="Types of issues")
+    confidence_before: float = Field(default=0.0)
+    confidence_after: float = Field(default=0.0)
 
 
 class EvalResult(BaseModel):
@@ -111,6 +185,21 @@ class EvalResult(BaseModel):
         ge=0.0,
         le=1.0,
         description="Fraction of expected phrases found",
+    )
+
+    # Authority-aware metrics
+    authority_metrics: Optional[AuthorityMetricsResult] = Field(
+        default=None, description="Authority-weighted retrieval metrics"
+    )
+
+    # Faithfulness metrics
+    faithfulness_metrics: Optional[FaithfulnessMetricsResult] = Field(
+        default=None, description="Claim faithfulness to sources"
+    )
+
+    # Self-correction metrics
+    correction_metrics: Optional[CorrectionMetricsResult] = Field(
+        default=None, description="Self-correction tracking"
     )
 
     # LLM judgment
