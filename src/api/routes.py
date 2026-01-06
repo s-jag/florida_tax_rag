@@ -55,26 +55,45 @@ router = APIRouter()
 @router.post(
     "/query",
     response_model=QueryResponse,
+    summary="Execute Tax Law Query",
+    description="""
+Execute a Florida tax law query through the RAG agent.
+
+The agent performs:
+1. **Query decomposition** - Breaks complex queries into sub-queries
+2. **Hybrid retrieval** - Combines vector, keyword, and graph search
+3. **Relevance scoring** - Filters and ranks results
+4. **Temporal validation** - Ensures documents are current
+5. **Answer synthesis** - Generates answer with citations
+6. **Validation** - Detects and corrects hallucinations
+    """,
     responses={
-        408: {"description": "Request timeout"},
-        500: {"description": "Internal error"},
+        200: {
+            "description": "Successful query response",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "request_id": "abc-123-def",
+                        "answer": "The Florida state sales tax rate is 6%...",
+                        "citations": [{"doc_id": "statute:212.05", "citation": "Fla. Stat. § 212.05"}],
+                        "confidence": 0.92,
+                        "validation_passed": True,
+                        "processing_time_ms": 3250
+                    }
+                }
+            },
+        },
+        408: {"description": "Request timeout - query exceeded time limit"},
+        500: {"description": "Internal error during query processing"},
     },
+    tags=["Query"],
 )
 async def query(
     request: QueryRequest,
     request_id: RequestIdDep,
     graph: AgentGraphDep,
 ) -> QueryResponse:
-    """Execute a tax law query through the RAG agent.
-
-    This endpoint invokes the full agent graph including:
-    - Query decomposition
-    - Hybrid retrieval (vector + keyword + graph)
-    - Relevance scoring and filtering
-    - Temporal validation
-    - Answer synthesis with citations
-    - Hallucination detection and correction
-    """
+    """Execute a tax law query through the RAG agent."""
     start_time = time.perf_counter()
 
     # Build initial state
@@ -185,22 +204,43 @@ async def query(
     )
 
 
-@router.post("/query/stream")
+@router.post(
+    "/query/stream",
+    summary="Stream Tax Law Query",
+    description="""
+Stream query results via Server-Sent Events (SSE).
+
+**Event Types:**
+- `status` - Node execution updates (e.g., entering decompose, retrieve)
+- `reasoning` - Reasoning step completed with description
+- `chunk` - Source chunk retrieved with citation info
+- `answer` - Final answer text (may stream in parts)
+- `complete` - Query completed with request_id and timing
+- `error` - Error occurred with code and message
+
+**Example SSE Stream:**
+```
+event: status
+data: {"node": "decompose", "timestamp": "2024-01-15T10:30:00Z"}
+
+event: chunk
+data: {"chunk_id": "statute:212.05:001", "citation": "Fla. Stat. § 212.05"}
+
+event: answer
+data: {"text": "The Florida sales tax rate is 6%..."}
+
+event: complete
+data: {"request_id": "abc-123", "processing_time_ms": 3250}
+```
+    """,
+    tags=["Query"],
+)
 async def query_stream(
     request: QueryRequest,
     request_id: RequestIdDep,
     graph: AgentGraphDep,
 ) -> StreamingResponse:
-    """Stream query results via Server-Sent Events.
-
-    Events:
-    - `status`: Status updates (node entered, etc.)
-    - `reasoning`: Reasoning step completed
-    - `chunk`: Source chunk retrieved
-    - `answer`: Final answer
-    - `complete`: Final result
-    - `error`: Error occurred
-    """
+    """Stream query results via Server-Sent Events."""
 
     async def event_generator() -> AsyncGenerator[str, None]:
         start_time = time.perf_counter()
@@ -270,17 +310,25 @@ async def query_stream(
 @router.get(
     "/sources/{chunk_id}",
     response_model=ChunkDetailResponse,
+    summary="Get Chunk Details",
+    description="""
+Get full details for a specific chunk by its ID.
+
+Returns:
+- Full text content
+- Document metadata (type, citation, effective date)
+- Hierarchical relationships (parent/child chunks)
+- Related documents via citation graph
+    """,
     responses={404: {"description": "Chunk not found"}},
+    tags=["Sources"],
 )
 async def get_chunk(
     chunk_id: str,
     neo4j: Neo4jDep,
     request_id: RequestIdDep,
 ) -> ChunkDetailResponse:
-    """Get full details for a specific chunk by ID.
-
-    Retrieves chunk content, metadata, and relationships from Neo4j.
-    """
+    """Get full details for a specific chunk by ID."""
     query = """
     MATCH (c:Chunk {id: $chunk_id})
     OPTIONAL MATCH (c)<-[:HAS_CHUNK]-(d:Document)
@@ -334,18 +382,28 @@ async def get_chunk(
 @router.get(
     "/statute/{section}",
     response_model=StatuteWithRulesResponse,
+    summary="Get Statute with Related Documents",
+    description="""
+Get a Florida statute with its full interpretation chain.
+
+Returns:
+- **Statute** - The primary statute document
+- **Implementing Rules** - F.A.C. rules that implement this statute
+- **Interpreting Cases** - Court cases that interpret this statute
+- **Interpreting TAAs** - Technical Assistance Advisements
+
+**Example:** `/api/v1/statute/212.05` returns the sales tax rate statute
+with all related administrative rules and case law.
+    """,
     responses={404: {"description": "Statute not found"}},
+    tags=["Graph"],
 )
 async def get_statute(
     section: str,
     neo4j: Neo4jDep,
     request_id: RequestIdDep,
 ) -> StatuteWithRulesResponse:
-    """Get a statute with its implementing rules and interpreting documents.
-
-    Args:
-        section: Statute section number (e.g., '212.05')
-    """
+    """Get a statute with its implementing rules and interpreting documents."""
     result = get_interpretation_chain(neo4j, section)
 
     if result is None:
@@ -375,15 +433,28 @@ async def get_statute(
 @router.get(
     "/graph/{doc_id:path}/related",
     response_model=RelatedDocumentsResponse,
+    summary="Get Related Documents",
+    description="""
+Get documents related to a given document via the citation graph.
+
+Returns:
+- **Citing Documents** - Documents that cite this document
+- **Cited Documents** - Documents cited by this document
+- **Interpretation Chain** - For statutes, includes implementing rules and cases
+
+The `doc_id` format is `{type}:{identifier}`:
+- `statute:212.05` - Florida Statute section
+- `rule:12A-1.001` - F.A.C. rule
+- `case:123456` - Court case
+- `taa:24B01-001` - Technical Assistance Advisement
+    """,
+    tags=["Graph"],
 )
 async def get_related_documents(
     doc_id: str,
     neo4j: Neo4jDep,
 ) -> RelatedDocumentsResponse:
-    """Get documents related to a given document via citations.
-
-    Returns both documents that cite this one and documents cited by this one.
-    """
+    """Get documents related to a given document via citations."""
     citing = get_citing_documents(neo4j, doc_id) or []
     cited = get_cited_documents(neo4j, doc_id) or []
 
@@ -425,12 +496,24 @@ async def get_related_documents(
 # =============================================================================
 
 
-@router.get("/metrics", response_model=MetricsResponse)
-async def get_metrics() -> MetricsResponse:
-    """Get API metrics.
+@router.get(
+    "/metrics",
+    response_model=MetricsResponse,
+    summary="Get API Metrics",
+    description="""
+Get API performance metrics and statistics.
 
-    Returns query statistics including counts, latency, and error breakdown.
-    """
+Returns:
+- **Query counts** - Total, successful, and failed queries
+- **Success rate** - Percentage of successful queries
+- **Latency stats** - Average, min, max response times
+- **Error breakdown** - Counts by error type
+- **Uptime** - Time since server start
+    """,
+    tags=["Monitoring"],
+)
+async def get_metrics() -> MetricsResponse:
+    """Get API metrics."""
     metrics = get_metrics_collector()
     stats = metrics.get_stats()
 
@@ -455,15 +538,29 @@ async def get_metrics() -> MetricsResponse:
 # =============================================================================
 
 
-@router.get("/health", response_model=HealthResponse)
+@router.get(
+    "/health",
+    response_model=HealthResponse,
+    summary="Health Check",
+    description="""
+Check health of all backend services.
+
+Returns:
+- **Overall status** - `healthy`, `degraded`, or `unhealthy`
+- **Service details** - Per-service health and latency
+
+Status meanings:
+- `healthy` - All services operational
+- `degraded` - Some services unhealthy but system functional
+- `unhealthy` - Critical services unavailable
+    """,
+    tags=["Monitoring"],
+)
 async def health_check(
     neo4j: Neo4jDep,
     weaviate: WeaviateDep,
 ) -> HealthResponse:
-    """Check health of all backend services.
-
-    Returns individual service status and overall system health.
-    """
+    """Check health of all backend services."""
     services = []
 
     # Check Neo4j

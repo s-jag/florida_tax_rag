@@ -71,6 +71,21 @@ class QueryRequest(BaseModel):
         description="Query options",
     )
 
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "query": "What is the Florida state sales tax rate?",
+                    "options": {"include_reasoning": False, "timeout_seconds": 60},
+                },
+                {
+                    "query": "Are groceries exempt from sales tax in Florida?",
+                    "options": {"doc_types": ["statute", "rule"], "tax_year": 2024},
+                },
+            ]
+        }
+    }
+
 
 # =============================================================================
 # Response Models
@@ -128,6 +143,37 @@ class QueryResponse(BaseModel):
     )
     validation_passed: bool = Field(..., description="Whether validation passed")
     processing_time_ms: int = Field(..., description="Processing time in milliseconds")
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "request_id": "abc-123-def",
+                "answer": "The Florida state sales tax rate is 6% pursuant to Fla. Stat. § 212.05. This rate applies to most retail sales of tangible personal property...",
+                "citations": [
+                    {
+                        "doc_id": "statute:212.05",
+                        "citation": "Fla. Stat. § 212.05",
+                        "doc_type": "statute",
+                        "text_snippet": "There is levied on each taxable transaction..."
+                    }
+                ],
+                "sources": [
+                    {
+                        "chunk_id": "statute:212.05:chunk_001",
+                        "doc_id": "statute:212.05",
+                        "doc_type": "statute",
+                        "citation": "Fla. Stat. § 212.05",
+                        "text": "There is levied on each taxable transaction...",
+                        "relevance_score": 0.92
+                    }
+                ],
+                "confidence": 0.92,
+                "warnings": [],
+                "validation_passed": True,
+                "processing_time_ms": 3250
+            }
+        }
+    }
 
 
 # =============================================================================
@@ -220,6 +266,19 @@ class HealthResponse(BaseModel):
     )
     timestamp: datetime = Field(..., description="Health check timestamp")
 
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "status": "healthy",
+                "services": [
+                    {"name": "neo4j", "healthy": True, "latency_ms": 12.5},
+                    {"name": "weaviate", "healthy": True, "latency_ms": 8.3}
+                ],
+                "timestamp": "2024-01-15T10:30:00.000Z"
+            }
+        }
+    }
+
 
 class ErrorDetail(BaseModel):
     """Error detail for ErrorResponse."""
@@ -266,3 +325,18 @@ class MetricsResponse(BaseModel):
     )
     uptime_seconds: float = Field(..., description="Uptime in seconds")
     started_at: str = Field(..., description="Start time ISO format")
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "total_queries": 1500,
+                "successful_queries": 1425,
+                "failed_queries": 75,
+                "success_rate_percent": 95.0,
+                "latency_ms": {"avg": 3250.5, "min": 1200.0, "max": 8500.0},
+                "errors_by_type": {"TIMEOUT": 50, "RETRIEVAL_ERROR": 15, "VALIDATION_ERROR": 10},
+                "uptime_seconds": 86400.0,
+                "started_at": "2024-01-14T10:30:00.000Z"
+            }
+        }
+    }

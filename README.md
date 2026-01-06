@@ -86,7 +86,13 @@ florida_tax_rag/
 │       ├── generation.py   # Response generation, hallucination detection
 │       └── evaluation.py   # LLM judge prompts
 ├── docs/
-│   └── configuration.md    # Configuration guide
+│   ├── architecture.md     # System architecture
+│   ├── api.md              # API reference
+│   ├── configuration.md    # Configuration guide
+│   ├── deployment.md       # Deployment guide
+│   ├── development.md      # Development guide
+│   ├── evaluation.md       # Evaluation guide
+│   └── troubleshooting.md  # Troubleshooting guide
 ├── scripts/
 │   ├── scrape_statutes.py
 │   ├── scrape_admin_code.py
@@ -1493,11 +1499,24 @@ make format             # Format code
 
 ## Documentation
 
-- [docs/configuration.md](./docs/configuration.md) - Configuration guide (environment variables, validation)
-- [SCRAPING_NOTES.md](./SCRAPING_NOTES.md) - Detailed scraping documentation
-- [RETRIEVAL_ANALYSIS.md](./RETRIEVAL_ANALYSIS.md) - Retrieval analysis and alpha tuning results
-- [data/processed/README.md](./data/processed/README.md) - Unified corpus schema documentation
-- [data/evaluation/README.md](./data/evaluation/README.md) - Evaluation methodology and metrics
+### Guides
+
+| Guide | Description |
+|-------|-------------|
+| [Architecture](./docs/architecture.md) | System architecture, components, data flow |
+| [API Reference](./docs/api.md) | REST API endpoints, request/response schemas |
+| [Configuration](./docs/configuration.md) | Environment variables, settings validation |
+| [Deployment](./docs/deployment.md) | Docker setup, production configuration |
+| [Development](./docs/development.md) | Dev setup, testing, contributing |
+| [Evaluation](./docs/evaluation.md) | Metrics, LLM judge, running evaluations |
+| [Troubleshooting](./docs/troubleshooting.md) | Common issues, debugging, FAQ |
+
+### Additional Resources
+
+- [SCRAPING_NOTES.md](./SCRAPING_NOTES.md) - Data collection documentation
+- [RETRIEVAL_ANALYSIS.md](./RETRIEVAL_ANALYSIS.md) - Retrieval analysis and alpha tuning
+- [data/processed/README.md](./data/processed/README.md) - Corpus schema documentation
+- [data/evaluation/README.md](./data/evaluation/README.md) - Golden dataset and methodology
 
 ## License
 
