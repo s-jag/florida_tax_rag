@@ -1157,6 +1157,78 @@ markdown = generate_markdown_report(report)
 
 See [data/evaluation/README.md](./data/evaluation/README.md) for full methodology and [data/evaluation/reports/analysis.md](./data/evaluation/reports/analysis.md) for detailed findings.
 
+### Retrieval Analysis
+
+The system includes a dedicated retrieval analysis module for measuring and optimizing search quality independent of answer generation.
+
+**Retrieval Metrics:**
+- **MRR (Mean Reciprocal Rank)** - How high the first relevant doc ranks
+- **NDCG@k** - Normalized Discounted Cumulative Gain at k
+- **Recall@k** - Fraction of relevant docs in top-k
+- **Precision@k** - Fraction of top-k that are relevant
+
+**Running Retrieval Analysis:**
+
+```bash
+# Full analysis with method comparison
+python scripts/analyze_retrieval.py
+
+# Alpha tuning (find optimal vector vs keyword balance)
+python scripts/analyze_retrieval.py --tune-alpha
+
+# Analyze single question
+python scripts/analyze_retrieval.py --question eval_001
+
+# Debug a specific query
+python scripts/analyze_retrieval.py --debug "What is the Florida sales tax rate?"
+
+# Limit to N questions
+python scripts/analyze_retrieval.py --limit 5
+```
+
+**Alpha Tuning Results:**
+
+The alpha parameter controls the balance between vector similarity (1.0) and keyword/BM25 matching (0.0):
+
+| Alpha | MRR | Recall@10 | Interpretation |
+|-------|-----|-----------|----------------|
+| **0.25** | **0.61** | **0.60** | **Best - keyword-heavy hybrid** |
+| 0.00 | 0.42 | 0.50 | Pure keyword |
+| 0.50 | 0.51 | 0.60 | Balanced |
+| 1.00 | 0.25 | 0.50 | Pure vector (worst) |
+
+**Key Finding:** Keyword-weighted hybrid search (alpha=0.25) significantly outperforms pure vector or pure keyword approaches for legal document retrieval. Legal queries benefit from exact term matching (statute numbers, legal terminology).
+
+**Using the Retrieval Analysis Module:**
+
+```python
+from src.evaluation import (
+    RetrievalAnalyzer,
+    debug_retrieval,
+    mean_reciprocal_rank,
+    recall_at_k,
+)
+from src.retrieval import create_retriever
+
+# Create retriever and analyzer
+retriever = create_retriever()
+analyzer = RetrievalAnalyzer(retriever, dataset)
+
+# Compare retrieval methods for a question
+comparison = analyzer.compare_retrieval_methods(question, top_k=20)
+print(f"Best method: {comparison.best_method} (MRR={comparison.best_mrr:.4f})")
+
+# Tune alpha parameter
+results = analyzer.tune_alpha(alphas=[0.0, 0.25, 0.5, 0.75, 1.0])
+optimal = max(results, key=lambda r: r.mrr)
+print(f"Optimal alpha: {optimal.alpha}")
+
+# Debug single query
+debug_info = debug_retrieval(retriever, "What is the sales tax rate?")
+```
+
+See [RETRIEVAL_ANALYSIS.md](./RETRIEVAL_ANALYSIS.md) for detailed findings and recommendations.
+
 ## Key Features
 
 ### Scraper Infrastructure

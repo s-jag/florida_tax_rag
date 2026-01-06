@@ -29,6 +29,23 @@ from .report import (
     generate_markdown_report,
 )
 from .runner import EvaluationRunner
+from .retrieval_metrics import (
+    AlphaTuningResult,
+    MethodComparisonResult,
+    QueryRetrievalResult,
+    RetrievalAnalysisReport,
+    RetrievalMetrics,
+    find_rank,
+    mean_reciprocal_rank,
+    ndcg_at_k,
+    precision_at_k,
+    recall_at_k,
+)
+from .retrieval_analysis import (
+    RetrievalAnalyzer,
+    debug_retrieval,
+    generate_retrieval_markdown_report,
+)
 
 __all__ = [
     # Enums
@@ -60,4 +77,19 @@ __all__ = [
     "generate_markdown_report",
     # Runner
     "EvaluationRunner",
+    # Retrieval Metrics
+    "AlphaTuningResult",
+    "MethodComparisonResult",
+    "QueryRetrievalResult",
+    "RetrievalAnalysisReport",
+    "RetrievalMetrics",
+    "find_rank",
+    "mean_reciprocal_rank",
+    "ndcg_at_k",
+    "precision_at_k",
+    "recall_at_k",
+    # Retrieval Analysis
+    "RetrievalAnalyzer",
+    "debug_retrieval",
+    "generate_retrieval_markdown_report",
 ]
