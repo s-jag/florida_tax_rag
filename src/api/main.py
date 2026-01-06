@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import AsyncGenerator
@@ -13,6 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from config.settings import get_settings
 from src.observability.context import request_id_var
 from src.observability.logging import configure_logging, get_logger
 from src.observability.metrics import get_metrics_collector
@@ -35,6 +35,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Manage application lifecycle.
 
     Startup:
+    - Load and validate settings
     - Configure structured logging
     - Initialize database connections
     - Warm up connection pools
@@ -44,13 +45,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     - Close database connections
     - Cleanup resources
     """
-    # Configure structured logging
-    # Use JSON output in production, console output in development
-    is_production = os.getenv("ENVIRONMENT", "development") == "production"
-    log_level = os.getenv("LOG_LEVEL", "INFO")
-    configure_logging(json_output=is_production, log_level=log_level)
+    # Load settings (validates via Pydantic)
+    settings = get_settings()
 
-    logger.info("api_startup_started", environment="production" if is_production else "development")
+    # Configure structured logging based on settings
+    configure_logging(
+        json_output=settings.is_production,
+        log_level=settings.log_level,
+    )
+
+    logger.info(
+        "api_startup_started",
+        environment=settings.env,
+        debug=settings.debug,
+    )
 
     # Warm up connections
     try:
@@ -60,17 +68,30 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Verify connectivity
         if not neo4j.health_check():
             logger.warning("neo4j_not_available", status="unavailable")
+            if settings.is_production:
+                raise RuntimeError("Neo4j unavailable in production")
         else:
             logger.info("neo4j_connected", status="connected")
 
         if not weaviate.health_check():
             logger.warning("weaviate_not_available", status="unavailable")
+            if settings.is_production:
+                raise RuntimeError("Weaviate unavailable in production")
         else:
             logger.info("weaviate_connected", status="connected")
 
+    except RuntimeError:
+        # Re-raise production startup failures
+        raise
     except Exception as e:
-        logger.error("connection_initialization_failed", error=str(e), error_type=type(e).__name__)
-        # Continue anyway - health endpoint will report status
+        logger.error(
+            "connection_initialization_failed",
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        if settings.is_production:
+            raise RuntimeError(f"Critical service unavailable: {e}")
+        # Continue in dev/staging - health endpoint will report status
 
     logger.info("api_startup_complete", status="ready")
 
@@ -118,8 +139,8 @@ def create_app() -> FastAPI:
     )
 
     # Rate limiting middleware
-    rate_limit = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
-    app.add_middleware(RateLimitMiddleware, requests_per_minute=rate_limit)
+    settings = get_settings()
+    app.add_middleware(RateLimitMiddleware, requests_per_minute=settings.rate_limit_per_minute)
 
     # Request logging middleware (runs first, logs all requests)
     app.add_middleware(RequestLoggingMiddleware)

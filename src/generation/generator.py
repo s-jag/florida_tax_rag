@@ -15,7 +15,7 @@ from src.generation.models import (
     GeneratedResponse,
     ValidatedCitation,
 )
-from src.generation.prompts import CONTEXT_TEMPLATE, SYSTEM_PROMPT
+from config.prompts import CONTEXT_TEMPLATE, GENERATION_SYSTEM_PROMPT as SYSTEM_PROMPT
 
 logger = structlog.get_logger(__name__)
 

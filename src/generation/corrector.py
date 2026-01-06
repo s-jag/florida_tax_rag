@@ -15,7 +15,7 @@ from src.generation.models import (
     DetectedHallucination,
     ValidationResult,
 )
-from src.generation.prompts import CORRECTION_PROMPT
+from config.prompts import CORRECTION_PROMPT
 
 logger = structlog.get_logger(__name__)
 

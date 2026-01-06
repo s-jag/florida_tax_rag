@@ -14,7 +14,7 @@ from src.generation.models import (
     HallucinationType,
     ValidationResult,
 )
-from src.generation.prompts import HALLUCINATION_DETECTION_PROMPT
+from config.prompts import HALLUCINATION_DETECTION_PROMPT
 
 logger = structlog.get_logger(__name__)
 

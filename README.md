@@ -45,15 +45,13 @@ florida_tax_rag/
 │   │   ├── graph_expander.py # Neo4j graph expansion
 │   │   ├── reranker.py     # Legal-specific reranking
 │   │   ├── query_decomposer.py # Claude-powered query decomposition
-│   │   ├── multi_retriever.py  # Multi-query parallel retrieval
-│   │   └── prompts.py      # LLM prompts for decomposition/scoring
+│   │   └── multi_retriever.py  # Multi-query parallel retrieval
 │   ├── agent/              # LangGraph agentic workflow
 │   │   ├── state.py        # TaxAgentState TypedDict
 │   │   ├── nodes.py        # 9 node functions (decompose, retrieve, validate, etc.)
 │   │   ├── edges.py        # Conditional routing logic
 │   │   └── graph.py        # StateGraph definition
 │   ├── generation/         # LLM response generation with citations
-│   │   ├── prompts.py      # Tax attorney system prompt + validation prompts
 │   │   ├── formatter.py    # Chunk formatting for context
 │   │   ├── generator.py    # TaxLawGenerator class
 │   │   ├── validator.py    # ResponseValidator (hallucination detection)
@@ -73,12 +71,22 @@ florida_tax_rag/
 │   └── evaluation/         # RAG quality evaluation
 │       ├── models.py       # EvalQuestion, EvalResult, JudgmentResult
 │       ├── metrics.py      # Citation precision/recall, F1 score
-│       ├── prompts.py      # LLM judge prompt
 │       ├── llm_judge.py    # GPT-4 based answer evaluation
 │       ├── runner.py       # EvaluationRunner orchestration
-│       └── report.py       # Report models + markdown generation
+│       ├── report.py       # Report models + markdown generation
+│       ├── retrieval_metrics.py  # MRR, NDCG, Recall@k metrics
+│       └── retrieval_analysis.py # RetrievalAnalyzer class
 ├── config/
-│   └── settings.py         # Pydantic settings from environment
+│   ├── settings.py         # Pydantic settings with validation
+│   ├── development.env     # Development environment defaults
+│   ├── staging.env         # Staging environment defaults
+│   ├── production.env.template  # Production template (no secrets)
+│   └── prompts/            # Centralized LLM prompts
+│       ├── retrieval.py    # Query decomposition, classification, relevance
+│       ├── generation.py   # Response generation, hallucination detection
+│       └── evaluation.py   # LLM judge prompts
+├── docs/
+│   └── configuration.md    # Configuration guide
 ├── scripts/
 │   ├── scrape_statutes.py
 │   ├── scrape_admin_code.py
@@ -97,7 +105,9 @@ florida_tax_rag/
 │   ├── test_decomposition.py # Test query decomposition
 │   ├── visualize_agent.py  # Visualize LangGraph agent workflow
 │   ├── test_load.py        # Load testing script
-│   └── run_evaluation.py   # Run evaluation pipeline
+│   ├── run_evaluation.py   # Run evaluation pipeline
+│   ├── analyze_retrieval.py # Retrieval analysis and alpha tuning
+│   └── validate_config.py  # Configuration validation script
 ├── data/
 │   ├── raw/                # Raw scraped data
 │   │   ├── statutes/       # 742 statute sections
@@ -1270,27 +1280,80 @@ TAAs are distributed as PDFs:
 
 ## Configuration
 
-Create a `.env` file:
+### Quick Start
+
+```bash
+# Copy example configuration
+cp .env.example .env
+
+# Fill in API keys and run validation
+python scripts/validate_config.py
+```
+
+### Environment Variables
+
+Create a `.env` file (see `.env.example` for full documentation):
 
 ```env
-# API Keys
-ANTHROPIC_API_KEY=your_key
-VOYAGE_API_KEY=your_key
-OPENAI_API_KEY=your_key          # For GPT-4 evaluation judge (optional)
+# Environment
+ENV=development               # development | staging | production
+DEBUG=true
+LOG_LEVEL=INFO                # DEBUG | INFO | WARNING | ERROR
+
+# Required API Keys
+VOYAGE_API_KEY=your_key       # Voyage AI (legal embeddings)
+ANTHROPIC_API_KEY=your_key    # Anthropic (Claude LLM)
+NEO4J_PASSWORD=your_password
+
+# Optional API Keys
+OPENAI_API_KEY=your_key       # GPT-4 evaluation judge (optional)
+WEAVIATE_API_KEY=your_key     # Weaviate Cloud (optional)
 
 # Database Connections
-WEAVIATE_URL=http://localhost:8080
 NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=your_password
-REDIS_HOST=localhost
-REDIS_PORT=6379
+WEAVIATE_URL=http://localhost:8080
+REDIS_URL=redis://localhost:6379/0
 
-# Observability (optional)
-ENVIRONMENT=development     # development | production (affects log format)
-LOG_LEVEL=INFO              # DEBUG | INFO | WARNING | ERROR
-RATE_LIMIT_PER_MINUTE=60    # Max requests per IP per minute
+# Retrieval Settings
+HYBRID_ALPHA=0.25             # Optimal: keyword-heavy hybrid (0=keyword, 1=vector)
+RETRIEVAL_TOP_K=20
+
+# Generation Settings
+LLM_MODEL=claude-sonnet-4-20250514
+LLM_TEMPERATURE=0.1
+MAX_TOKENS=4096
+
+# Rate Limits
+RATE_LIMIT_PER_MINUTE=60
 ```
+
+### Environment-Specific Configuration
+
+| Environment | File | Key Settings |
+|-------------|------|--------------|
+| Development | `config/development.env` | `DEBUG=true`, `LOG_LEVEL=DEBUG`, relaxed rate limits |
+| Staging | `config/staging.env` | `DEBUG=false`, `LOG_LEVEL=INFO` |
+| Production | `config/production.env.template` | `LOG_LEVEL=WARNING`, fail-fast startup |
+
+### Configuration Validation
+
+```bash
+# Full validation (settings + service connections)
+python scripts/validate_config.py
+
+# Quick validation (settings only)
+python scripts/validate_config.py --quick
+
+# Test specific service
+python scripts/validate_config.py --service neo4j
+
+# Show masked API keys
+python scripts/validate_config.py --verbose
+```
+
+**Production Behavior:** In production (`ENV=production`), the API fails fast if Neo4j or Weaviate are unavailable.
+
+See [docs/configuration.md](./docs/configuration.md) for complete configuration documentation.
 
 ## Development
 
@@ -1336,6 +1399,10 @@ make eval-no-judge      # Run all questions without LLM judge
 # Load Testing
 python scripts/test_load.py           # Run load test (50 req, 5 concurrent)
 python scripts/test_load.py -n 100    # Custom request count
+
+# Configuration
+python scripts/validate_config.py     # Validate settings and test connections
+python scripts/validate_config.py --quick  # Validate settings only
 
 # Development
 make install            # Install dependencies
@@ -1416,9 +1483,19 @@ make format             # Format code
   - [x] Report generation (JSON + Markdown)
   - [x] Baseline metrics established (v1.0)
 
+- [x] **Phase 9: Configuration Management**
+  - [x] Comprehensive Settings class with validators
+  - [x] Environment-specific configs (development, staging, production)
+  - [x] Centralized prompts in `config/prompts/`
+  - [x] Configuration validation script (`scripts/validate_config.py`)
+  - [x] Production fail-fast startup behavior
+  - [x] Configuration documentation (`docs/configuration.md`)
+
 ## Documentation
 
+- [docs/configuration.md](./docs/configuration.md) - Configuration guide (environment variables, validation)
 - [SCRAPING_NOTES.md](./SCRAPING_NOTES.md) - Detailed scraping documentation
+- [RETRIEVAL_ANALYSIS.md](./RETRIEVAL_ANALYSIS.md) - Retrieval analysis and alpha tuning results
 - [data/processed/README.md](./data/processed/README.md) - Unified corpus schema documentation
 - [data/evaluation/README.md](./data/evaluation/README.md) - Evaluation methodology and metrics
 

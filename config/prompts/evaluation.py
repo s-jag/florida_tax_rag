@@ -1,4 +1,10 @@
-"""Prompts for LLM-based evaluation."""
+"""Prompts for LLM-based evaluation.
+
+These prompts are used by:
+- src/evaluation/llm_judge.py
+"""
+
+from __future__ import annotations
 
 JUDGE_PROMPT = """You are evaluating a Florida tax law Q&A system's response.
 

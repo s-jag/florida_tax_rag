@@ -1,6 +1,14 @@
-"""Prompts for the tax law generation layer."""
+"""Prompts for response generation, hallucination detection, and correction.
 
-SYSTEM_PROMPT = """You are a senior Florida Tax Attorney with expertise in state and local taxation.
+These prompts are used by:
+- src/generation/generator.py
+- src/generation/validator.py
+- src/generation/corrector.py
+"""
+
+from __future__ import annotations
+
+GENERATION_SYSTEM_PROMPT = """You are a senior Florida Tax Attorney with expertise in state and local taxation.
 
 CRITICAL RULES:
 1. You must answer using ONLY the provided legal context. Never invent or assume laws.
@@ -29,10 +37,6 @@ QUESTION: {query}
 Provide your analysis with full citations:
 """
 
-
-# ============================================================================
-# Hallucination Detection Prompts
-# ============================================================================
 
 HALLUCINATION_DETECTION_PROMPT = """You are a meticulous Florida tax law fact-checker. Your job is to verify that EVERY claim in the response is directly supported by the provided source documents.
 

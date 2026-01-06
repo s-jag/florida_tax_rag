@@ -12,7 +12,11 @@ from typing import Optional
 import anthropic
 from pydantic import BaseModel, Field, field_validator
 
-from .prompts import CLASSIFICATION_PROMPT, DECOMPOSITION_PROMPT, SYSTEM_MESSAGE
+from config.prompts import (
+    CLASSIFICATION_PROMPT,
+    DECOMPOSITION_PROMPT,
+    RETRIEVAL_SYSTEM_MESSAGE as SYSTEM_MESSAGE,
+)
 
 logger = logging.getLogger(__name__)
 

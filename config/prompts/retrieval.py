@@ -1,4 +1,9 @@
-"""Prompts for query decomposition and classification."""
+"""Prompts for query decomposition, classification, and relevance scoring.
+
+These prompts are used by:
+- src/retrieval/query_decomposer.py
+- src/agent/nodes.py (relevance scoring)
+"""
 
 from __future__ import annotations
 
@@ -54,8 +59,7 @@ Query: {query}
 
 Return ONLY the category name (one word, lowercase).'''
 
-# System message for consistent behavior
-SYSTEM_MESSAGE = '''You are a Florida tax law expert assistant specializing in sales and use tax (Chapter 212 of Florida Statutes).
+RETRIEVAL_SYSTEM_MESSAGE = '''You are a Florida tax law expert assistant specializing in sales and use tax (Chapter 212 of Florida Statutes).
 
 Your role is to help decompose complex tax questions into searchable sub-queries for a legal document retrieval system.
 
@@ -67,7 +71,6 @@ Key Florida tax resources you're familiar with:
 
 Be precise and focused on Florida-specific tax law.'''
 
-# Relevance scoring prompt for agent nodes
 RELEVANCE_PROMPT = '''Given this tax law question and a document excerpt,
 rate the relevance from 0 to 10:
 

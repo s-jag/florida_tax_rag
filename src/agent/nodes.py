@@ -271,7 +271,7 @@ async def score_relevance(state: TaxAgentState) -> dict[str, Any]:
     import anthropic
 
     from config.settings import get_settings
-    from src.retrieval.prompts import RELEVANCE_PROMPT
+    from config.prompts import RELEVANCE_PROMPT
 
     query = state["original_query"]
     results = state.get("current_retrieval_results", [])

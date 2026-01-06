@@ -9,7 +9,7 @@ from typing import Optional
 from openai import AsyncOpenAI
 
 from .models import EvalQuestion, JudgmentResult
-from .prompts import JUDGE_PROMPT
+from config.prompts import JUDGE_PROMPT
 
 
 class LLMJudge:
