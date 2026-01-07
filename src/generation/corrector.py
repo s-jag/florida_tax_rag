@@ -41,7 +41,7 @@ class ResponseCorrector:
     def __init__(
         self,
         client: Any | None = None,
-        model: str = "claude-sonnet-4-20250514",
+        model: str = "claude-haiku-3-5-20241022",  # Changed from Sonnet for faster corrections
         max_tokens: int = 2048,
     ):
         """Initialize the corrector.

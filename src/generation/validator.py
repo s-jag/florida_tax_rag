@@ -39,7 +39,7 @@ class ResponseValidator:
         self,
         client: Any | None = None,
         model: str = "claude-haiku-3-5-20241022",
-        max_tokens: int = 4096,
+        max_tokens: int = 1500,  # Reduced from 4096 (sufficient for JSON output)
     ):
         """Initialize the validator.
 

@@ -127,7 +127,7 @@ def route_after_validation(
     needs_correction = validation_data.get("needs_correction", False)
 
     regeneration_count = state.get("regeneration_count", 0)
-    max_regenerations = state.get("max_regenerations", 2)
+    max_regenerations = state.get("max_regenerations", 1)  # Reduced from 2 for latency
 
     if needs_regeneration and regeneration_count < max_regenerations:
         return "regenerate"

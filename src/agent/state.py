@@ -71,6 +71,6 @@ class TaxAgentState(TypedDict, total=False):
     validation_result: Optional[dict]  # ValidationResult as dict
     correction_result: Optional[dict]  # CorrectionResult as dict
     regeneration_count: int  # Number of regeneration attempts
-    max_regenerations: int  # Max regeneration attempts (default 2)
+    max_regenerations: int  # Max regeneration attempts (default 1)
     validation_passed: bool  # Whether validation passed
     original_answer: Optional[str]  # Original answer before corrections
