@@ -7,13 +7,14 @@ These prompts are used by:
 
 from __future__ import annotations
 
-DECOMPOSITION_PROMPT = '''You are a Florida tax law expert assistant.
+DECOMPOSITION_PROMPT = """You are a Florida tax law expert assistant.
 
 Given a tax question, break it down into specific sub-questions that need to be answered.
 
 Consider these aspects:
 1. Definitions: What terms need to be defined under Florida law?
-2. Applicable statutes: Which sections of Florida Statutes (especially Chapter 212 for sales tax) apply?
+2. Applicable statutes: Which sections of Florida Statutes
+   (especially Chapter 212 for sales tax) apply?
 3. Applicable rules: Which Department of Revenue rules (12A-1.xxx) implement those statutes?
 4. Exemptions: Are there any exemptions that might apply?
 5. Local taxes: Are there county-specific surtaxes (Miami-Dade, Hillsborough, etc.)?
@@ -29,7 +30,9 @@ IMPORTANT GUIDELINES:
 Return your response as valid JSON in this exact format:
 {{
     "sub_queries": [
-        {{"text": "specific search query text", "type": "definition|statute|rule|exemption|local|temporal", "priority": 1}}
+        {{"text": "specific search query text",
+          "type": "definition|statute|rule|exemption|local|temporal",
+          "priority": 1}}
     ],
     "reasoning": "Brief explanation of why you decomposed this way (or why you didn't)",
     "is_simple": false
@@ -42,9 +45,9 @@ If the query is simple and doesn't need decomposition, return:
     "is_simple": true
 }}
 
-User Query: {query}'''
+User Query: {query}"""
 
-CLASSIFICATION_PROMPT = '''Classify this Florida tax question into ONE primary category:
+CLASSIFICATION_PROMPT = """Classify this Florida tax question into ONE primary category:
 
 Categories:
 - definition: Asks what something means under tax law (e.g., "What is tangible personal property?")
@@ -57,11 +60,13 @@ Categories:
 
 Query: {query}
 
-Return ONLY the category name (one word, lowercase).'''
+Return ONLY the category name (one word, lowercase)."""
 
-RETRIEVAL_SYSTEM_MESSAGE = '''You are a Florida tax law expert assistant specializing in sales and use tax (Chapter 212 of Florida Statutes).
+RETRIEVAL_SYSTEM_MESSAGE = """You are a Florida tax law expert assistant specializing in
+sales and use tax (Chapter 212 of Florida Statutes).
 
-Your role is to help decompose complex tax questions into searchable sub-queries for a legal document retrieval system.
+Your role is to help decompose complex tax questions into searchable sub-queries
+for a legal document retrieval system.
 
 Key Florida tax resources you're familiar with:
 - Florida Statutes Chapter 212 (Sales and Use Tax)
@@ -69,9 +74,9 @@ Key Florida tax resources you're familiar with:
 - Technical Assistance Advisements (TAAs)
 - Florida case law on tax matters
 
-Be precise and focused on Florida-specific tax law.'''
+Be precise and focused on Florida-specific tax law."""
 
-RELEVANCE_PROMPT = '''Given this tax law question and a document excerpt,
+RELEVANCE_PROMPT = """Given this tax law question and a document excerpt,
 rate the relevance from 0 to 10:
 
 Question: {query}
@@ -85,4 +90,4 @@ Consider:
 - Is this the authoritative source (statute > rule > case > taa)?
 - Is this current law or potentially superseded?
 
-Return JSON only: {{"score": 0-10, "reasoning": "brief explanation"}}'''
+Return JSON only: {{"score": 0-10, "reasoning": "brief explanation"}}"""

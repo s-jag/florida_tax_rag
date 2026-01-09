@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import AsyncGenerator
 
-import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -150,9 +149,7 @@ def create_app() -> FastAPI:
     # ==========================================================================
 
     @app.exception_handler(TaxRAGError)
-    async def handle_tax_rag_error(
-        request: Request, exc: TaxRAGError
-    ) -> JSONResponse:
+    async def handle_tax_rag_error(request: Request, exc: TaxRAGError) -> JSONResponse:
         """Handle custom TaxRAG exceptions."""
         request_id = request_id_var.get("unknown")
 
@@ -180,9 +177,7 @@ def create_app() -> FastAPI:
         )
 
     @app.exception_handler(RateLimitError)
-    async def handle_rate_limit_error(
-        request: Request, exc: RateLimitError
-    ) -> JSONResponse:
+    async def handle_rate_limit_error(request: Request, exc: RateLimitError) -> JSONResponse:
         """Handle rate limit exceeded errors with Retry-After header."""
         request_id = request_id_var.get("unknown")
 
@@ -242,9 +237,7 @@ def create_app() -> FastAPI:
         )
 
     @app.exception_handler(Exception)
-    async def general_exception_handler(
-        request: Request, exc: Exception
-    ) -> JSONResponse:
+    async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         """Handle unexpected exceptions."""
         request_id = request_id_var.get("unknown")
 

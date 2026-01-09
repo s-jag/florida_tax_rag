@@ -19,8 +19,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from statistics import mean, stdev
-from typing import Any, Optional
+from statistics import mean
 
 import httpx
 
@@ -32,30 +31,81 @@ sys.path.insert(0, str(PROJECT_ROOT))
 BENCHMARK_QUERIES = [
     # Simple factual queries
     {"query": "What is the Florida sales tax rate?", "category": "factual", "difficulty": "easy"},
-    {"query": "What is the corporate income tax rate in Florida?", "category": "factual", "difficulty": "easy"},
-    {"query": "What is the documentary stamp tax rate?", "category": "factual", "difficulty": "easy"},
-
+    {
+        "query": "What is the corporate income tax rate in Florida?",
+        "category": "factual",
+        "difficulty": "easy",
+    },
+    {
+        "query": "What is the documentary stamp tax rate?",
+        "category": "factual",
+        "difficulty": "easy",
+    },
     # Exemption queries
-    {"query": "Are groceries exempt from sales tax in Florida?", "category": "exemption", "difficulty": "medium"},
-    {"query": "Is clothing exempt from Florida sales tax?", "category": "exemption", "difficulty": "medium"},
-    {"query": "What medical items are exempt from Florida sales tax?", "category": "exemption", "difficulty": "medium"},
-
+    {
+        "query": "Are groceries exempt from sales tax in Florida?",
+        "category": "exemption",
+        "difficulty": "medium",
+    },
+    {
+        "query": "Is clothing exempt from Florida sales tax?",
+        "category": "exemption",
+        "difficulty": "medium",
+    },
+    {
+        "query": "What medical items are exempt from Florida sales tax?",
+        "category": "exemption",
+        "difficulty": "medium",
+    },
     # Complex multi-step queries
-    {"query": "How does a business determine if it has sales tax nexus in Florida?", "category": "nexus", "difficulty": "hard"},
-    {"query": "What are the requirements for claiming a resale exemption certificate?", "category": "procedural", "difficulty": "hard"},
-    {"query": "How is use tax calculated when purchasing from out-of-state vendors?", "category": "calculation", "difficulty": "hard"},
-
+    {
+        "query": "How does a business determine if it has sales tax nexus in Florida?",
+        "category": "nexus",
+        "difficulty": "hard",
+    },
+    {
+        "query": "What are the requirements for claiming a resale exemption certificate?",
+        "category": "procedural",
+        "difficulty": "hard",
+    },
+    {
+        "query": "How is use tax calculated when purchasing from out-of-state vendors?",
+        "category": "calculation",
+        "difficulty": "hard",
+    },
     # SaaS/Technology queries
-    {"query": "How does Florida tax SaaS subscriptions?", "category": "technology", "difficulty": "hard"},
-    {"query": "Are cloud computing services taxable in Florida?", "category": "technology", "difficulty": "hard"},
-
+    {
+        "query": "How does Florida tax SaaS subscriptions?",
+        "category": "technology",
+        "difficulty": "hard",
+    },
+    {
+        "query": "Are cloud computing services taxable in Florida?",
+        "category": "technology",
+        "difficulty": "hard",
+    },
     # Rental/Lease queries
-    {"query": "How is commercial real estate rental taxed in Florida?", "category": "rental", "difficulty": "medium"},
-    {"query": "What is the tax treatment of equipment leases in Florida?", "category": "rental", "difficulty": "medium"},
-
+    {
+        "query": "How is commercial real estate rental taxed in Florida?",
+        "category": "rental",
+        "difficulty": "medium",
+    },
+    {
+        "query": "What is the tax treatment of equipment leases in Florida?",
+        "category": "rental",
+        "difficulty": "medium",
+    },
     # Specific statute queries
-    {"query": "What does Florida Statute 212.05 say about sales tax?", "category": "statute", "difficulty": "easy"},
-    {"query": "What are the penalties for late sales tax filing under Chapter 212?", "category": "statute", "difficulty": "medium"},
+    {
+        "query": "What does Florida Statute 212.05 say about sales tax?",
+        "category": "statute",
+        "difficulty": "easy",
+    },
+    {
+        "query": "What are the penalties for late sales tax filing under Chapter 212?",
+        "category": "statute",
+        "difficulty": "medium",
+    },
 ]
 
 
@@ -71,8 +121,8 @@ class BenchmarkResult:
     stage_timings: dict[str, float] = field(default_factory=dict)
     confidence: float = 0.0
     citation_count: int = 0
-    error: Optional[str] = None
-    request_id: Optional[str] = None
+    error: str | None = None
+    request_id: str | None = None
 
 
 @dataclass
@@ -143,9 +193,7 @@ class BenchmarkSummary:
                     stage_times[stage] = []
                 stage_times[stage].append(timing)
 
-        return {
-            stage: mean(times) for stage, times in stage_times.items()
-        }
+        return {stage: mean(times) for stage, times in stage_times.items()}
 
     def get_metrics_by_category(self) -> dict[str, dict[str, float]]:
         """Get metrics broken down by query category."""
@@ -302,7 +350,7 @@ async def run_benchmark(
     return summary
 
 
-def generate_report(summary: BenchmarkSummary, comparison: Optional[dict] = None) -> str:
+def generate_report(summary: BenchmarkSummary, comparison: dict | None = None) -> str:
     """Generate a markdown report from benchmark results."""
     lines = [
         "# Florida Tax RAG Benchmark Report",
@@ -323,34 +371,40 @@ def generate_report(summary: BenchmarkSummary, comparison: Optional[dict] = None
     ]
 
     if summary.latencies:
-        lines.extend([
-            f"| Min Latency | {min(summary.latencies):.0f}ms |",
-            f"| Max Latency | {max(summary.latencies):.0f}ms |",
-        ])
+        lines.extend(
+            [
+                f"| Min Latency | {min(summary.latencies):.0f}ms |",
+                f"| Max Latency | {max(summary.latencies):.0f}ms |",
+            ]
+        )
 
     # Stage timing breakdown
     stage_avgs = summary.get_stage_averages()
     if stage_avgs:
-        lines.extend([
-            "",
-            "## Pipeline Stage Timing (Average)",
-            "",
-            "| Stage | Average (ms) |",
-            "|-------|-------------|",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Pipeline Stage Timing (Average)",
+                "",
+                "| Stage | Average (ms) |",
+                "|-------|-------------|",
+            ]
+        )
         for stage, avg in sorted(stage_avgs.items(), key=lambda x: -x[1]):
             lines.append(f"| {stage} | {avg:.0f} |")
 
     # By category
     category_metrics = summary.get_metrics_by_category()
     if category_metrics:
-        lines.extend([
-            "",
-            "## Results by Category",
-            "",
-            "| Category | Count | Success Rate | Avg Latency |",
-            "|----------|-------|--------------|-------------|",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Results by Category",
+                "",
+                "| Category | Count | Success Rate | Avg Latency |",
+                "|----------|-------|--------------|-------------|",
+            ]
+        )
         for cat, metrics in sorted(category_metrics.items()):
             lines.append(
                 f"| {cat} | {metrics['count']} | {metrics['success_rate']:.0f}% | {metrics['avg_latency_ms']:.0f}ms |"
@@ -359,13 +413,15 @@ def generate_report(summary: BenchmarkSummary, comparison: Optional[dict] = None
     # By difficulty
     diff_metrics = summary.get_metrics_by_difficulty()
     if diff_metrics:
-        lines.extend([
-            "",
-            "## Results by Difficulty",
-            "",
-            "| Difficulty | Count | Success Rate | Avg Latency |",
-            "|------------|-------|--------------|-------------|",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Results by Difficulty",
+                "",
+                "| Difficulty | Count | Success Rate | Avg Latency |",
+                "|------------|-------|--------------|-------------|",
+            ]
+        )
         for diff in ["easy", "medium", "hard"]:
             if diff in diff_metrics:
                 metrics = diff_metrics[diff]
@@ -375,13 +431,15 @@ def generate_report(summary: BenchmarkSummary, comparison: Optional[dict] = None
 
     # Comparison if provided
     if comparison:
-        lines.extend([
-            "",
-            "## Comparison with Previous Run",
-            "",
-            "| Metric | Before | After | Change |",
-            "|--------|--------|-------|--------|",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Comparison with Previous Run",
+                "",
+                "| Metric | Before | After | Change |",
+                "|--------|--------|-------|--------|",
+            ]
+        )
 
         before_p95 = comparison.get("p95_latency_ms", 0)
         after_p95 = summary.p95_latency_ms

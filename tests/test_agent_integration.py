@@ -24,9 +24,11 @@ async def test_full_agent_flow():
     """
     graph = create_tax_agent_graph()
 
-    result = await graph.ainvoke({
-        "original_query": "Is software consulting taxable in Miami?",
-    })
+    result = await graph.ainvoke(
+        {
+            "original_query": "Is software consulting taxable in Miami?",
+        }
+    )
 
     # Verify decomposition happened
     assert "sub_queries" in result
@@ -61,9 +63,11 @@ async def test_simple_query_flow():
     """
     graph = create_tax_agent_graph()
 
-    result = await graph.ainvoke({
-        "original_query": "What is the Florida sales tax rate?",
-    })
+    result = await graph.ainvoke(
+        {
+            "original_query": "What is the Florida sales tax rate?",
+        }
+    )
 
     assert result.get("is_simple_query") is True
     assert len(result.get("retrieved_chunks", [])) > 0
@@ -75,9 +79,11 @@ async def test_homestead_exemption_query():
     """Test with homestead exemption query."""
     graph = create_tax_agent_graph()
 
-    result = await graph.ainvoke({
-        "original_query": "What are the requirements for homestead exemption?",
-    })
+    result = await graph.ainvoke(
+        {
+            "original_query": "What are the requirements for homestead exemption?",
+        }
+    )
 
     assert "sub_queries" in result
     assert "retrieved_chunks" in result
@@ -96,9 +102,11 @@ async def test_temporal_query_flow():
     """Test with query mentioning specific tax year."""
     graph = create_tax_agent_graph()
 
-    result = await graph.ainvoke({
-        "original_query": "What was the sales tax rate in 2023?",
-    })
+    result = await graph.ainvoke(
+        {
+            "original_query": "What was the sales tax rate in 2023?",
+        }
+    )
 
     # Should extract 2023 as the tax year
     assert result.get("query_tax_year") == 2023
@@ -110,9 +118,11 @@ async def test_complex_multi_aspect_query():
     """Test with complex query that should decompose into multiple sub-queries."""
     graph = create_tax_agent_graph()
 
-    result = await graph.ainvoke({
-        "original_query": "Are software as a service (SaaS) products taxable in Florida, and are there any exemptions for resale or manufacturing?",
-    })
+    result = await graph.ainvoke(
+        {
+            "original_query": "Are software as a service (SaaS) products taxable in Florida, and are there any exemptions for resale or manufacturing?",
+        }
+    )
 
     # Complex query should decompose
     assert "is_simple_query" in result
@@ -130,9 +140,11 @@ async def test_graph_context_populated():
     """Test that graph context is populated when statutes are found."""
     graph = create_tax_agent_graph()
 
-    result = await graph.ainvoke({
-        "original_query": "What does Florida Statute 212.05 say about sales tax?",
-    })
+    result = await graph.ainvoke(
+        {
+            "original_query": "What does Florida Statute 212.05 say about sales tax?",
+        }
+    )
 
     # If we found statutes, graph_context should be populated
     retrieved = result.get("retrieved_chunks", [])
@@ -149,9 +161,11 @@ async def test_confidence_score_range():
     """Test that confidence score is in valid range."""
     graph = create_tax_agent_graph()
 
-    result = await graph.ainvoke({
-        "original_query": "Is food taxable?",
-    })
+    result = await graph.ainvoke(
+        {
+            "original_query": "Is food taxable?",
+        }
+    )
 
     confidence = result.get("confidence", -1)
     assert 0 <= confidence <= 1, f"Confidence {confidence} out of range [0, 1]"
@@ -162,9 +176,11 @@ async def test_citations_have_required_fields():
     """Test that citations have all required fields."""
     graph = create_tax_agent_graph()
 
-    result = await graph.ainvoke({
-        "original_query": "What is tangible personal property?",
-    })
+    result = await graph.ainvoke(
+        {
+            "original_query": "What is tangible personal property?",
+        }
+    )
 
     citations = result.get("citations", [])
 

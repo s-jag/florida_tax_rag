@@ -17,7 +17,6 @@ from src.ingestion.build_citation_graph import (
 )
 from src.ingestion.citation_extractor import Citation, CitationType, RelationType
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================
@@ -129,27 +128,19 @@ class TestBuildCitationIndex:
         assert "statute:212.05" in citation_index.statute_to_chunks
         assert len(citation_index.statute_to_chunks["statute:212.05"]) == 2
 
-    def test_indexes_rules(
-        self, sample_chunks: list[dict], citation_index: CitationIndex
-    ) -> None:
+    def test_indexes_rules(self, sample_chunks: list[dict], citation_index: CitationIndex) -> None:
         """Should index rule chunks."""
         assert "rule:12A-1.001" in citation_index.rule_to_chunks
 
-    def test_indexes_cases(
-        self, sample_chunks: list[dict], citation_index: CitationIndex
-    ) -> None:
+    def test_indexes_cases(self, sample_chunks: list[dict], citation_index: CitationIndex) -> None:
         """Should index case chunks."""
         assert "case:1234567" in citation_index.case_to_chunks
 
-    def test_indexes_taas(
-        self, sample_chunks: list[dict], citation_index: CitationIndex
-    ) -> None:
+    def test_indexes_taas(self, sample_chunks: list[dict], citation_index: CitationIndex) -> None:
         """Should index TAA chunks."""
         assert "taa:24A-001" in citation_index.taa_to_chunks
 
-    def test_builds_section_to_doc_mapping(
-        self, citation_index: CitationIndex
-    ) -> None:
+    def test_builds_section_to_doc_mapping(self, citation_index: CitationIndex) -> None:
         """Should map section numbers to doc IDs."""
         assert "212.05" in citation_index.section_to_doc
         assert citation_index.section_to_doc["212.05"] == "statute:212.05"
@@ -159,9 +150,7 @@ class TestBuildCitationIndex:
         assert "12A-1.001" in citation_index.rule_to_doc
         assert citation_index.rule_to_doc["12A-1.001"] == "rule:12A-1.001"
 
-    def test_builds_case_citation_mapping(
-        self, citation_index: CitationIndex
-    ) -> None:
+    def test_builds_case_citation_mapping(self, citation_index: CitationIndex) -> None:
         """Should map normalized case citations to doc IDs."""
         # The normalized form of "366 So. 2d 1173"
         assert any("1173" in k for k in citation_index.case_citation_to_id.keys())
@@ -224,9 +213,7 @@ class TestResolveCitation:
         assert chunk_id is not None
         assert confidence == 1.0
 
-    def test_resolves_statute_with_subsection(
-        self, citation_index: CitationIndex
-    ) -> None:
+    def test_resolves_statute_with_subsection(self, citation_index: CitationIndex) -> None:
         """Should resolve statute with subsection to base section."""
         citation = Citation(
             raw_text="Section 212.05(1)(a)",
@@ -270,9 +257,7 @@ class TestResolveCitation:
         assert doc_id == "case:1234567"
         assert confidence == 0.9
 
-    def test_returns_none_for_unresolvable(
-        self, citation_index: CitationIndex
-    ) -> None:
+    def test_returns_none_for_unresolvable(self, citation_index: CitationIndex) -> None:
         """Should return None for unresolvable citation."""
         citation = Citation(
             raw_text="Section 999.99",
@@ -325,9 +310,7 @@ class TestExtractChunkCitations:
         assert len(relations) >= 1
         # Should find the 212.05 citation
         statute_relations = [
-            r
-            for r in relations
-            if r.target_citation.citation_type == CitationType.STATUTE
+            r for r in relations if r.target_citation.citation_type == CitationType.STATUTE
         ]
         assert len(statute_relations) >= 1
 
@@ -342,11 +325,7 @@ class TestExtractChunkCitations:
         relations = extract_chunk_citations(chunk, citation_index)
 
         # Should not include self-reference to 212.05
-        self_refs = [
-            r
-            for r in relations
-            if r.target_citation.section == "212.05"
-        ]
+        self_refs = [r for r in relations if r.target_citation.section == "212.05"]
         assert len(self_refs) == 0
 
 
@@ -382,9 +361,7 @@ class TestBuildCitationGraph:
         # Should have at least one resolved edge
         assert len(resolved) >= 1
         # The rule should cite the statute
-        rule_to_statute = [
-            e for e in resolved if e.source_doc_id == "rule:12A-1.001"
-        ]
+        rule_to_statute = [e for e in resolved if e.source_doc_id == "rule:12A-1.001"]
         assert len(rule_to_statute) >= 1
 
     def test_respects_min_confidence(self) -> None:

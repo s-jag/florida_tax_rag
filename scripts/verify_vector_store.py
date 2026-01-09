@@ -129,12 +129,11 @@ def main() -> int:
     query = "tax exemption"
     query_vector = embedder.embed_query(query)
     results = client.hybrid_search(
-        query, query_vector, alpha=0.5, limit=5,
-        filters={"doc_type": "statute"}
+        query, query_vector, alpha=0.5, limit=5, filters={"doc_type": "statute"}
     )
 
     print(f"Query: {query}")
-    print(f"Filter: doc_type = statute")
+    print("Filter: doc_type = statute")
     print(f"Results: {len(results)}")
 
     if results:
@@ -151,12 +150,11 @@ def main() -> int:
     query = "administrative procedure"
     query_vector = embedder.embed_query(query)
     results = client.hybrid_search(
-        query, query_vector, alpha=0.5, limit=5,
-        filters={"doc_type": "rule"}
+        query, query_vector, alpha=0.5, limit=5, filters={"doc_type": "rule"}
     )
 
     print(f"Query: {query}")
-    print(f"Filter: doc_type = rule")
+    print("Filter: doc_type = rule")
     print(f"Results: {len(results)}")
 
     if results:
@@ -173,12 +171,11 @@ def main() -> int:
     query = "sales tax"
     query_vector = embedder.embed_query(query)
     results = client.hybrid_search(
-        query, query_vector, alpha=0.5, limit=5,
-        filters={"doc_type": "case"}
+        query, query_vector, alpha=0.5, limit=5, filters={"doc_type": "case"}
     )
 
     print(f"Query: {query}")
-    print(f"Filter: doc_type = case")
+    print("Filter: doc_type = case")
     print(f"Results: {len(results)}")
 
     if results:
@@ -195,12 +192,11 @@ def main() -> int:
     query = "technical assistance"
     query_vector = embedder.embed_query(query)
     results = client.hybrid_search(
-        query, query_vector, alpha=0.5, limit=5,
-        filters={"doc_type": "taa"}
+        query, query_vector, alpha=0.5, limit=5, filters={"doc_type": "taa"}
     )
 
     print(f"Query: {query}")
-    print(f"Filter: doc_type = taa")
+    print("Filter: doc_type = taa")
     print(f"Results: {len(results)}")
 
     if results:
@@ -239,12 +235,11 @@ def main() -> int:
     query = "exemption"
     query_vector = embedder.embed_query(query)
     results = client.hybrid_search(
-        query, query_vector, alpha=0.5, limit=5,
-        filters={"doc_type": "statute", "level": "parent"}
+        query, query_vector, alpha=0.5, limit=5, filters={"doc_type": "statute", "level": "parent"}
     )
 
     print(f"Query: {query}")
-    print(f"Filters: doc_type=statute, level=parent")
+    print("Filters: doc_type=statute, level=parent")
     print(f"Results: {len(results)}")
 
     if results:

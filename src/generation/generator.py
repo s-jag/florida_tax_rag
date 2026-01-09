@@ -9,13 +9,14 @@ from typing import Any
 
 import structlog
 
+from config.prompts import CONTEXT_TEMPLATE
+from config.prompts import GENERATION_SYSTEM_PROMPT as SYSTEM_PROMPT
 from src.generation.formatter import format_chunks_for_context
 from src.generation.models import (
     ExtractedCitation,
     GeneratedResponse,
     ValidatedCitation,
 )
-from config.prompts import CONTEXT_TEMPLATE, GENERATION_SYSTEM_PROMPT as SYSTEM_PROMPT
 
 logger = structlog.get_logger(__name__)
 
@@ -70,9 +71,7 @@ class TaxLawGenerator:
             from config.settings import get_settings
 
             settings = get_settings()
-            self.client = anthropic.Anthropic(
-                api_key=settings.anthropic_api_key.get_secret_value()
-            )
+            self.client = anthropic.Anthropic(api_key=settings.anthropic_api_key.get_secret_value())
         return self.client
 
     async def generate(
@@ -424,9 +423,7 @@ class TaxLawGenerator:
         }
 
         # Calculate source quality score (top 5 chunks)
-        source_weights = [
-            doc_type_weights.get(c.get("doc_type", ""), 0.5) for c in chunks[:5]
-        ]
+        source_weights = [doc_type_weights.get(c.get("doc_type", ""), 0.5) for c in chunks[:5]]
         source_score = sum(source_weights) / max(len(source_weights), 1)
 
         # Calculate verification score

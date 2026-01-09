@@ -20,22 +20,20 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.evaluation.authority_metrics import AuthorityMetrics, aggregate_authority_metrics
+from src.evaluation.authority_metrics import AuthorityMetrics
 from src.evaluation.correction_metrics import CorrectionMetrics
 from src.evaluation.visualizations import (
+    create_ablation_comparison,
+    create_alpha_tuning_curve,
     create_authority_heatmap,
     create_correction_funnel,
-    create_precision_recall_curve,
-    create_alpha_tuning_curve,
+    create_faithfulness_distribution,
     create_latency_distribution,
     create_metrics_by_category,
     create_metrics_by_difficulty,
-    create_ablation_comparison,
+    create_precision_recall_curve,
     create_retrieval_radar,
-    create_faithfulness_distribution,
-    create_summary_metrics_card,
 )
-
 
 DASHBOARD_TEMPLATE = """
 <!DOCTYPE html>
@@ -300,10 +298,26 @@ def generate_sample_data() -> dict:
             "queries_failed": 0,
         },
         "precision_recall_data": [
-            {"method": "vector", "recall": [0.3, 0.5, 0.6, 0.7, 0.8], "precision": [0.9, 0.85, 0.8, 0.7, 0.6]},
-            {"method": "keyword", "recall": [0.4, 0.55, 0.65, 0.72, 0.78], "precision": [0.88, 0.82, 0.75, 0.68, 0.62]},
-            {"method": "hybrid", "recall": [0.5, 0.65, 0.75, 0.82, 0.88], "precision": [0.92, 0.88, 0.85, 0.8, 0.75]},
-            {"method": "graph", "recall": [0.55, 0.7, 0.8, 0.85, 0.9], "precision": [0.94, 0.9, 0.87, 0.82, 0.78]},
+            {
+                "method": "vector",
+                "recall": [0.3, 0.5, 0.6, 0.7, 0.8],
+                "precision": [0.9, 0.85, 0.8, 0.7, 0.6],
+            },
+            {
+                "method": "keyword",
+                "recall": [0.4, 0.55, 0.65, 0.72, 0.78],
+                "precision": [0.88, 0.82, 0.75, 0.68, 0.62],
+            },
+            {
+                "method": "hybrid",
+                "recall": [0.5, 0.65, 0.75, 0.82, 0.88],
+                "precision": [0.92, 0.88, 0.85, 0.8, 0.75],
+            },
+            {
+                "method": "graph",
+                "recall": [0.55, 0.7, 0.8, 0.85, 0.9],
+                "precision": [0.94, 0.9, 0.87, 0.82, 0.78],
+            },
         ],
         "alpha_tuning": {
             "alphas": [0.0, 0.25, 0.5, 0.75, 1.0],
@@ -311,10 +325,34 @@ def generate_sample_data() -> dict:
             "optimal": 0.25,
         },
         "retrieval_methods": {
-            "vector": {"mrr": 0.25, "ndcg_at_10": 0.37, "recall_at_10": 0.5, "precision_at_5": 0.4, "auth_ndcg": 0.35},
-            "keyword": {"mrr": 0.42, "ndcg_at_10": 0.65, "recall_at_10": 0.5, "precision_at_5": 0.5, "auth_ndcg": 0.55},
-            "hybrid": {"mrr": 0.61, "ndcg_at_10": 0.78, "recall_at_10": 0.6, "precision_at_5": 0.6, "auth_ndcg": 0.75},
-            "graph": {"mrr": 0.65, "ndcg_at_10": 0.82, "recall_at_10": 0.7, "precision_at_5": 0.65, "auth_ndcg": 0.85},
+            "vector": {
+                "mrr": 0.25,
+                "ndcg_at_10": 0.37,
+                "recall_at_10": 0.5,
+                "precision_at_5": 0.4,
+                "auth_ndcg": 0.35,
+            },
+            "keyword": {
+                "mrr": 0.42,
+                "ndcg_at_10": 0.65,
+                "recall_at_10": 0.5,
+                "precision_at_5": 0.5,
+                "auth_ndcg": 0.55,
+            },
+            "hybrid": {
+                "mrr": 0.61,
+                "ndcg_at_10": 0.78,
+                "recall_at_10": 0.6,
+                "precision_at_5": 0.6,
+                "auth_ndcg": 0.75,
+            },
+            "graph": {
+                "mrr": 0.65,
+                "ndcg_at_10": 0.82,
+                "recall_at_10": 0.7,
+                "precision_at_5": 0.65,
+                "auth_ndcg": 0.85,
+            },
         },
         "metrics_by_category": {
             "categories": ["Sales Tax", "Exemptions", "Corporate", "Procedures"],
@@ -333,12 +371,70 @@ def generate_sample_data() -> dict:
             "values_on": [0, 0.95, 0.72, 0.91],
             "values_off": [12, 0.88, 0.70, 0.75],
         },
-        "faithfulness_scores": [0.95, 0.92, 0.88, 0.91, 0.85, 0.93, 0.89, 0.96, 0.87, 0.94,
-                               0.90, 0.92, 0.88, 0.95, 0.91, 0.86, 0.93, 0.89, 0.94, 0.87,
-                               0.72, 0.65, 0.78, 0.55, 0.82, 0.45, 0.91, 0.88, 0.93, 0.90],
-        "latencies": [2500, 3200, 2800, 4100, 3500, 2900, 3800, 2600, 3100, 4500,
-                     2700, 3300, 2900, 3600, 4200, 2800, 3400, 3000, 3700, 4800,
-                     5500, 6200, 3100, 2500, 2800, 3200, 3900, 4100, 3500, 2900],
+        "faithfulness_scores": [
+            0.95,
+            0.92,
+            0.88,
+            0.91,
+            0.85,
+            0.93,
+            0.89,
+            0.96,
+            0.87,
+            0.94,
+            0.90,
+            0.92,
+            0.88,
+            0.95,
+            0.91,
+            0.86,
+            0.93,
+            0.89,
+            0.94,
+            0.87,
+            0.72,
+            0.65,
+            0.78,
+            0.55,
+            0.82,
+            0.45,
+            0.91,
+            0.88,
+            0.93,
+            0.90,
+        ],
+        "latencies": [
+            2500,
+            3200,
+            2800,
+            4100,
+            3500,
+            2900,
+            3800,
+            2600,
+            3100,
+            4500,
+            2700,
+            3300,
+            2900,
+            3600,
+            4200,
+            2800,
+            3400,
+            3000,
+            3700,
+            4800,
+            5500,
+            6200,
+            3100,
+            2500,
+            2800,
+            3200,
+            3900,
+            4100,
+            3500,
+            2900,
+        ],
     }
 
 
@@ -450,7 +546,9 @@ def generate_dashboard(data: dict, output_path: Path) -> Path:
     chart_scripts = []
     for div_id, fig in charts:
         chart_json = fig.to_json()
-        chart_scripts.append(f"Plotly.newPlot('{div_id}', {chart_json}.data, {chart_json}.layout, chartConfig);")
+        chart_scripts.append(
+            f"Plotly.newPlot('{div_id}', {chart_json}.data, {chart_json}.layout, chartConfig);"
+        )
 
     # Get summary values
     summary = data.get("summary", {})

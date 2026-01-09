@@ -75,12 +75,13 @@ async def main() -> None:
         use_cache=not args.no_cache,
         raw_data_dir=raw_data_dir,
     ) as scraper:
-
         # Handle --list-chapters
         if args.list_chapters:
             divisions = args.division or list(scraper.TAX_DIVISIONS.keys())
             for division in divisions:
-                print(f"\n=== Division {division}: {scraper.TAX_DIVISIONS.get(division, 'Unknown')} ===")
+                print(
+                    f"\n=== Division {division}: {scraper.TAX_DIVISIONS.get(division, 'Unknown')} ==="
+                )
                 chapters = await scraper.get_division_chapters(division)
                 for ch in chapters:
                     print(f"  {ch['chapter']}: {ch['title']}")
@@ -155,7 +156,7 @@ async def main() -> None:
         print()
 
         results = await scraper.scrape(divisions=divisions, delay=args.delay)
-        print(f"\n=== Scrape Complete ===")
+        print("\n=== Scrape Complete ===")
         print(f"Total rules scraped: {len(results)}")
 
 

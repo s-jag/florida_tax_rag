@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -16,7 +15,7 @@ class CitationContext(BaseModel):
     relation_type: str = Field(
         ..., description="Type of relation (CITES, IMPLEMENTS, AUTHORITY, INTERPRETS)"
     )
-    context_snippet: Optional[str] = Field(
+    context_snippet: str | None = Field(
         default=None, description="Surrounding text where citation appears"
     )
 
@@ -32,36 +31,26 @@ class RetrievalResult(BaseModel):
 
     # Content
     text: str = Field(..., description="Chunk text content")
-    text_with_ancestry: Optional[str] = Field(
-        default=None, description="Text with ancestry prefix"
-    )
-    ancestry: Optional[str] = Field(
+    text_with_ancestry: str | None = Field(default=None, description="Text with ancestry prefix")
+    ancestry: str | None = Field(
         default=None, description="Hierarchical path (e.g., Chapter 212 > § 212.05)"
     )
-    citation: Optional[str] = Field(
+    citation: str | None = Field(
         default=None, description="Legal citation (e.g., Fla. Stat. § 212.05)"
     )
-    effective_date: Optional[date] = Field(
-        default=None, description="Effective date of the document"
-    )
-    token_count: Optional[int] = Field(
-        default=None, description="Number of tokens in the chunk"
-    )
+    effective_date: date | None = Field(default=None, description="Effective date of the document")
+    token_count: int | None = Field(default=None, description="Number of tokens in the chunk")
 
     # Scores
     score: float = Field(..., description="Combined relevance score")
-    vector_score: Optional[float] = Field(
+    vector_score: float | None = Field(
         default=None, description="Score from vector similarity search"
     )
-    keyword_score: Optional[float] = Field(
-        default=None, description="Score from BM25 keyword search"
-    )
-    graph_boost: float = Field(
-        default=0.0, description="Score boost from graph relationships"
-    )
+    keyword_score: float | None = Field(default=None, description="Score from BM25 keyword search")
+    graph_boost: float = Field(default=0.0, description="Score boost from graph relationships")
 
     # Graph enrichment
-    parent_chunk_id: Optional[str] = Field(
+    parent_chunk_id: str | None = Field(
         default=None, description="ID of the parent chunk (for child chunks)"
     )
     related_chunk_ids: list[str] = Field(

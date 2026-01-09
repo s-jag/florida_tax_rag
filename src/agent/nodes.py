@@ -142,16 +142,10 @@ async def retrieve_for_subquery(state: TaxAgentState) -> dict[str, Any]:
         # Run all retrievals in parallel
         if profiler:
             with profiler.stage("retrieve", query_count=len(remaining_queries)):
-                tasks = [
-                    retrieve_one(q, start_idx + i)
-                    for i, q in enumerate(remaining_queries)
-                ]
+                tasks = [retrieve_one(q, start_idx + i) for i, q in enumerate(remaining_queries)]
                 all_results = await asyncio.gather(*tasks)
         else:
-            tasks = [
-                retrieve_one(q, start_idx + i)
-                for i, q in enumerate(remaining_queries)
-            ]
+            tasks = [retrieve_one(q, start_idx + i) for i, q in enumerate(remaining_queries)]
             all_results = await asyncio.gather(*tasks)
 
         # Flatten and deduplicate results by chunk_id
@@ -179,9 +173,7 @@ async def retrieve_for_subquery(state: TaxAgentState) -> dict[str, Any]:
         reasoning_steps = []
         for i, (q, batch) in enumerate(zip(remaining_queries, all_results)):
             query_text = q.get("text", "")[:50]
-            reasoning_steps.append(
-                f"Retrieved {len(batch)} chunks for: {query_text}..."
-            )
+            reasoning_steps.append(f"Retrieved {len(batch)} chunks for: {query_text}...")
         reasoning_steps.append(
             f"Combined {total_before_dedup} results, deduplicated to {len(results_dicts)}"
         )
@@ -221,15 +213,13 @@ async def expand_with_graph(state: TaxAgentState) -> dict[str, Any]:
     from src.graph.queries import get_citing_documents, get_interpretation_chain
 
     results = state.get("current_retrieval_results", [])
-    logger.info(
-        "node_started", node="expand_with_graph", result_count=len(results)
-    )
+    logger.info("node_started", node="expand_with_graph", result_count=len(results))
 
     profiler = get_profiler()
     graph_context: list[dict[str, Any]] = []
     interpretation_chains: dict[str, Any] = {}
 
-    async def _do_expand(client: "Neo4jClient") -> None:
+    async def _do_expand(client: Neo4jClient) -> None:
         nonlocal graph_context, interpretation_chains
         for result in results:
             doc_id = result.get("doc_id", "")
@@ -238,44 +228,48 @@ async def expand_with_graph(state: TaxAgentState) -> dict[str, Any]:
             try:
                 if doc_type == "statute":
                     section = doc_id.split(":")[-1] if ":" in doc_id else doc_id
-                    chain = await asyncio.to_thread(
-                        get_interpretation_chain, client, section
-                    )
+                    chain = await asyncio.to_thread(get_interpretation_chain, client, section)
                     if chain:
                         interpretation_chains[doc_id] = chain.model_dump()
                         for rule in chain.implementing_rules:
-                            graph_context.append({
-                                "target_doc_id": rule.id,
-                                "target_citation": rule.full_citation,
-                                "relation_type": "IMPLEMENTS",
-                                "context_snippet": None,
-                            })
+                            graph_context.append(
+                                {
+                                    "target_doc_id": rule.id,
+                                    "target_citation": rule.full_citation,
+                                    "relation_type": "IMPLEMENTS",
+                                    "context_snippet": None,
+                                }
+                            )
                         for case in chain.interpreting_cases:
-                            graph_context.append({
-                                "target_doc_id": case.id,
-                                "target_citation": case.full_citation,
-                                "relation_type": "INTERPRETS",
-                                "context_snippet": None,
-                            })
+                            graph_context.append(
+                                {
+                                    "target_doc_id": case.id,
+                                    "target_citation": case.full_citation,
+                                    "relation_type": "INTERPRETS",
+                                    "context_snippet": None,
+                                }
+                            )
                         for taa in chain.interpreting_taas:
-                            graph_context.append({
-                                "target_doc_id": taa.id,
-                                "target_citation": taa.full_citation,
-                                "relation_type": "INTERPRETS",
-                                "context_snippet": None,
-                            })
+                            graph_context.append(
+                                {
+                                    "target_doc_id": taa.id,
+                                    "target_citation": taa.full_citation,
+                                    "relation_type": "INTERPRETS",
+                                    "context_snippet": None,
+                                }
+                            )
 
                 elif doc_type in ("rule", "case", "taa"):
-                    citing = await asyncio.to_thread(
-                        get_citing_documents, client, doc_id
-                    )
+                    citing = await asyncio.to_thread(get_citing_documents, client, doc_id)
                     for doc in citing[:5]:
-                        graph_context.append({
-                            "target_doc_id": doc.id,
-                            "target_citation": doc.full_citation,
-                            "relation_type": "CITES",
-                            "context_snippet": None,
-                        })
+                        graph_context.append(
+                            {
+                                "target_doc_id": doc.id,
+                                "target_citation": doc.full_citation,
+                                "relation_type": "CITES",
+                                "context_snippet": None,
+                            }
+                        )
 
             except Exception as e:
                 logger.warning(
@@ -303,9 +297,7 @@ async def expand_with_graph(state: TaxAgentState) -> dict[str, Any]:
         return {
             "graph_context": graph_context,
             "interpretation_chains": interpretation_chains,
-            "reasoning_steps": [
-                f"Graph expansion found {len(graph_context)} related documents"
-            ],
+            "reasoning_steps": [f"Graph expansion found {len(graph_context)} related documents"],
         }
 
     except Exception as e:
@@ -332,21 +324,17 @@ async def score_relevance(state: TaxAgentState) -> dict[str, Any]:
     """
     import anthropic
 
-    from config.settings import get_settings
     from config.prompts import RELEVANCE_PROMPT
+    from config.settings import get_settings
 
     query = state["original_query"]
     results = state.get("current_retrieval_results", [])
 
-    logger.info(
-        "node_started", node="score_relevance", chunk_count=len(results)
-    )
+    logger.info("node_started", node="score_relevance", chunk_count=len(results))
 
     profiler = get_profiler()
     settings = get_settings()
-    client = anthropic.Anthropic(
-        api_key=settings.anthropic_api_key.get_secret_value()
-    )
+    client = anthropic.Anthropic(api_key=settings.anthropic_api_key.get_secret_value())
 
     relevance_scores: dict[str, float] = {}
 
@@ -381,9 +369,7 @@ async def score_relevance(state: TaxAgentState) -> dict[str, Any]:
             reasoning = data.get("reasoning", "")
             return chunk_id, score, reasoning
         except Exception as e:
-            logger.warning(
-                "scoring_failed", chunk_id=chunk_id, error=str(e)
-            )
+            logger.warning("scoring_failed", chunk_id=chunk_id, error=str(e))
             return chunk_id, 0.5, f"Scoring failed: {e}"
 
     # Score chunks in parallel with semaphore to limit concurrency
@@ -487,8 +473,7 @@ async def filter_irrelevant(state: TaxAgentState) -> dict[str, Any]:
     return {
         "filtered_chunks": filtered,
         "reasoning_steps": [
-            f"Filtered {removed} chunks below threshold {threshold}. "
-            f"Kept {len(filtered)} chunks."
+            f"Filtered {removed} chunks below threshold {threshold}. Kept {len(filtered)} chunks."
         ],
     }
 
@@ -669,7 +654,7 @@ async def synthesize_answer(state: TaxAgentState) -> dict[str, Any]:
         fallback_citations: list[dict[str, Any]] = [
             {
                 "doc_id": c.get("doc_id", ""),
-                "citation": c.get("citation", f"Source {i+1}"),
+                "citation": c.get("citation", f"Source {i + 1}"),
                 "doc_type": c.get("doc_type", "unknown"),
                 "text_snippet": c.get("text", "")[:200],
             }

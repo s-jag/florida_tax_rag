@@ -5,7 +5,6 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass
@@ -16,8 +15,8 @@ class QueryMetrics:
     successful_queries: int = 0
     failed_queries: int = 0
     total_latency_ms: float = 0.0
-    min_latency_ms: Optional[float] = None
-    max_latency_ms: Optional[float] = None
+    min_latency_ms: float | None = None
+    max_latency_ms: float | None = None
     errors_by_type: dict[str, int] = field(default_factory=dict)
     started_at: datetime = field(default_factory=datetime.utcnow)
 
@@ -36,10 +35,10 @@ class MetricsCollector:
         stats = metrics.get_stats()
     """
 
-    _instance: Optional["MetricsCollector"] = None
+    _instance: MetricsCollector | None = None
     _lock: threading.Lock = threading.Lock()
 
-    def __new__(cls) -> "MetricsCollector":
+    def __new__(cls) -> MetricsCollector:
         """Ensure singleton instance."""
         if cls._instance is None:
             with cls._lock:
@@ -54,7 +53,7 @@ class MetricsCollector:
         self,
         latency_ms: float,
         success: bool,
-        error_type: Optional[str] = None,
+        error_type: str | None = None,
     ) -> None:
         """Record metrics for a completed query.
 
@@ -101,13 +100,9 @@ class MetricsCollector:
         """
         with self._metrics_lock:
             m = self._metrics
-            avg_latency = (
-                m.total_latency_ms / m.total_queries if m.total_queries > 0 else 0.0
-            )
+            avg_latency = m.total_latency_ms / m.total_queries if m.total_queries > 0 else 0.0
             success_rate = (
-                (m.successful_queries / m.total_queries * 100)
-                if m.total_queries > 0
-                else 0.0
+                (m.successful_queries / m.total_queries * 100) if m.total_queries > 0 else 0.0
             )
             uptime_seconds = (datetime.utcnow() - m.started_at).total_seconds()
 

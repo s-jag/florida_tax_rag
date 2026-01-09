@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import date, datetime
-from typing import Any, Optional
+from typing import Any
 
 import redis
 
@@ -67,7 +67,7 @@ class QueryCache:
         self._hits = 0
         self._misses = 0
 
-    def _cache_key(self, query: str, options: Optional[dict[str, Any]] = None) -> str:
+    def _cache_key(self, query: str, options: dict[str, Any] | None = None) -> str:
         """Generate cache key from query and options.
 
         Args:
@@ -86,7 +86,8 @@ class QueryCache:
         if options:
             # Only include options that affect the query result
             relevant_options = {
-                k: v for k, v in sorted(options.items())
+                k: v
+                for k, v in sorted(options.items())
                 if k in ("tax_year", "include_reasoning") and v is not None
             }
             if relevant_options:
@@ -99,8 +100,8 @@ class QueryCache:
     async def get(
         self,
         query: str,
-        options: Optional[dict[str, Any]] = None,
-    ) -> Optional[dict[str, Any]]:
+        options: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         """Get cached response if exists.
 
         Args:
@@ -130,7 +131,7 @@ class QueryCache:
     async def set(
         self,
         query: str,
-        options: Optional[dict[str, Any]],
+        options: dict[str, Any] | None,
         response: dict[str, Any],
     ) -> bool:
         """Cache response with TTL.
@@ -164,7 +165,7 @@ class QueryCache:
             logger.warning("cache_set_error", key=key, error=str(e))
             return False
 
-    async def invalidate(self, query: str, options: Optional[dict[str, Any]] = None) -> bool:
+    async def invalidate(self, query: str, options: dict[str, Any] | None = None) -> bool:
         """Invalidate a cached entry.
 
         Args:
@@ -220,10 +221,10 @@ class QueryCache:
 
 
 # Singleton instance
-_query_cache: Optional[QueryCache] = None
+_query_cache: QueryCache | None = None
 
 
-def get_query_cache() -> Optional[QueryCache]:
+def get_query_cache() -> QueryCache | None:
     """Get the singleton query cache instance.
 
     Returns:

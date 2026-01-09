@@ -13,20 +13,21 @@ Usage:
 
 from __future__ import annotations
 
+from .evaluation import JUDGE_PROMPT
+from .generation import (
+    CONTEXT_TEMPLATE,
+    CORRECTION_PROMPT,
+    GENERATION_SYSTEM_PROMPT,
+    HALLUCINATION_DETECTION_PROMPT,
+)
+
 # Re-export all prompts for convenient access
 from .retrieval import (
-    DECOMPOSITION_PROMPT,
     CLASSIFICATION_PROMPT,
-    RETRIEVAL_SYSTEM_MESSAGE,
+    DECOMPOSITION_PROMPT,
     RELEVANCE_PROMPT,
+    RETRIEVAL_SYSTEM_MESSAGE,
 )
-from .generation import (
-    GENERATION_SYSTEM_PROMPT,
-    CONTEXT_TEMPLATE,
-    HALLUCINATION_DETECTION_PROMPT,
-    CORRECTION_PROMPT,
-)
-from .evaluation import JUDGE_PROMPT
 
 # Legacy aliases for backward compatibility
 SYSTEM_PROMPT = GENERATION_SYSTEM_PROMPT

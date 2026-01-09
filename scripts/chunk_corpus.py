@@ -19,12 +19,12 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.ingestion import Corpus, LegalDocument, chunk_corpus, ChunkLevel
+from src.ingestion import Corpus, LegalDocument, chunk_corpus
 
 
 def load_corpus(corpus_path: Path) -> Corpus:
     """Load the corpus from JSON file."""
-    with open(corpus_path, "r", encoding="utf-8") as f:
+    with open(corpus_path, encoding="utf-8") as f:
         data = json.load(f)
 
     # Reconstruct Corpus from JSON
@@ -43,6 +43,7 @@ def load_corpus(corpus_path: Path) -> Corpus:
         effective_date = None
         if doc_data.get("effective_date"):
             from datetime import date as date_type
+
             effective_date = date_type.fromisoformat(doc_data["effective_date"])
 
         # Parse scraped_at
@@ -126,10 +127,10 @@ def main():
         over_2000 = sum(1 for t in token_counts if t >= 2000)
         print()
         print("Token distribution:")
-        print(f"  <500 tokens: {under_500} ({100*under_500//len(token_counts)}%)")
-        print(f"  500-999 tokens: {under_1000} ({100*under_1000//len(token_counts)}%)")
-        print(f"  1000-1999 tokens: {under_2000} ({100*under_2000//len(token_counts)}%)")
-        print(f"  2000+ tokens: {over_2000} ({100*over_2000//len(token_counts)}%)")
+        print(f"  <500 tokens: {under_500} ({100 * under_500 // len(token_counts)}%)")
+        print(f"  500-999 tokens: {under_1000} ({100 * under_1000 // len(token_counts)}%)")
+        print(f"  1000-1999 tokens: {under_2000} ({100 * under_2000 // len(token_counts)}%)")
+        print(f"  2000+ tokens: {over_2000} ({100 * over_2000 // len(token_counts)}%)")
 
     # Save chunks
     print()

@@ -24,7 +24,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.vector.client import WeaviateClient
-from src.vector.schema import CollectionName, VOYAGE_LAW_2_DIMENSION
+from src.vector.schema import VOYAGE_LAW_2_DIMENSION, CollectionName
 
 # Configure logging
 logging.basicConfig(
@@ -97,9 +97,7 @@ def main() -> int:
     Returns:
         Exit code (0 for success, 1 for failure)
     """
-    parser = argparse.ArgumentParser(
-        description="Initialize Weaviate schema for Florida Tax RAG"
-    )
+    parser = argparse.ArgumentParser(description="Initialize Weaviate schema for Florida Tax RAG")
     parser.add_argument(
         "--delete",
         action="store_true",

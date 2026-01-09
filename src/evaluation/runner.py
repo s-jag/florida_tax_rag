@@ -5,11 +5,11 @@ from __future__ import annotations
 import json
 import time
 from collections import defaultdict
-from pathlib import Path
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
-from .authority_metrics import compute_authority_metrics, aggregate_authority_metrics
-from .correction_metrics import CorrectionTracker, CorrectionAction
+from .authority_metrics import compute_authority_metrics
+from .correction_metrics import CorrectionTracker
 from .llm_judge import LLMJudge
 from .metrics import (
     answer_contains_expected,
@@ -24,7 +24,6 @@ from .models import (
     EvalDataset,
     EvalQuestion,
     EvalResult,
-    FaithfulnessMetricsResult,
 )
 from .report import (
     AuthorityAnalysis,
@@ -43,7 +42,7 @@ class EvaluationRunner:
     def __init__(
         self,
         agent: Any,
-        judge: Optional[LLMJudge],
+        judge: LLMJudge | None,
         dataset_path: str,
         enable_authority_metrics: bool = True,
         enable_faithfulness_check: bool = False,
@@ -81,7 +80,7 @@ class EvaluationRunner:
     async def run_single(
         self,
         question: EvalQuestion,
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
     ) -> EvalResult:
         """Run evaluation on a single question.
 
@@ -140,10 +139,7 @@ class EvaluationRunner:
         authority_metrics_result = None
         if self.enable_authority_metrics:
             chunks = result.get("retrieved_chunks", [])
-            doc_types = [
-                chunk.get("doc_type", "unknown")
-                for chunk in chunks
-            ]
+            doc_types = [chunk.get("doc_type", "unknown") for chunk in chunks]
             if doc_types:
                 auth_metrics = compute_authority_metrics(doc_types)
                 authority_metrics_result = AuthorityMetricsResult(
@@ -198,8 +194,8 @@ class EvaluationRunner:
 
     async def run_all(
         self,
-        limit: Optional[int] = None,
-        progress_callback: Optional[Callable[[int, int], None]] = None,
+        limit: int | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
         timeout_per_question: int = 120,
     ) -> FullEvaluationReport:
         """Run evaluation on all questions in the dataset.
@@ -220,7 +216,9 @@ class EvaluationRunner:
 
         for i, question in enumerate(questions):
             try:
-                print(f"  [{i+1}/{len(questions)}] Evaluating: {question.id} - {question.question[:50]}...")
+                print(
+                    f"  [{i + 1}/{len(questions)}] Evaluating: {question.id} - {question.question[:50]}..."
+                )
                 result = await self.run_single(question, timeout=timeout_per_question)
                 results.append(result)
 
@@ -229,7 +227,9 @@ class EvaluationRunner:
                     status = "PASS" if result.judgment.passed else "FAIL"
                     print(f"    -> Score: {result.judgment.overall_score}/10 [{status}]")
                 else:
-                    print(f"    -> Precision: {result.citation_precision:.0%}, Recall: {result.citation_recall:.0%}")
+                    print(
+                        f"    -> Precision: {result.citation_precision:.0%}, Recall: {result.citation_recall:.0%}"
+                    )
 
             except Exception as e:
                 failed.append(question.id)
@@ -274,8 +274,12 @@ class EvaluationRunner:
                     hallucinations=result.judgment.hallucinations if result.judgment else [],
                     missing_concepts=result.judgment.missing_concepts if result.judgment else [],
                     latency_ms=result.latency_ms,
-                    faithfulness_score=result.faithfulness_metrics.faithfulness_score if result.faithfulness_metrics else None,
-                    correction_action=result.correction_metrics.action_taken if result.correction_metrics else None,
+                    faithfulness_score=result.faithfulness_metrics.faithfulness_score
+                    if result.faithfulness_metrics
+                    else None,
+                    correction_action=result.correction_metrics.action_taken
+                    if result.correction_metrics
+                    else None,
                 )
                 summaries.append(summary)
 
@@ -308,8 +312,6 @@ class EvaluationRunner:
         if self.enable_authority_metrics:
             auth_results = [r for r in results if r.authority_metrics]
             if auth_results:
-                from .authority_metrics import AuthorityMetrics as AuthMetrics
-                auth_metrics_list = []
                 total_doc_type_dist: dict[str, int] = {}
                 total_by_rank: dict[int, dict[str, int]] = {}
 
@@ -320,10 +322,22 @@ class EvaluationRunner:
                         total_doc_type_dist[dt] = total_doc_type_dist.get(dt, 0) + 1
 
                 authority_analysis = AuthorityAnalysis(
-                    avg_authority_ndcg_at_5=sum(r.authority_metrics.authority_ndcg_at_5 for r in auth_results) / len(auth_results),
-                    avg_authority_ndcg_at_10=sum(r.authority_metrics.authority_ndcg_at_10 for r in auth_results) / len(auth_results),
-                    avg_hierarchy_alignment=sum(r.authority_metrics.hierarchy_alignment_score for r in auth_results) / len(auth_results),
-                    avg_primary_authority_rate=sum(r.authority_metrics.primary_authority_rate_at_5 for r in auth_results) / len(auth_results),
+                    avg_authority_ndcg_at_5=sum(
+                        r.authority_metrics.authority_ndcg_at_5 for r in auth_results
+                    )
+                    / len(auth_results),
+                    avg_authority_ndcg_at_10=sum(
+                        r.authority_metrics.authority_ndcg_at_10 for r in auth_results
+                    )
+                    / len(auth_results),
+                    avg_hierarchy_alignment=sum(
+                        r.authority_metrics.hierarchy_alignment_score for r in auth_results
+                    )
+                    / len(auth_results),
+                    avg_primary_authority_rate=sum(
+                        r.authority_metrics.primary_authority_rate_at_5 for r in auth_results
+                    )
+                    / len(auth_results),
                     doc_type_distribution=total_doc_type_dist,
                     authority_by_rank=total_by_rank,
                 )
@@ -351,18 +365,31 @@ class EvaluationRunner:
         faith_results = [r for r in results if r.faithfulness_metrics]
         if faith_results:
             faithfulness_analysis = FaithfulnessAnalysis(
-                total_claims_checked=sum(r.faithfulness_metrics.total_claims for r in faith_results),
+                total_claims_checked=sum(
+                    r.faithfulness_metrics.total_claims for r in faith_results
+                ),
                 total_supported=sum(r.faithfulness_metrics.supported_claims for r in faith_results),
-                total_partially_supported=sum(r.faithfulness_metrics.partially_supported_claims for r in faith_results),
-                total_unsupported=sum(r.faithfulness_metrics.unsupported_claims for r in faith_results),
-                total_contradicted=sum(r.faithfulness_metrics.contradicted_claims for r in faith_results),
-                avg_faithfulness_score=sum(r.faithfulness_metrics.faithfulness_score for r in faith_results) / len(faith_results),
+                total_partially_supported=sum(
+                    r.faithfulness_metrics.partially_supported_claims for r in faith_results
+                ),
+                total_unsupported=sum(
+                    r.faithfulness_metrics.unsupported_claims for r in faith_results
+                ),
+                total_contradicted=sum(
+                    r.faithfulness_metrics.contradicted_claims for r in faith_results
+                ),
+                avg_faithfulness_score=sum(
+                    r.faithfulness_metrics.faithfulness_score for r in faith_results
+                )
+                / len(faith_results),
             )
 
         # Calculate aggregate faithfulness score
         avg_faithfulness = 1.0
         if faith_results:
-            avg_faithfulness = sum(r.faithfulness_metrics.faithfulness_score for r in faith_results) / len(faith_results)
+            avg_faithfulness = sum(
+                r.faithfulness_metrics.faithfulness_score for r in faith_results
+            ) / len(faith_results)
 
         return FullEvaluationReport(
             dataset_version=self.dataset.metadata.get("version", "1.0.0"),
@@ -408,7 +435,8 @@ class EvaluationRunner:
             metrics[cat] = CategoryMetrics(
                 category=cat,
                 count=len(cat_results),
-                avg_precision=sum(r.citation_precision for r in cat_results) / max(len(cat_results), 1),
+                avg_precision=sum(r.citation_precision for r in cat_results)
+                / max(len(cat_results), 1),
                 avg_recall=sum(r.citation_recall for r in cat_results) / max(len(cat_results), 1),
                 avg_score=sum(r.judgment.overall_score for r in judged) / max(len(judged), 1),
                 pass_rate=sum(1 for r in judged if r.judgment.passed) / max(len(judged), 1),
@@ -436,7 +464,8 @@ class EvaluationRunner:
             metrics[diff] = DifficultyMetrics(
                 difficulty=diff,
                 count=len(diff_results),
-                avg_precision=sum(r.citation_precision for r in diff_results) / max(len(diff_results), 1),
+                avg_precision=sum(r.citation_precision for r in diff_results)
+                / max(len(diff_results), 1),
                 avg_recall=sum(r.citation_recall for r in diff_results) / max(len(diff_results), 1),
                 avg_score=sum(r.judgment.overall_score for r in judged) / max(len(judged), 1),
                 pass_rate=sum(1 for r in judged if r.judgment.passed) / max(len(judged), 1),

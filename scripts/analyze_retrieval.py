@@ -50,9 +50,7 @@ def load_dataset(path: str) -> EvalDataset:
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Analyze retrieval quality for Florida Tax RAG"
-    )
+    parser = argparse.ArgumentParser(description="Analyze retrieval quality for Florida Tax RAG")
     parser.add_argument(
         "--dataset",
         default="data/evaluation/golden_dataset.json",
@@ -151,10 +149,7 @@ def main() -> int:
                     continue
                 for r in results[:10]:
                     marker = " *" if r.get("matches_expected") else ""
-                    print(
-                        f"  [{r['rank']:2d}] {r['doc_id']} "
-                        f"(score={r['score']:.4f}){marker}"
-                    )
+                    print(f"  [{r['rank']:2d}] {r['doc_id']} (score={r['score']:.4f}){marker}")
                     print(f"       {r['text_preview'][:70]}...")
 
         weaviate.close()
@@ -249,10 +244,8 @@ def main() -> int:
 
         all_results = []
         for i, question in enumerate(dataset.questions):
-            print(f"  {i+1}/{len(dataset.questions)}: {question.id}", end="\r")
-            result = analyzer.analyze_query(
-                question, top_k=args.top_k, method=args.method
-            )
+            print(f"  {i + 1}/{len(dataset.questions)}: {question.id}", end="\r")
+            result = analyzer.analyze_query(question, top_k=args.top_k, method=args.method)
             all_results.append(result)
 
         print("\n\nResults:")
@@ -286,9 +279,7 @@ def main() -> int:
     def progress(step, i, n):
         print(f"  {step}: {i}/{n}", end="\r")
 
-    report = analyzer.run_full_analysis(
-        alphas=alphas, top_k=args.top_k, progress_callback=progress
-    )
+    report = analyzer.run_full_analysis(alphas=alphas, top_k=args.top_k, progress_callback=progress)
 
     print("\n")
 

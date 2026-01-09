@@ -17,7 +17,6 @@ import random
 import time
 from dataclasses import dataclass, field
 from statistics import mean, stdev
-from typing import Optional
 
 import httpx
 
@@ -43,8 +42,8 @@ class RequestResult:
     success: bool
     status_code: int
     latency_ms: float
-    error: Optional[str] = None
-    request_id: Optional[str] = None
+    error: str | None = None
+    request_id: str | None = None
 
 
 @dataclass
@@ -218,7 +217,7 @@ def print_results(results: LoadTestResults) -> None:
     print("LOAD TEST RESULTS")
     print("=" * 60)
 
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f"  Total Requests:     {results.total_requests}")
     print(f"  Successful:         {results.successful_requests}")
     print(f"  Failed:             {results.failed_requests}")
@@ -226,7 +225,7 @@ def print_results(results: LoadTestResults) -> None:
     print(f"  Duration:           {results.duration_seconds:.2f}s")
     print(f"  Requests/Second:    {results.requests_per_second:.2f}")
 
-    print(f"\nLatency (ms):")
+    print("\nLatency (ms):")
     print(f"  Average:            {results.avg_latency_ms:.0f}")
     print(f"  P50:                {results.p50_latency_ms:.0f}")
     print(f"  P95:                {results.p95_latency_ms:.0f}")
@@ -238,12 +237,12 @@ def print_results(results: LoadTestResults) -> None:
             print(f"  Std Dev:            {stdev(results.latencies):.0f}")
 
     if results.status_codes:
-        print(f"\nStatus Codes:")
+        print("\nStatus Codes:")
         for code, count in sorted(results.status_codes.items()):
             print(f"  {code}: {count}")
 
     if results.errors:
-        print(f"\nErrors:")
+        print("\nErrors:")
         for error, count in sorted(results.errors.items(), key=lambda x: -x[1]):
             print(f"  {error}: {count}")
 
@@ -262,7 +261,7 @@ async def check_health(url: str) -> bool:
         return False
 
 
-async def get_metrics(url: str) -> Optional[dict]:
+async def get_metrics(url: str) -> dict | None:
     """Get metrics from the API."""
     metrics_url = url.rsplit("/", 1)[0] + "/metrics"
     try:
@@ -320,7 +319,7 @@ async def main():
 
     args = parser.parse_args()
 
-    print(f"Florida Tax RAG API Load Test")
+    print("Florida Tax RAG API Load Test")
     print(f"URL: {args.url}")
     print(f"Requests: {args.num_requests}, Concurrency: {args.concurrency}")
     print(f"Timeout: {args.timeout}s, Think Time: {args.think_time}s")
@@ -339,7 +338,7 @@ async def main():
         print(f"  Initial queries: {initial_metrics.get('total_queries', 'N/A')}")
 
     # Run load test
-    print(f"\nStarting load test...")
+    print("\nStarting load test...")
     results = await run_load_test(
         url=args.url,
         num_requests=args.num_requests,

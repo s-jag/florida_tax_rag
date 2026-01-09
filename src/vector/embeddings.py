@@ -6,7 +6,7 @@ import hashlib
 import json
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import redis
@@ -67,7 +67,7 @@ class EmbeddingCache:
         """
         return f"{self.prefix}{self._hash_text(text)}"
 
-    def get(self, text: str) -> Optional[list[float]]:
+    def get(self, text: str) -> list[float] | None:
         """Get cached embedding by text.
 
         Args:
@@ -148,9 +148,9 @@ class VoyageEmbedder:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         model: str = "voyage-law-2",
-        cache: Optional[EmbeddingCache] = None,
+        cache: EmbeddingCache | None = None,
         batch_size: int = 72,  # Conservative default to stay under 120K token limit
         rate_limit_delay: float = 0.1,
     ):
@@ -237,7 +237,7 @@ class VoyageEmbedder:
             return []
 
         start_time = time.time()
-        embeddings: list[Optional[list[float]]] = [None] * len(texts)
+        embeddings: list[list[float] | None] = [None] * len(texts)
 
         # Check cache first
         texts_to_embed: list[tuple[int, str]] = []
@@ -264,7 +264,7 @@ class VoyageEmbedder:
             iterator = tqdm(batches, desc="Embedding", disable=not show_progress)
 
             for batch_idx, batch in enumerate(iterator):
-                batch_indices = [idx for idx, _ in batch]
+                [idx for idx, _ in batch]
                 batch_texts = [text for _, text in batch]
 
                 try:
@@ -294,10 +294,7 @@ class VoyageEmbedder:
         self.stats["total_time"] += time.time() - start_time
 
         # Return embeddings, using zero vectors for any failures
-        return [
-            emb if emb is not None else [0.0] * self.dimension
-            for emb in embeddings
-        ]
+        return [emb if emb is not None else [0.0] * self.dimension for emb in embeddings]
 
     def embed_query(self, query: str) -> list[float]:
         """Embed a single query for retrieval.
@@ -389,7 +386,7 @@ def create_redis_client(
 
 
 def create_embedder_with_cache(
-    api_key: Optional[str] = None,
+    api_key: str | None = None,
     use_cache: bool = True,
 ) -> VoyageEmbedder:
     """Create a VoyageEmbedder with optional Redis cache.

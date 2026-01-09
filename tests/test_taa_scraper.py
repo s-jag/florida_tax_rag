@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.scrapers.taa import FloridaTAAScraper
 from src.scrapers.models import RawTAA, TAAMetadata
-
+from src.scrapers.taa import FloridaTAAScraper
 
 # =============================================================================
 # Fixtures
@@ -105,7 +104,7 @@ class TestScraperInit:
     def test_creates_output_dirs(self, temp_dirs: tuple[Path, Path]) -> None:
         """Should create taa and pdfs output directories."""
         cache_dir, raw_data_dir = temp_dirs
-        scraper = FloridaTAAScraper(
+        FloridaTAAScraper(
             cache_dir=cache_dir,
             raw_data_dir=raw_data_dir,
         )
@@ -199,9 +198,7 @@ class TestGetTAAIndex:
         self, scraper: FloridaTAAScraper, sample_search_html: str
     ) -> None:
         """Should parse TAA links from search page."""
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = sample_search_html
 
             taas = await scraper.get_taa_index()
@@ -213,13 +210,9 @@ class TestGetTAAIndex:
         assert "TAA 24B-015" in taa_numbers
         assert "TAA 24A-099" in taa_numbers
 
-    async def test_excludes_tips(
-        self, scraper: FloridaTAAScraper, sample_search_html: str
-    ) -> None:
+    async def test_excludes_tips(self, scraper: FloridaTAAScraper, sample_search_html: str) -> None:
         """Should exclude TIP documents."""
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = sample_search_html
 
             taas = await scraper.get_taa_index()
@@ -231,9 +224,7 @@ class TestGetTAAIndex:
         self, scraper: FloridaTAAScraper, sample_search_html: str
     ) -> None:
         """Should exclude court case documents."""
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = sample_search_html
 
             taas = await scraper.get_taa_index()
@@ -245,9 +236,7 @@ class TestGetTAAIndex:
         self, scraper: FloridaTAAScraper, sample_search_html: str
     ) -> None:
         """Should exclude PTO Bulletin documents."""
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = sample_search_html
 
             taas = await scraper.get_taa_index()
@@ -263,9 +252,7 @@ class TestGetTAAIndex:
             <tr><td><a href="/TaxLaw/Documents/25A-001.pdf">TAA 1 Dup</a></td><td>TAA</td><td>01/15/2025</td></tr>
         </table>
         """
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = html
 
             taas = await scraper.get_taa_index()
@@ -347,9 +334,7 @@ class TestExtractSubject:
 class TestExtractQuestion:
     """Test _extract_question method."""
 
-    def test_extracts_question_section(
-        self, scraper: FloridaTAAScraper
-    ) -> None:
+    def test_extracts_question_section(self, scraper: FloridaTAAScraper) -> None:
         """Should extract question section."""
         # Use text that matches the actual regex pattern
         text = """
@@ -393,9 +378,7 @@ class TestExtractQuestion:
 class TestExtractAnswer:
     """Test _extract_answer method."""
 
-    def test_extracts_answer_section(
-        self, scraper: FloridaTAAScraper
-    ) -> None:
+    def test_extracts_answer_section(self, scraper: FloridaTAAScraper) -> None:
         """Should extract answer section."""
         # Use text that matches the actual regex pattern
         text = """
@@ -484,9 +467,7 @@ class TestDownloadPDF:
         pdf_path = scraper.pdf_dir / "test.pdf"
         pdf_path.write_bytes(b"%PDF-1.4 test content")
 
-        result = await scraper.download_pdf(
-            "https://example.com/test.pdf", "test.pdf"
-        )
+        result = await scraper.download_pdf("https://example.com/test.pdf", "test.pdf")
 
         assert result == pdf_path
         # Content should be unchanged (not re-downloaded)
@@ -501,14 +482,10 @@ class TestDownloadPDF:
         mock_client = AsyncMock()
         mock_client.get = AsyncMock(return_value=mock_response)
 
-        with patch.object(
-            scraper, "_get_client", new_callable=AsyncMock
-        ) as mock_get_client:
+        with patch.object(scraper, "_get_client", new_callable=AsyncMock) as mock_get_client:
             mock_get_client.return_value = mock_client
 
-            result = await scraper.download_pdf(
-                "https://example.com/new.pdf", "new.pdf"
-            )
+            result = await scraper.download_pdf("https://example.com/new.pdf", "new.pdf")
 
         assert result.exists()
         assert result.read_bytes() == b"%PDF-1.4 new content"
@@ -531,9 +508,7 @@ class TestExtractPDFText:
 class TestParseTAAContent:
     """Test parse_taa_content method."""
 
-    def test_parses_metadata(
-        self, scraper: FloridaTAAScraper, sample_taa_text: str
-    ) -> None:
+    def test_parses_metadata(self, scraper: FloridaTAAScraper, sample_taa_text: str) -> None:
         """Should parse TAA content into metadata."""
         result = scraper.parse_taa_content(sample_taa_text, "TAA 24A-001")
 
@@ -541,16 +516,12 @@ class TestParseTAAContent:
         assert result.tax_type == "Sales and Use Tax"
         assert result.tax_type_code == "A"
 
-    def test_extracts_title(
-        self, scraper: FloridaTAAScraper, sample_taa_text: str
-    ) -> None:
+    def test_extracts_title(self, scraper: FloridaTAAScraper, sample_taa_text: str) -> None:
         """Should extract title from content."""
         result = scraper.parse_taa_content(sample_taa_text, "TAA 24A-001")
         assert "Manufacturing Equipment" in result.title
 
-    def test_extracts_citations(
-        self, scraper: FloridaTAAScraper, sample_taa_text: str
-    ) -> None:
+    def test_extracts_citations(self, scraper: FloridaTAAScraper, sample_taa_text: str) -> None:
         """Should extract statute citations."""
         result = scraper.parse_taa_content(sample_taa_text, "TAA 24A-001")
         # Check that statutes_cited is a list (may be empty depending on parse_statute_citation)
@@ -576,7 +547,7 @@ class TestSaveTAA:
             metadata=metadata,
             text="Test content",
             source_url="https://example.com/taa.pdf",
-            scraped_at=datetime.now(timezone.utc),
+            scraped_at=datetime.now(UTC),
         )
 
         path = scraper._save_taa(taa)
@@ -595,7 +566,7 @@ class TestSaveTAA:
             metadata=metadata,
             text="Content",
             source_url="https://example.com",
-            scraped_at=datetime.now(timezone.utc),
+            scraped_at=datetime.now(UTC),
         )
 
         path = scraper._save_taa(taa)
@@ -614,9 +585,7 @@ class TestScrapeTAA:
 
     async def test_returns_raw_taa(self, scraper: FloridaTAAScraper) -> None:
         """Should return RawTAA object."""
-        with patch.object(
-            scraper, "download_pdf", new_callable=AsyncMock
-        ) as mock_download:
+        with patch.object(scraper, "download_pdf", new_callable=AsyncMock) as mock_download:
             mock_download.return_value = Path("/tmp/test.pdf")
 
             with patch.object(scraper, "extract_pdf_text") as mock_extract:
@@ -653,17 +622,13 @@ class TestScrapeFromIndex:
         mock_taa.metadata.taa_number = "TAA 1"
         mock_taa.model_dump_json.return_value = "{}"
 
-        with patch.object(
-            scraper, "get_taa_index", new_callable=AsyncMock
-        ) as mock_index:
+        with patch.object(scraper, "get_taa_index", new_callable=AsyncMock) as mock_index:
             mock_index.return_value = index
 
-            with patch.object(
-                scraper, "scrape_taa", new_callable=AsyncMock
-            ) as mock_scrape:
+            with patch.object(scraper, "scrape_taa", new_callable=AsyncMock) as mock_scrape:
                 mock_scrape.return_value = mock_taa
 
-                taas = await scraper.scrape_from_index(max_count=2, delay=0.001)
+                await scraper.scrape_from_index(max_count=2, delay=0.001)
 
         assert mock_scrape.call_count == 2
 
@@ -684,9 +649,7 @@ class TestScrape:
         mock_taa.model_dump.return_value = {"test": "data"}
         mock_taa.model_dump_json.return_value = "{}"
 
-        with patch.object(
-            scraper, "scrape_from_index", new_callable=AsyncMock
-        ) as mock_scrape:
+        with patch.object(scraper, "scrape_from_index", new_callable=AsyncMock) as mock_scrape:
             mock_scrape.return_value = [mock_taa]
 
             results = await scraper.scrape(max_count=1, delay=0.001)
@@ -702,9 +665,7 @@ class TestScrape:
         mock_taa.model_dump.return_value = {}
         mock_taa.model_dump_json.return_value = "{}"
 
-        with patch.object(
-            scraper, "scrape_from_index", new_callable=AsyncMock
-        ) as mock_scrape:
+        with patch.object(scraper, "scrape_from_index", new_callable=AsyncMock) as mock_scrape:
             mock_scrape.return_value = [mock_taa]
 
             await scraper.scrape(max_count=1, delay=0.001)

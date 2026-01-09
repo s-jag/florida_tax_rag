@@ -137,9 +137,7 @@ class TestLegalReranker:
 
         # Statute should rank higher due to primary authority boost
         # even though TAA had higher original score
-        statute_idx = next(
-            i for i, r in enumerate(ranked) if r.doc_type == "statute"
-        )
+        statute_idx = next(i for i, r in enumerate(ranked) if r.doc_type == "statute")
         taa_idx = next(i for i, r in enumerate(ranked) if r.doc_type == "taa")
 
         # After reranking: statute * 1.0 = 0.85, taa * 0.7 = 0.665
@@ -273,9 +271,7 @@ class TestGraphExpander:
     def test_expand_statute(self, expander, mock_neo4j):
         """Test statute expansion finds related docs."""
         # Mock get_interpretation_chain
-        with patch(
-            "src.retrieval.graph_expander.get_interpretation_chain"
-        ) as mock_chain:
+        with patch("src.retrieval.graph_expander.get_interpretation_chain") as mock_chain:
             mock_chain.return_value = MagicMock(
                 implementing_rules=[MagicMock(id="rule:12A-1.001")],
                 interpreting_cases=[MagicMock(id="case:123")],

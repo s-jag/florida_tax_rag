@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from starlette.requests import Request
@@ -17,7 +17,6 @@ from src.api.dependencies import (
     get_weaviate_client,
     request_id_var,
 )
-
 
 # =============================================================================
 # Fixtures
@@ -82,9 +81,7 @@ class TestGetRequestId:
 
         assert result == "test-id-from-header"
 
-    async def test_generates_new_id_if_no_header(
-        self, mock_request: MagicMock
-    ) -> None:
+    async def test_generates_new_id_if_no_header(self, mock_request: MagicMock) -> None:
         """Should generate new ID if header not present."""
         mock_request.headers = {}
 

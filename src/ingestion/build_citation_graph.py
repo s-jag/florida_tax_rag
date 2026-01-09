@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -29,9 +28,7 @@ class ResolvedEdge(BaseModel):
     source_chunk_id: str = Field(..., description="ID of source chunk")
     source_doc_id: str = Field(..., description="ID of source document")
     target_doc_id: str = Field(..., description="ID of target document")
-    target_chunk_id: Optional[str] = Field(
-        default=None, description="ID of target parent chunk"
-    )
+    target_chunk_id: str | None = Field(default=None, description="ID of target parent chunk")
     relation_type: RelationType = Field(..., description="Type of relationship")
     citation_text: str = Field(..., description="Original citation text")
     confidence: float = Field(..., description="Resolution confidence (0.0 to 1.0)")
@@ -135,7 +132,7 @@ def build_citation_index(chunks: list[dict]) -> CitationIndex:
     return index
 
 
-def get_parent_chunk(chunks: list[str]) -> Optional[str]:
+def get_parent_chunk(chunks: list[str]) -> str | None:
     """Get the parent chunk ID from a list of chunk IDs.
 
     Parent chunks have index 0 by convention (e.g., "chunk:statute:212.05:0").
@@ -161,7 +158,7 @@ def get_parent_chunk(chunks: list[str]) -> Optional[str]:
 def resolve_citation(
     citation: Citation,
     index: CitationIndex,
-) -> tuple[Optional[str], Optional[str], float]:
+) -> tuple[str | None, str | None, float]:
     """Resolve a citation to a document and chunk ID.
 
     Uses multi-tier resolution:
@@ -286,14 +283,22 @@ def extract_chunk_citations(
             if citation.section == source_section:
                 continue
             # Also skip if base section matches
-            base_section = citation.section.split("(")[0] if citation.section and "(" in citation.section else citation.section
+            base_section = (
+                citation.section.split("(")[0]
+                if citation.section and "(" in citation.section
+                else citation.section
+            )
             if base_section == source_section:
                 continue
 
         if citation.citation_type == CitationType.RULE:
             if citation.section == source_section:
                 continue
-            base_rule = citation.section.split("(")[0] if citation.section and "(" in citation.section else citation.section
+            base_rule = (
+                citation.section.split("(")[0]
+                if citation.section and "(" in citation.section
+                else citation.section
+            )
             if base_rule == source_section:
                 continue
 

@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from src.graph.client import Neo4jClient
 from src.graph.queries import (
-    CitationEdge,
     get_all_citations_for_chunk,
     get_cited_documents,
     get_citing_documents,
@@ -37,7 +36,7 @@ class GraphExpander:
         """
         self.neo4j = neo4j_client
 
-    def get_parent_chunk(self, chunk_id: str) -> Optional[dict]:
+    def get_parent_chunk(self, chunk_id: str) -> dict | None:
         """Get the parent chunk for context.
 
         Args:
@@ -76,9 +75,7 @@ class GraphExpander:
         LIMIT $limit
         """
 
-        results = self.neo4j.run_query(
-            query, {"chunk_id": chunk_id, "limit": limit}
-        )
+        results = self.neo4j.run_query(query, {"chunk_id": chunk_id, "limit": limit})
 
         return [r["id"] for r in results]
 
@@ -190,9 +187,7 @@ class GraphExpander:
         cited = get_cited_documents(self.neo4j, doc_id)
         return [d.id for d in cited]
 
-    def get_related_chunks_for_doc(
-        self, doc_id: str, limit: int = 3
-    ) -> list[str]:
+    def get_related_chunks_for_doc(self, doc_id: str, limit: int = 3) -> list[str]:
         """Get chunk IDs from a related document.
 
         Args:
@@ -253,9 +248,7 @@ class GraphExpander:
                 elif result.doc_type == "case":
                     related_doc_ids = self.expand_case(result.doc_id)
                 else:  # taa or other
-                    related_doc_ids = self.get_related_documents(
-                        result.doc_id, limit=max_expansion
-                    )
+                    related_doc_ids = self.get_related_documents(result.doc_id, limit=max_expansion)
 
                 # 4. Get chunk IDs from related documents
                 related_chunks = []
@@ -272,9 +265,7 @@ class GraphExpander:
                     result.graph_boost += 0.02 * min(len(related_chunks), 5)
 
             except Exception as e:
-                logger.warning(
-                    f"Failed to expand chunk {result.chunk_id}: {e}"
-                )
+                logger.warning(f"Failed to expand chunk {result.chunk_id}: {e}")
                 # Continue with other results
 
         return results

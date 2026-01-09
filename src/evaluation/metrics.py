@@ -56,7 +56,7 @@ def citations_match(generated: str, expected: str) -> bool:
     if gen_norm.startswith(exp_norm):
         # Make sure it's actually a subsection, not a different statute
         # e.g., 212.05 should match 212.05(1), but not 212.051
-        remainder = gen_norm[len(exp_norm):]
+        remainder = gen_norm[len(exp_norm) :]
         if not remainder or remainder.startswith("("):
             return True
 
@@ -94,10 +94,7 @@ def citation_precision(
     if not expected:
         return 1.0  # No expected = any citation is fine
 
-    correct = sum(
-        1 for g in generated
-        if any(citations_match(g, e) for e in expected)
-    )
+    correct = sum(1 for g in generated if any(citations_match(g, e) for e in expected))
     return correct / len(generated)
 
 
@@ -123,10 +120,7 @@ def citation_recall(
     if not expected:
         return 1.0  # No expected citations = perfect recall
 
-    found = sum(
-        1 for e in expected
-        if any(citations_match(g, e) for g in generated)
-    )
+    found = sum(1 for e in expected if any(citations_match(g, e) for g in generated))
     return found / len(expected)
 
 

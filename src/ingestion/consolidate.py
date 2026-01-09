@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any
 
 from .models import Corpus, CorpusMetadata, DocumentType, LegalDocument
 
@@ -44,7 +43,7 @@ def parse_datetime(dt_str: str | None) -> datetime:
 def load_json_file(path: Path) -> dict | None:
     """Load a JSON file."""
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, UnicodeDecodeError, FileNotFoundError):
         return None
@@ -104,11 +103,13 @@ def consolidate_rule(data: dict, file_path: Path) -> LegalDocument | None:
     parent_id = f"rule:chapter_{chapter}" if chapter else None
 
     # Extract statute citations from rulemaking_authority and law_implemented
-    cites_statutes = list(set(
-        metadata.get("rulemaking_authority", []) +
-        metadata.get("law_implemented", []) +
-        metadata.get("references_statutes", [])
-    ))
+    cites_statutes = list(
+        set(
+            metadata.get("rulemaking_authority", [])
+            + metadata.get("law_implemented", [])
+            + metadata.get("references_statutes", [])
+        )
+    )
 
     extra_metadata = {
         "chapter": chapter,

@@ -31,9 +31,7 @@ def init_schema(client: Neo4jClient) -> None:
     logger.info("Schema initialization complete")
 
 
-def load_documents(
-    client: Neo4jClient, documents: list[dict[str, Any]]
-) -> dict[str, int]:
+def load_documents(client: Neo4jClient, documents: list[dict[str, Any]]) -> dict[str, int]:
     """Load Document nodes from corpus.
 
     Creates nodes with appropriate labels based on doc_type:
@@ -123,9 +121,7 @@ def load_documents(
     return totals
 
 
-def load_chunks(
-    client: Neo4jClient, chunks: list[dict[str, Any]]
-) -> dict[str, int]:
+def load_chunks(client: Neo4jClient, chunks: list[dict[str, Any]]) -> dict[str, int]:
     """Load Chunk nodes and link to Documents.
 
     Args:
@@ -188,9 +184,7 @@ def load_chunks(
     }
 
 
-def load_hierarchy(
-    client: Neo4jClient, chunks: list[dict[str, Any]]
-) -> dict[str, int]:
+def load_hierarchy(client: Neo4jClient, chunks: list[dict[str, Any]]) -> dict[str, int]:
     """Create CHILD_OF relationships between chunks.
 
     Args:
@@ -226,9 +220,7 @@ def load_hierarchy(
     return result
 
 
-def load_citations(
-    client: Neo4jClient, edges: list[dict[str, Any]]
-) -> dict[str, int]:
+def load_citations(client: Neo4jClient, edges: list[dict[str, Any]]) -> dict[str, int]:
     """Create citation relationships between documents.
 
     Args:
@@ -329,9 +321,7 @@ def load_all(
 
     # Load hierarchy
     hierarchy_result = load_hierarchy(client, chunks)
-    stats["hierarchy"]["relationships_created"] = hierarchy_result[
-        "relationships_created"
-    ]
+    stats["hierarchy"]["relationships_created"] = hierarchy_result["relationships_created"]
 
     # Load citations
     logger.info(f"Loading citations from {citations_path}")
@@ -341,8 +331,6 @@ def load_all(
     edges = citation_data["edges"]
     stats["citations"]["count"] = len(edges)
     citation_result = load_citations(client, edges)
-    stats["citations"]["relationships_created"] = citation_result[
-        "relationships_created"
-    ]
+    stats["citations"]["relationships_created"] = citation_result["relationships_created"]
 
     return stats

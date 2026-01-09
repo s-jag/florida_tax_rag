@@ -158,9 +158,7 @@ def main() -> int:
     Returns:
         Exit code (0 for success, 1 for failure)
     """
-    parser = argparse.ArgumentParser(
-        description="Generate embeddings for chunks using Voyage AI"
-    )
+    parser = argparse.ArgumentParser(description="Generate embeddings for chunks using Voyage AI")
     parser.add_argument(
         "--sample",
         type=int,
@@ -188,9 +186,9 @@ def main() -> int:
     print("FLORIDA TAX RAG - EMBEDDING GENERATION")
     print("=" * 60)
     print()
-    print(f"Model: voyage-law-2")
+    print("Model: voyage-law-2")
     print(f"Dimension: {VOYAGE_LAW_2_DIMENSION}")
-    print(f"Batch size: 72 (conservative for token limit)")
+    print("Batch size: 72 (conservative for token limit)")
     print()
 
     # Load chunks
@@ -296,7 +294,9 @@ def main() -> int:
         verification = verify_embeddings(embeddings.tolist())
 
         print(f"Count: {verification['count']}")
-        print(f"Dimension: {verification['dimension']} (expected {verification['expected_dimension']})")
+        print(
+            f"Dimension: {verification['dimension']} (expected {verification['expected_dimension']})"
+        )
         print(f"Dimension OK: {verification['dimension_ok']}")
         print(f"Avg L2 norm: {verification['avg_norm']:.4f}")
         print(f"Std L2 norm: {verification['std_norm']:.4f}")
@@ -311,12 +311,14 @@ def main() -> int:
 
     # Statistics
     stats = embedder.get_stats()
-    stats.update({
-        "total_chunks": len(chunk_ids),
-        "elapsed_seconds": elapsed,
-        "output_file": str(output_path),
-        "timestamp": datetime.now().isoformat(),
-    })
+    stats.update(
+        {
+            "total_chunks": len(chunk_ids),
+            "elapsed_seconds": elapsed,
+            "output_file": str(output_path),
+            "timestamp": datetime.now().isoformat(),
+        }
+    )
 
     if not args.sample:
         save_stats(stats, STATS_PATH)

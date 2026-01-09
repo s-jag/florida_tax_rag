@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -40,7 +39,7 @@ class ValidatedCitation(BaseModel):
         ...,
         description="The citation text from the response",
     )
-    chunk_id: Optional[str] = Field(
+    chunk_id: str | None = Field(
         default=None,
         description="ID of the source chunk if found, None if hallucinated",
     )
@@ -135,11 +134,11 @@ class DetectedHallucination(BaseModel):
         ...,
         description="Classification of the hallucination type",
     )
-    cited_source: Optional[str] = Field(
+    cited_source: str | None = Field(
         default=None,
         description="The citation referenced for this claim, if any",
     )
-    actual_source_text: Optional[str] = Field(
+    actual_source_text: str | None = Field(
         default=None,
         description="What the source actually says (for misquoted/misattributed)",
     )
@@ -153,7 +152,7 @@ class DetectedHallucination(BaseModel):
         ...,
         description="Explanation of why this is considered a hallucination",
     )
-    suggested_correction: Optional[str] = Field(
+    suggested_correction: str | None = Field(
         default=None,
         description="Suggested corrected text, if correction is possible",
     )

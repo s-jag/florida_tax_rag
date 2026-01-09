@@ -24,9 +24,9 @@ import structlog
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.scrapers.statutes import (
-    FloridaStatutesScraper,
-    ChapterInfo,
     TITLES,
+    ChapterInfo,
+    FloridaStatutesScraper,
 )
 
 
@@ -72,7 +72,7 @@ async def scrape_single_chapter(
 
     if not chapter_info:
         # Build chapter info manually if not found in index
-        title_info = TITLES.get(title_num, {})
+        TITLES.get(title_num, {})
         chapter_info = ChapterInfo(
             chapter_number=chapter,
             chapter_name=f"Chapter {chapter}",
@@ -162,7 +162,7 @@ def print_summary(statutes: list, output_path: Path) -> None:
 
     print(f"\nTotal sections scraped: {len(statutes)}")
     print(f"Chapters covered: {len(chapters)}")
-    print(f"\nBreakdown by chapter:")
+    print("\nBreakdown by chapter:")
 
     for ch in sorted(chapters.keys()):
         sections = chapters[ch]
@@ -224,7 +224,8 @@ Examples:
         help="Disable request caching (re-fetch all pages)",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable verbose logging",
     )
@@ -238,7 +239,9 @@ Examples:
     # Validate arguments
     if args.title not in TITLES:
         log.error("unsupported_title", title=args.title, supported=list(TITLES.keys()))
-        print(f"Error: Title {args.title} is not supported. Supported titles: {list(TITLES.keys())}")
+        print(
+            f"Error: Title {args.title} is not supported. Supported titles: {list(TITLES.keys())}"
+        )
         return 1
 
     if args.chapter:

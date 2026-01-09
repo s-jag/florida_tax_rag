@@ -7,7 +7,6 @@ tell the story of the evaluation results.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 from .report import FullEvaluationReport
 
@@ -18,13 +17,13 @@ class NarrativeSection:
 
     title: str
     prose: str
-    callout: Optional[str] = None
-    insight: Optional[str] = None
+    callout: str | None = None
+    insight: str | None = None
 
 
 def generate_executive_summary(
     report: FullEvaluationReport,
-    baseline_data: Optional[dict] = None,
+    baseline_data: dict | None = None,
 ) -> str:
     """Generate 3-paragraph executive summary.
 
@@ -140,7 +139,9 @@ def generate_self_correction_narrative(
     # Calculate errors prevented
     errors_prevented = with_issues - failed if with_issues > failed else 0
 
-    callout = f"We catch {int((1 - failed / max(with_issues, 1)) * 100)}% of errors before you see them."
+    callout = (
+        f"We catch {int((1 - failed / max(with_issues, 1)) * 100)}% of errors before you see them."
+    )
 
     insight = (
         f"The ablation study (validation ON vs OFF) shows this isn't just theater: "

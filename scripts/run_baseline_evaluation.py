@@ -20,20 +20,19 @@ import json
 import os
 import sys
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from openai import AsyncOpenAI
 from anthropic import AsyncAnthropic
+from openai import AsyncOpenAI
 
 from src.evaluation.llm_judge import LLMJudge
-from src.evaluation.models import EvalQuestion, EvalDataset
-from src.evaluation.metrics import extract_citations_from_answer, citation_precision
+from src.evaluation.metrics import citation_precision, extract_citations_from_answer
+from src.evaluation.models import EvalDataset, EvalQuestion
 
 
 @dataclass
@@ -175,7 +174,7 @@ async def evaluate_model(
 
     results: list[BaselineResult] = []
 
-    async def process_question(q: EvalQuestion) -> Optional[BaselineResult]:
+    async def process_question(q: EvalQuestion) -> BaselineResult | None:
         async with semaphore:
             try:
                 print(f"  [{model_name}] Evaluating: {q.id} - {q.question[:50]}...")
@@ -277,7 +276,7 @@ async def run_baseline_evaluation(
     dataset_path: str,
     output_path: str,
     models: list[str],
-    limit: Optional[int] = None,
+    limit: int | None = None,
     max_concurrent: int = 3,
 ) -> dict:
     """Run baseline evaluation on specified models."""
@@ -318,7 +317,7 @@ async def run_baseline_evaluation(
             if not openai_api_key:
                 print("  Skipping GPT-4: No API key")
                 continue
-            print(f"\n--- Evaluating GPT-4 Turbo ---")
+            print("\n--- Evaluating GPT-4 Turbo ---")
             summary = await evaluate_model(
                 "GPT-4 Turbo (No RAG)",
                 "gpt-4-turbo-preview",
@@ -334,7 +333,7 @@ async def run_baseline_evaluation(
             if not anthropic_client:
                 print("  Skipping Claude: No API key")
                 continue
-            print(f"\n--- Evaluating Claude Sonnet 4 ---")
+            print("\n--- Evaluating Claude Sonnet 4 ---")
             summary = await evaluate_model(
                 "Claude Sonnet 4 (No RAG)",
                 "claude-sonnet-4-20250514",
@@ -410,13 +409,15 @@ def main():
 
     args = parser.parse_args()
 
-    asyncio.run(run_baseline_evaluation(
-        dataset_path=args.dataset,
-        output_path=args.output,
-        models=args.models,
-        limit=args.limit,
-        max_concurrent=args.max_concurrent,
-    ))
+    asyncio.run(
+        run_baseline_evaluation(
+            dataset_path=args.dataset,
+            output_path=args.output,
+            models=args.models,
+            limit=args.limit,
+            max_concurrent=args.max_concurrent,
+        )
+    )
 
 
 if __name__ == "__main__":

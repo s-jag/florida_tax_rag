@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Generator, Optional
+from typing import Any
 
 from neo4j import Driver, GraphDatabase
 from neo4j.exceptions import AuthError, ServiceUnavailable
@@ -19,15 +20,13 @@ class Neo4jConfig(BaseModel):
     user: str = Field(default="neo4j", description="Neo4j username")
     password: str = Field(..., description="Neo4j password")
     database: str = Field(default="neo4j", description="Neo4j database name")
-    max_connection_pool_size: int = Field(
-        default=50, description="Maximum connection pool size"
-    )
+    max_connection_pool_size: int = Field(default=50, description="Maximum connection pool size")
 
 
 class Neo4jClient:
     """Neo4j database client with connection pooling and query helpers."""
 
-    def __init__(self, config: Optional[Neo4jConfig] = None):
+    def __init__(self, config: Neo4jConfig | None = None):
         """Initialize Neo4j client.
 
         Args:
@@ -44,7 +43,7 @@ class Neo4jClient:
             )
 
         self._config = config
-        self._driver: Optional[Driver] = None
+        self._driver: Driver | None = None
         self._logger = logging.getLogger(__name__)
 
     @property
@@ -64,23 +63,21 @@ class Neo4jClient:
             self._driver.close()
             self._driver = None
 
-    def __enter__(self) -> "Neo4jClient":
+    def __enter__(self) -> Neo4jClient:
         """Context manager entry."""
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[type],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[Any],
+        exc_type: type | None,
+        exc_val: BaseException | None,
+        exc_tb: Any | None,
     ) -> None:
         """Context manager exit."""
         self.close()
 
     @contextmanager
-    def session(
-        self, database: Optional[str] = None
-    ) -> Generator[Any, None, None]:
+    def session(self, database: str | None = None) -> Generator[Any, None, None]:
         """Get a session context manager.
 
         Args:
@@ -114,8 +111,8 @@ class Neo4jClient:
     def run_query(
         self,
         query: str,
-        parameters: Optional[dict[str, Any]] = None,
-        database: Optional[str] = None,
+        parameters: dict[str, Any] | None = None,
+        database: str | None = None,
     ) -> list[dict[str, Any]]:
         """Execute a query and return results as list of dicts.
 
@@ -134,8 +131,8 @@ class Neo4jClient:
     def run_write(
         self,
         query: str,
-        parameters: Optional[dict[str, Any]] = None,
-        database: Optional[str] = None,
+        parameters: dict[str, Any] | None = None,
+        database: str | None = None,
     ) -> dict[str, int]:
         """Execute a write query and return summary counters.
 
@@ -190,9 +187,7 @@ class Neo4jClient:
             batch = items[i : i + batch_size]
             batch_num = i // batch_size + 1
             total_batches = (len(items) + batch_size - 1) // batch_size
-            self._logger.debug(
-                f"Processing batch {batch_num}/{total_batches}: {len(batch)} items"
-            )
+            self._logger.debug(f"Processing batch {batch_num}/{total_batches}: {len(batch)} items")
 
             result = self.run_write(query, {batch_param_name: batch})
             totals["nodes_created"] += result["nodes_created"]
@@ -244,7 +239,7 @@ class Neo4jClient:
         self._logger.warning("Clearing all data from Neo4j database")
         # Delete in batches to avoid memory issues with large graphs
         while True:
-            result = self.run_write(
+            self.run_write(
                 "MATCH (n) WITH n LIMIT 10000 DETACH DELETE n RETURN count(*) AS deleted"
             )
             # Check if any nodes were deleted by running a count query

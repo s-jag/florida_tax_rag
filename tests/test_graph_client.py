@@ -58,9 +58,7 @@ class TestNeo4jClient:
         mock_session.run.side_effect = ServiceUnavailable("Connection refused")
 
         with patch.object(client, "session") as mock_session_cm:
-            mock_session_cm.return_value.__enter__ = MagicMock(
-                return_value=mock_session
-            )
+            mock_session_cm.return_value.__enter__ = MagicMock(return_value=mock_session)
             mock_session_cm.return_value.__exit__ = MagicMock(return_value=False)
 
             assert client.health_check() is False
@@ -76,15 +74,11 @@ class TestNeo4jClient:
         mock_record2 = MagicMock()
         mock_record2.data.return_value = {"name": "Test2"}
         mock_result = MagicMock()
-        mock_result.__iter__ = MagicMock(
-            return_value=iter([mock_record1, mock_record2])
-        )
+        mock_result.__iter__ = MagicMock(return_value=iter([mock_record1, mock_record2]))
         mock_session.run.return_value = mock_result
 
         with patch.object(client, "session") as mock_session_cm:
-            mock_session_cm.return_value.__enter__ = MagicMock(
-                return_value=mock_session
-            )
+            mock_session_cm.return_value.__enter__ = MagicMock(return_value=mock_session)
             mock_session_cm.return_value.__exit__ = MagicMock(return_value=False)
 
             results = client.run_query("MATCH (n) RETURN n.name AS name")
@@ -110,9 +104,7 @@ class TestNeo4jClient:
         mock_session.run.return_value = mock_result
 
         with patch.object(client, "session") as mock_session_cm:
-            mock_session_cm.return_value.__enter__ = MagicMock(
-                return_value=mock_session
-            )
+            mock_session_cm.return_value.__enter__ = MagicMock(return_value=mock_session)
             mock_session_cm.return_value.__exit__ = MagicMock(return_value=False)
 
             result = client.run_write("CREATE (n:Test)")

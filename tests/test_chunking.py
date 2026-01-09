@@ -2,8 +2,6 @@
 
 from datetime import date, datetime
 
-import pytest
-
 from src.ingestion.chunking import (
     ChunkLevel,
     LegalChunk,
@@ -408,7 +406,8 @@ class TestChunkTaa:
     def test_chunk_taa_with_sections(self):
         """Test chunking TAA with logical sections."""
         # Create a long TAA with sections (>2000 tokens to trigger splitting)
-        long_text = """TAA Introduction and summary.
+        long_text = (
+            """TAA Introduction and summary.
 
 REQUESTED ADVISEMENT
 
@@ -416,7 +415,9 @@ The taxpayer requests advisement on applicability of sales tax.
 
 FACTS
 
-The taxpayer operates a business in Florida. """ + "Additional facts about the business operations and circumstances. " * 500 + """
+The taxpayer operates a business in Florida. """
+            + "Additional facts about the business operations and circumstances. " * 500
+            + """
 
 TAXPAYER'S POSITION
 
@@ -424,12 +425,15 @@ The taxpayer believes the transaction is exempt.
 
 LAW AND DISCUSSION
 
-Section 212.05, F.S., provides the applicable law. """ + "Discussion of the legal analysis and application continues here. " * 500 + """
+Section 212.05, F.S., provides the applicable law. """
+            + "Discussion of the legal analysis and application continues here. " * 500
+            + """
 
 CONCLUSION
 
 Based on the above analysis, the transaction is taxable.
 """
+        )
 
         doc = LegalDocument(
             id="taa:25A-002",

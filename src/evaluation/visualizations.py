@@ -5,15 +5,13 @@ Generates standalone HTML graphs for embedding in dashboards and reports.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
-import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from .authority_metrics import AuthorityMetrics, AUTHORITY_HIERARCHY
+from .authority_metrics import AUTHORITY_HIERARCHY, AuthorityMetrics
 from .correction_metrics import CorrectionMetrics
-
 
 # Color schemes
 COLORS = {
@@ -67,16 +65,21 @@ def create_authority_heatmap(
             row.append(count)
         z.append(row)
 
-    fig = go.Figure(data=go.Heatmap(
-        z=z,
-        x=[f"{r}{'st' if r == 1 else 'nd' if r == 2 else 'rd' if r == 3 else 'th'}" for r in ranks],
-        y=[dt.title() for dt in doc_types],
-        colorscale="RdYlGn",
-        text=z,
-        texttemplate="%{text}",
-        textfont={"size": 14},
-        hovertemplate="Rank: %{x}<br>Type: %{y}<br>Count: %{z}<extra></extra>",
-    ))
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=z,
+            x=[
+                f"{r}{'st' if r == 1 else 'nd' if r == 2 else 'rd' if r == 3 else 'th'}"
+                for r in ranks
+            ],
+            y=[dt.title() for dt in doc_types],
+            colorscale="RdYlGn",
+            text=z,
+            texttemplate="%{text}",
+            textfont={"size": 14},
+            hovertemplate="Rank: %{x}<br>Type: %{y}<br>Count: %{z}<extra></extra>",
+        )
+    )
 
     fig.update_layout(
         title=dict(text=title, x=0.5),
@@ -135,14 +138,16 @@ def create_correction_funnel(
         COLORS["danger"] if final_issues > 0 else COLORS["success"],
     ]
 
-    fig = go.Figure(go.Funnel(
-        y=stages,
-        x=values,
-        textposition="inside",
-        textinfo="value+percent initial",
-        marker=dict(color=colors),
-        connector=dict(line=dict(color="royalblue", width=2)),
-    ))
+    fig = go.Figure(
+        go.Funnel(
+            y=stages,
+            x=values,
+            textposition="inside",
+            textinfo="value+percent initial",
+            marker=dict(color=colors),
+            connector=dict(line=dict(color="royalblue", width=2)),
+        )
+    )
 
     fig.update_layout(
         title=dict(text=title, x=0.5),
@@ -184,19 +189,21 @@ def create_precision_recall_curve(
         method = method_data["method"]
         color = method_colors.get(method, COLORS["primary"])
 
-        fig.add_trace(go.Scatter(
-            x=method_data["recall"],
-            y=method_data["precision"],
-            mode="lines+markers",
-            name=method.title(),
-            line=dict(color=color, width=2),
-            marker=dict(size=8),
-            hovertemplate=(
-                f"{method.title()}<br>"
-                "Recall: %{x:.2f}<br>"
-                "Precision: %{y:.2f}<extra></extra>"
-            ),
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=method_data["recall"],
+                y=method_data["precision"],
+                mode="lines+markers",
+                name=method.title(),
+                line=dict(color=color, width=2),
+                marker=dict(size=8),
+                hovertemplate=(
+                    f"{method.title()}<br>"
+                    "Recall: %{x:.2f}<br>"
+                    "Precision: %{y:.2f}<extra></extra>"
+                ),
+            )
+        )
 
     fig.update_layout(
         title=dict(text=title, x=0.5),
@@ -215,7 +222,7 @@ def create_precision_recall_curve(
 def create_alpha_tuning_curve(
     alpha_values: list[float],
     mrr_values: list[float],
-    optimal_alpha: Optional[float] = None,
+    optimal_alpha: float | None = None,
     title: str = "Hybrid Search Alpha Tuning",
 ) -> go.Figure:
     """Create curve showing MRR vs alpha parameter.
@@ -236,16 +243,18 @@ def create_alpha_tuning_curve(
     """
     fig = go.Figure()
 
-    fig.add_trace(go.Scatter(
-        x=alpha_values,
-        y=mrr_values,
-        mode="lines+markers",
-        name="MRR",
-        line=dict(color=COLORS["primary"], width=3),
-        marker=dict(size=10),
-        fill="tozeroy",
-        fillcolor="rgba(46, 134, 171, 0.2)",
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=alpha_values,
+            y=mrr_values,
+            mode="lines+markers",
+            name="MRR",
+            line=dict(color=COLORS["primary"], width=3),
+            marker=dict(size=10),
+            fill="tozeroy",
+            fillcolor="rgba(46, 134, 171, 0.2)",
+        )
+    )
 
     # Add optimal point annotation
     if optimal_alpha is not None:
@@ -265,14 +274,16 @@ def create_alpha_tuning_curve(
 
     # Add endpoint annotations
     fig.add_annotation(
-        x=0, y=mrr_values[0] if mrr_values else 0,
+        x=0,
+        y=mrr_values[0] if mrr_values else 0,
         text="Pure Keyword",
         showarrow=False,
         yshift=20,
         font=dict(size=10, color="gray"),
     )
     fig.add_annotation(
-        x=1, y=mrr_values[-1] if mrr_values else 0,
+        x=1,
+        y=mrr_values[-1] if mrr_values else 0,
         text="Pure Vector",
         showarrow=False,
         yshift=20,
@@ -315,13 +326,15 @@ def create_latency_distribution(
 
     fig = go.Figure()
 
-    fig.add_trace(go.Histogram(
-        x=latencies,
-        nbinsx=30,
-        name="Latency",
-        marker_color=COLORS["primary"],
-        opacity=0.75,
-    ))
+    fig.add_trace(
+        go.Histogram(
+            x=latencies,
+            nbinsx=30,
+            name="Latency",
+            marker_color=COLORS["primary"],
+            opacity=0.75,
+        )
+    )
 
     if show_percentiles and latencies:
         p50 = np.percentile(latencies, 50)
@@ -384,14 +397,16 @@ def create_metrics_by_category(
 
     for metric_name, values in metrics_data.items():
         color = metric_colors.get(metric_name, COLORS["primary"])
-        fig.add_trace(go.Bar(
-            name=metric_name.replace("_", " ").title(),
-            x=categories,
-            y=values,
-            marker_color=color,
-            text=[f"{v:.0%}" for v in values],
-            textposition="auto",
-        ))
+        fig.add_trace(
+            go.Bar(
+                name=metric_name.replace("_", " ").title(),
+                x=categories,
+                y=values,
+                marker_color=color,
+                text=[f"{v:.0%}" for v in values],
+                textposition="auto",
+            )
+        )
 
     fig.update_layout(
         title=dict(text=title, x=0.5),
@@ -429,28 +444,36 @@ def create_metrics_by_difficulty(
 
     passed = [results_by_difficulty.get(d, {}).get("passed", 0) for d in difficulties]
     failed_clean = [results_by_difficulty.get(d, {}).get("failed_clean", 0) for d in difficulties]
-    failed_halluc = [results_by_difficulty.get(d, {}).get("failed_hallucination", 0) for d in difficulties]
+    failed_halluc = [
+        results_by_difficulty.get(d, {}).get("failed_hallucination", 0) for d in difficulties
+    ]
 
     fig = go.Figure()
 
-    fig.add_trace(go.Bar(
-        name="Passed",
-        x=[d.title() for d in difficulties],
-        y=passed,
-        marker_color=COLORS["success"],
-    ))
-    fig.add_trace(go.Bar(
-        name="Failed (No Hallucination)",
-        x=[d.title() for d in difficulties],
-        y=failed_clean,
-        marker_color=COLORS["warning"],
-    ))
-    fig.add_trace(go.Bar(
-        name="Failed (Hallucination)",
-        x=[d.title() for d in difficulties],
-        y=failed_halluc,
-        marker_color=COLORS["danger"],
-    ))
+    fig.add_trace(
+        go.Bar(
+            name="Passed",
+            x=[d.title() for d in difficulties],
+            y=passed,
+            marker_color=COLORS["success"],
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            name="Failed (No Hallucination)",
+            x=[d.title() for d in difficulties],
+            y=failed_clean,
+            marker_color=COLORS["warning"],
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            name="Failed (Hallucination)",
+            x=[d.title() for d in difficulties],
+            y=failed_halluc,
+            marker_color=COLORS["danger"],
+        )
+    )
 
     fig.update_layout(
         title=dict(text=title, x=0.5),
@@ -489,22 +512,26 @@ def create_ablation_comparison(
     """
     fig = go.Figure()
 
-    fig.add_trace(go.Bar(
-        name="Validation OFF",
-        x=metrics,
-        y=values_off,
-        marker_color=COLORS["danger"],
-        text=[f"{v:.2f}" for v in values_off],
-        textposition="auto",
-    ))
-    fig.add_trace(go.Bar(
-        name="Validation ON",
-        x=metrics,
-        y=values_on,
-        marker_color=COLORS["success"],
-        text=[f"{v:.2f}" for v in values_on],
-        textposition="auto",
-    ))
+    fig.add_trace(
+        go.Bar(
+            name="Validation OFF",
+            x=metrics,
+            y=values_off,
+            marker_color=COLORS["danger"],
+            text=[f"{v:.2f}" for v in values_off],
+            textposition="auto",
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            name="Validation ON",
+            x=metrics,
+            y=values_on,
+            marker_color=COLORS["success"],
+            text=[f"{v:.2f}" for v in values_on],
+            textposition="auto",
+        )
+    )
 
     # Add delta annotations
     for i, (on, off, metric) in enumerate(zip(values_on, values_off, metrics)):
@@ -565,14 +592,18 @@ def create_retrieval_radar(
         values = [scores.get(m.lower().replace("-", "_").replace("@", "_at_"), 0) for m in metrics]
         values.append(values[0])  # Close the polygon
 
-        fig.add_trace(go.Scatterpolar(
-            r=values,
-            theta=metrics + [metrics[0]],
-            name=method.title(),
-            line=dict(color=method_colors.get(method, COLORS["primary"]), width=2),
-            fill="toself",
-            fillcolor=method_colors.get(method, COLORS["primary"]).replace(")", ", 0.1)").replace("rgb", "rgba"),
-        ))
+        fig.add_trace(
+            go.Scatterpolar(
+                r=values,
+                theta=metrics + [metrics[0]],
+                name=method.title(),
+                line=dict(color=method_colors.get(method, COLORS["primary"]), width=2),
+                fill="toself",
+                fillcolor=method_colors.get(method, COLORS["primary"])
+                .replace(")", ", 0.1)")
+                .replace("rgb", "rgba"),
+            )
+        )
 
     fig.update_layout(
         title=dict(text=title, x=0.5),
@@ -616,12 +647,14 @@ def create_faithfulness_distribution(
         else:
             colors.append(COLORS["danger"])
 
-    fig.add_trace(go.Histogram(
-        x=scores,
-        nbinsx=20,
-        marker_color=COLORS["success"],
-        opacity=0.75,
-    ))
+    fig.add_trace(
+        go.Histogram(
+            x=scores,
+            nbinsx=20,
+            marker_color=COLORS["success"],
+            opacity=0.75,
+        )
+    )
 
     # Add threshold lines
     fig.add_vline(
@@ -681,61 +714,92 @@ def create_summary_metrics_card(
         Plotly Figure with indicator gauges
     """
     fig = make_subplots(
-        rows=2, cols=3,
+        rows=2,
+        cols=3,
         specs=[
             [{"type": "indicator"}, {"type": "indicator"}, {"type": "indicator"}],
             [{"type": "indicator"}, {"type": "indicator"}, {"type": "indicator"}],
         ],
         subplot_titles=[
-            "Citation Precision", "Citation Recall", "Faithfulness",
-            "Authority NDCG", "Pass Rate", "Hallucinations"
+            "Citation Precision",
+            "Citation Recall",
+            "Faithfulness",
+            "Authority NDCG",
+            "Pass Rate",
+            "Hallucinations",
         ],
     )
 
     # Row 1
-    fig.add_trace(go.Indicator(
-        mode="gauge+number",
-        value=metrics.get("precision", 0) * 100,
-        number={"suffix": "%"},
-        gauge={"axis": {"range": [0, 100]}, "bar": {"color": COLORS["primary"]}},
-    ), row=1, col=1)
+    fig.add_trace(
+        go.Indicator(
+            mode="gauge+number",
+            value=metrics.get("precision", 0) * 100,
+            number={"suffix": "%"},
+            gauge={"axis": {"range": [0, 100]}, "bar": {"color": COLORS["primary"]}},
+        ),
+        row=1,
+        col=1,
+    )
 
-    fig.add_trace(go.Indicator(
-        mode="gauge+number",
-        value=metrics.get("recall", 0) * 100,
-        number={"suffix": "%"},
-        gauge={"axis": {"range": [0, 100]}, "bar": {"color": COLORS["secondary"]}},
-    ), row=1, col=2)
+    fig.add_trace(
+        go.Indicator(
+            mode="gauge+number",
+            value=metrics.get("recall", 0) * 100,
+            number={"suffix": "%"},
+            gauge={"axis": {"range": [0, 100]}, "bar": {"color": COLORS["secondary"]}},
+        ),
+        row=1,
+        col=2,
+    )
 
-    fig.add_trace(go.Indicator(
-        mode="gauge+number",
-        value=metrics.get("faithfulness", 0) * 100,
-        number={"suffix": "%"},
-        gauge={"axis": {"range": [0, 100]}, "bar": {"color": COLORS["success"]}},
-    ), row=1, col=3)
+    fig.add_trace(
+        go.Indicator(
+            mode="gauge+number",
+            value=metrics.get("faithfulness", 0) * 100,
+            number={"suffix": "%"},
+            gauge={"axis": {"range": [0, 100]}, "bar": {"color": COLORS["success"]}},
+        ),
+        row=1,
+        col=3,
+    )
 
     # Row 2
-    fig.add_trace(go.Indicator(
-        mode="gauge+number",
-        value=metrics.get("authority_ndcg", 0) * 100,
-        number={"suffix": "%"},
-        gauge={"axis": {"range": [0, 100]}, "bar": {"color": COLORS["info"]}},
-    ), row=2, col=1)
+    fig.add_trace(
+        go.Indicator(
+            mode="gauge+number",
+            value=metrics.get("authority_ndcg", 0) * 100,
+            number={"suffix": "%"},
+            gauge={"axis": {"range": [0, 100]}, "bar": {"color": COLORS["info"]}},
+        ),
+        row=2,
+        col=1,
+    )
 
-    fig.add_trace(go.Indicator(
-        mode="gauge+number",
-        value=metrics.get("pass_rate", 0) * 100,
-        number={"suffix": "%"},
-        gauge={"axis": {"range": [0, 100]}, "bar": {"color": COLORS["success"]}},
-    ), row=2, col=2)
+    fig.add_trace(
+        go.Indicator(
+            mode="gauge+number",
+            value=metrics.get("pass_rate", 0) * 100,
+            number={"suffix": "%"},
+            gauge={"axis": {"range": [0, 100]}, "bar": {"color": COLORS["success"]}},
+        ),
+        row=2,
+        col=2,
+    )
 
     halluc_count = metrics.get("hallucinations", 0)
-    fig.add_trace(go.Indicator(
-        mode="number+delta",
-        value=halluc_count,
-        delta={"reference": 0, "increasing": {"color": COLORS["danger"]}},
-        number={"font": {"color": COLORS["success"] if halluc_count == 0 else COLORS["danger"]}},
-    ), row=2, col=3)
+    fig.add_trace(
+        go.Indicator(
+            mode="number+delta",
+            value=halluc_count,
+            delta={"reference": 0, "increasing": {"color": COLORS["danger"]}},
+            number={
+                "font": {"color": COLORS["success"] if halluc_count == 0 else COLORS["danger"]}
+            },
+        ),
+        row=2,
+        col=3,
+    )
 
     fig.update_layout(
         title=dict(text=title, x=0.5),
@@ -784,14 +848,16 @@ def create_baseline_comparison(
             val = val * 100  # Convert to percentage
         margen_values.append(val)
 
-    fig.add_trace(go.Bar(
-        name="Margen",
-        x=metric_labels,
-        y=margen_values,
-        marker_color=COLORS["success"],
-        text=[f"{v:.0f}%" for v in margen_values],
-        textposition="auto",
-    ))
+    fig.add_trace(
+        go.Bar(
+            name="Margen",
+            x=metric_labels,
+            y=margen_values,
+            marker_color=COLORS["success"],
+            text=[f"{v:.0f}%" for v in margen_values],
+            textposition="auto",
+        )
+    )
 
     # Baseline model colors
     baseline_colors = {
@@ -811,14 +877,16 @@ def create_baseline_comparison(
                 val = val * 100
             model_values.append(val)
 
-        fig.add_trace(go.Bar(
-            name=model_name,
-            x=metric_labels,
-            y=model_values,
-            marker_color=baseline_colors.get(model_key, COLORS["info"]),
-            text=[f"{v:.0f}%" for v in model_values],
-            textposition="auto",
-        ))
+        fig.add_trace(
+            go.Bar(
+                name=model_name,
+                x=metric_labels,
+                y=model_values,
+                marker_color=baseline_colors.get(model_key, COLORS["info"]),
+                text=[f"{v:.0f}%" for v in model_values],
+                textposition="auto",
+            )
+        )
 
     fig.update_layout(
         title=dict(text=title, x=0.5),
@@ -880,13 +948,15 @@ def create_latency_comparison(
         latencies.append(latency)
         colors.append(COLORS["primary"] if "gpt" in model.lower() else COLORS["secondary"])
 
-    fig.add_trace(go.Bar(
-        x=systems,
-        y=latencies,
-        marker_color=colors,
-        text=[f"{l:.0f}ms" for l in latencies],
-        textposition="auto",
-    ))
+    fig.add_trace(
+        go.Bar(
+            x=systems,
+            y=latencies,
+            marker_color=colors,
+            text=[f"{lat:.0f}ms" for lat in latencies],
+            textposition="auto",
+        )
+    )
 
     fig.update_layout(
         title=dict(text=title, x=0.5),

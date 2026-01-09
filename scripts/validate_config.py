@@ -154,9 +154,7 @@ def test_anthropic_api_key() -> tuple[bool, str]:
         from config.settings import get_settings
 
         settings = get_settings()
-        client = anthropic.Anthropic(
-            api_key=settings.anthropic_api_key.get_secret_value()
-        )
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key.get_secret_value())
 
         # Make a minimal completion request
         response = client.messages.create(
@@ -213,11 +211,15 @@ def print_settings_summary(verbose: bool = False) -> None:
         voyage_key = settings.voyage_api_key.get_secret_value()
         anthropic_key = settings.anthropic_api_key.get_secret_value()
         print(f"Voyage: {voyage_key[:8]}...{voyage_key[-4:] if len(voyage_key) > 12 else '****'}")
-        print(f"Anthropic: {anthropic_key[:8]}...{anthropic_key[-4:] if len(anthropic_key) > 12 else '****'}")
+        print(
+            f"Anthropic: {anthropic_key[:8]}...{anthropic_key[-4:] if len(anthropic_key) > 12 else '****'}"
+        )
 
         if settings.openai_api_key:
             openai_key = settings.openai_api_key.get_secret_value()
-            print(f"OpenAI: {openai_key[:8]}...{openai_key[-4:] if len(openai_key) > 12 else '****'}")
+            print(
+                f"OpenAI: {openai_key[:8]}...{openai_key[-4:] if len(openai_key) > 12 else '****'}"
+            )
         else:
             print("OpenAI: (not configured)")
 
@@ -238,7 +240,8 @@ def main() -> int:
         help="Test specific service only",
     )
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Show all settings values including masked API keys",
     )
@@ -298,10 +301,12 @@ def main() -> int:
             ]
 
             if not args.skip_api_tests:
-                service_tests.extend([
-                    ("Voyage AI", test_voyage_api_key),
-                    ("Anthropic", test_anthropic_api_key),
-                ])
+                service_tests.extend(
+                    [
+                        ("Voyage AI", test_voyage_api_key),
+                        ("Anthropic", test_anthropic_api_key),
+                    ]
+                )
 
         for name, test_func in service_tests:
             print(f"\n  Testing {name}...", end=" ")

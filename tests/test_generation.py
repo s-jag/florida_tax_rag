@@ -453,9 +453,7 @@ class TestGeneratorGenerate:
         generator = TaxLawGenerator()
 
         mock_client = MagicMock()
-        mock_client.messages.create = MagicMock(
-            side_effect=Exception("API Error")
-        )
+        mock_client.messages.create = MagicMock(side_effect=Exception("API Error"))
         generator.client = mock_client
 
         chunks = [
@@ -539,10 +537,7 @@ class TestClassifyCitation:
         generator = TaxLawGenerator()
 
         assert generator._classify_citation("TAA 24A-001") == "taa"
-        assert (
-            generator._classify_citation("Technical Assistance Advisement")
-            == "taa"
-        )
+        assert generator._classify_citation("Technical Assistance Advisement") == "taa"
 
     def test_classify_unknown(self):
         """Test unknown citation classification."""
@@ -562,9 +557,7 @@ async def test_end_to_end_generation():
 
     graph = create_tax_agent_graph()
 
-    result = await graph.ainvoke({
-        "original_query": "What is the sales tax rate in Miami?"
-    })
+    result = await graph.ainvoke({"original_query": "What is the sales tax rate in Miami?"})
 
     # Verify answer was generated
     assert result.get("final_answer") is not None

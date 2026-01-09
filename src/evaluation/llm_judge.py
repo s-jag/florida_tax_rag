@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Optional
 
 from openai import AsyncOpenAI
 
-from .models import EvalQuestion, JudgmentResult
 from config.prompts import JUDGE_PROMPT
+
+from .models import EvalQuestion, JudgmentResult
 
 
 class LLMJudge:

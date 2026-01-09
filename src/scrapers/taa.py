@@ -5,11 +5,9 @@ from __future__ import annotations
 import asyncio
 import re
 import subprocess
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Any, Optional
-
-from bs4 import BeautifulSoup
+from typing import Any
 
 from .base import BaseScraper, FetchError
 from .models import RawTAA, TAAMetadata
@@ -18,12 +16,14 @@ from .utils import parse_rule_citation, parse_statute_citation
 # Try to import PDF libraries
 try:
     import pdfplumber
+
     HAS_PDFPLUMBER = True
 except ImportError:
     HAS_PDFPLUMBER = False
 
 try:
     from pypdf import PdfReader
+
     HAS_PYPDF = True
 except ImportError:
     HAS_PYPDF = False
@@ -123,13 +123,13 @@ class FloridaTAAScraper(BaseScraper):
         # Pattern: <tr><td><a href="URL">TITLE</a></td><td>TYPE</td><td>DATE</td>
         row_pattern = re.compile(
             r'<tr><td><a href="([^"]+)"[^>]*>([^<]+)</a></td><td>([^<]*)</td><td>([^<]*)</td>',
-            re.IGNORECASE
+            re.IGNORECASE,
         )
 
         for match in row_pattern.finditer(html):
             href = match.group(1)
             title = match.group(2).strip()
-            doc_type = match.group(3).strip()
+            match.group(3).strip()
             date_str = match.group(4).strip()
 
             # Skip if not a PDF
@@ -173,13 +173,15 @@ class FloridaTAAScraper(BaseScraper):
             # Extract TAA number from filename
             taa_number = self._extract_taa_number(decoded_filename)
 
-            taas.append({
-                "filename": filename,
-                "taa_number": taa_number,
-                "url": url,
-                "title": title or filename,
-                "date": date_str,
-            })
+            taas.append(
+                {
+                    "filename": filename,
+                    "taa_number": taa_number,
+                    "url": url,
+                    "title": title or filename,
+                    "date": date_str,
+                }
+            )
 
         self.log.info("found_taas", count=len(taas))
         return taas
@@ -336,7 +338,7 @@ class FloridaTAAScraper(BaseScraper):
             rules_cited=rules_cited,
         )
 
-    def _extract_issue_date(self, text: str) -> Optional[date]:
+    def _extract_issue_date(self, text: str) -> date | None:
         """Extract the issue date from TAA text."""
         # Common date patterns in TAAs
         patterns = [
@@ -422,12 +424,34 @@ class FloridaTAAScraper(BaseScraper):
 
         # Common tax topic keywords
         topic_keywords = [
-            "exemption", "exempt", "taxable", "sale", "purchase", "resale",
-            "service", "lease", "rental", "repair", "installation",
-            "manufacturing", "agriculture", "construction", "real property",
-            "tangible personal property", "software", "digital", "electronic",
-            "food", "medical", "educational", "nonprofit", "government",
-            "import", "export", "interstate", "intrastate",
+            "exemption",
+            "exempt",
+            "taxable",
+            "sale",
+            "purchase",
+            "resale",
+            "service",
+            "lease",
+            "rental",
+            "repair",
+            "installation",
+            "manufacturing",
+            "agriculture",
+            "construction",
+            "real property",
+            "tangible personal property",
+            "software",
+            "digital",
+            "electronic",
+            "food",
+            "medical",
+            "educational",
+            "nonprofit",
+            "government",
+            "import",
+            "export",
+            "interstate",
+            "intrastate",
         ]
 
         subject_lower = subject.lower()
@@ -462,7 +486,7 @@ class FloridaTAAScraper(BaseScraper):
             text=text,
             pdf_path=str(pdf_path),
             source_url=url,
-            scraped_at=datetime.now(timezone.utc),
+            scraped_at=datetime.now(UTC),
         )
 
     def _save_taa(self, taa: RawTAA) -> Path:
@@ -520,6 +544,7 @@ class FloridaTAAScraper(BaseScraper):
             # Rate limit
             if i < len(taa_index) - 1:
                 import asyncio
+
                 await asyncio.sleep(delay)
 
         return taas
@@ -560,7 +585,7 @@ class FloridaTAAScraper(BaseScraper):
         # Save summary
         summary = {
             "total_taas": len(taas),
-            "scraped_at": datetime.now(timezone.utc).isoformat(),
+            "scraped_at": datetime.now(UTC).isoformat(),
             "taas": [taa.metadata.taa_number for taa in taas],
         }
         self.save_raw(summary, "taa/summary.json")

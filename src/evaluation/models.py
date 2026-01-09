@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -100,9 +99,7 @@ class JudgmentResult(BaseModel):
     correctness: int = Field(..., ge=0, le=10, description="Factual correctness (0-10)")
     completeness: int = Field(..., ge=0, le=10, description="Answer completeness (0-10)")
     clarity: int = Field(..., ge=0, le=10, description="Clarity and organization (0-10)")
-    citation_accuracy: int = Field(
-        ..., ge=0, le=10, description="Citation accuracy (0-10)"
-    )
+    citation_accuracy: int = Field(..., ge=0, le=10, description="Citation accuracy (0-10)")
     hallucinations: list[str] = Field(
         default_factory=list, description="List of hallucinated facts"
     )
@@ -188,24 +185,22 @@ class EvalResult(BaseModel):
     )
 
     # Authority-aware metrics
-    authority_metrics: Optional[AuthorityMetricsResult] = Field(
+    authority_metrics: AuthorityMetricsResult | None = Field(
         default=None, description="Authority-weighted retrieval metrics"
     )
 
     # Faithfulness metrics
-    faithfulness_metrics: Optional[FaithfulnessMetricsResult] = Field(
+    faithfulness_metrics: FaithfulnessMetricsResult | None = Field(
         default=None, description="Claim faithfulness to sources"
     )
 
     # Self-correction metrics
-    correction_metrics: Optional[CorrectionMetricsResult] = Field(
+    correction_metrics: CorrectionMetricsResult | None = Field(
         default=None, description="Self-correction tracking"
     )
 
     # LLM judgment
-    judgment: Optional[JudgmentResult] = Field(
-        default=None, description="LLM judge evaluation"
-    )
+    judgment: JudgmentResult | None = Field(default=None, description="LLM judge evaluation")
 
     # Performance
     latency_ms: int = Field(..., description="Query latency in milliseconds")

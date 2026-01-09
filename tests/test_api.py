@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
-from src.api.main import create_app
 from src.api.dependencies import (
     get_agent_graph,
     get_neo4j_client,
     get_weaviate_client,
 )
+from src.api.main import create_app
 
 
 @pytest.fixture
@@ -268,8 +267,10 @@ class TestSourceEndpoint:
             }
         ]
 
-        with patch("src.api.routes.get_citing_documents") as mock_citing, \
-             patch("src.api.routes.get_cited_documents") as mock_cited:
+        with (
+            patch("src.api.routes.get_citing_documents") as mock_citing,
+            patch("src.api.routes.get_cited_documents") as mock_cited,
+        ):
             mock_citing.return_value = []
             mock_cited.return_value = []
 
@@ -334,8 +335,10 @@ class TestRelatedDocumentsEndpoint:
 
     def test_get_related_documents(self, client, mock_neo4j):
         """Test getting related documents."""
-        with patch("src.api.routes.get_citing_documents") as mock_citing, \
-             patch("src.api.routes.get_cited_documents") as mock_cited:
+        with (
+            patch("src.api.routes.get_citing_documents") as mock_citing,
+            patch("src.api.routes.get_cited_documents") as mock_cited,
+        ):
             mock_citing.return_value = []
             mock_cited.return_value = []
 
@@ -349,9 +352,11 @@ class TestRelatedDocumentsEndpoint:
 
     def test_get_related_statute_includes_chain(self, client, mock_neo4j):
         """Test statute related documents include interpretation chain."""
-        with patch("src.api.routes.get_citing_documents") as mock_citing, \
-             patch("src.api.routes.get_cited_documents") as mock_cited, \
-             patch("src.api.routes.get_interpretation_chain") as mock_chain:
+        with (
+            patch("src.api.routes.get_citing_documents") as mock_citing,
+            patch("src.api.routes.get_cited_documents") as mock_cited,
+            patch("src.api.routes.get_interpretation_chain") as mock_chain,
+        ):
             mock_citing.return_value = []
             mock_cited.return_value = []
 

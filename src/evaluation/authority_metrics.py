@@ -8,15 +8,14 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Optional
 
 # Authority weights for different document types
 # Higher weight = more authoritative source
 AUTHORITY_WEIGHTS = {
-    "statute": 3.0,   # Primary law - binding
-    "rule": 2.0,      # Implementing authority - binding
-    "case": 2.0,      # Interpretive authority - binding precedent
-    "taa": 1.0,       # Technical Assistance Advisement - advisory only
+    "statute": 3.0,  # Primary law - binding
+    "rule": 2.0,  # Implementing authority - binding
+    "case": 2.0,  # Interpretive authority - binding precedent
+    "taa": 1.0,  # Technical Assistance Advisement - advisory only
 }
 
 # Authority hierarchy for ranking checks
@@ -74,7 +73,7 @@ def get_authority_rank(doc_type: str) -> int:
 
 def authority_weighted_dcg(
     doc_types: list[str],
-    relevance_scores: Optional[list[float]] = None,
+    relevance_scores: list[float] | None = None,
     k: int = 10,
 ) -> float:
     """Calculate Discounted Cumulative Gain weighted by authority.
@@ -109,7 +108,7 @@ def authority_weighted_dcg(
 
 def ideal_authority_weighted_dcg(
     doc_types: list[str],
-    relevance_scores: Optional[list[float]] = None,
+    relevance_scores: list[float] | None = None,
     k: int = 10,
 ) -> float:
     """Calculate ideal (maximum possible) authority-weighted DCG.
@@ -133,8 +132,7 @@ def ideal_authority_weighted_dcg(
 
     # Create (authority_weight * relevance) pairs and sort descending
     weighted_pairs = [
-        (get_authority_weight(dt) * rel, dt)
-        for dt, rel in zip(doc_types, relevance_scores)
+        (get_authority_weight(dt) * rel, dt) for dt, rel in zip(doc_types, relevance_scores)
     ]
     weighted_pairs.sort(reverse=True, key=lambda x: x[0])
 
@@ -148,7 +146,7 @@ def ideal_authority_weighted_dcg(
 
 def authority_weighted_ndcg(
     doc_types: list[str],
-    relevance_scores: Optional[list[float]] = None,
+    relevance_scores: list[float] | None = None,
     k: int = 10,
 ) -> float:
     """Calculate Normalized DCG weighted by document authority.
@@ -228,10 +226,7 @@ def primary_authority_rate(
     if not types:
         return 0.0
 
-    primary_count = sum(
-        1 for dt in types
-        if dt.lower() in ("statute", "rule")
-    )
+    primary_count = sum(1 for dt in types if dt.lower() in ("statute", "rule"))
 
     return primary_count / len(types)
 
@@ -286,7 +281,7 @@ def authority_by_rank(
 
 def compute_authority_metrics(
     doc_types: list[str],
-    relevance_scores: Optional[list[float]] = None,
+    relevance_scores: list[float] | None = None,
 ) -> AuthorityMetrics:
     """Compute all authority-aware metrics for a single query result.
 

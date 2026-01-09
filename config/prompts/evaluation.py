@@ -48,5 +48,6 @@ Scoring Guidelines:
 - 7-8: Good - Mostly correct with minor issues
 - 9-10: Excellent - Comprehensive, accurate, well-cited
 
-Be strict about hallucinations - any invented statute numbers, incorrect rates, or fabricated rules should be flagged.
+Be strict about hallucinations - any invented statute numbers, incorrect rates,
+or fabricated rules should be flagged.
 """

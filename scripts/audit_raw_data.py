@@ -8,12 +8,10 @@ and generates a comprehensive audit report.
 from __future__ import annotations
 
 import json
-import re
 import sys
-from collections import Counter, defaultdict
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -22,10 +20,10 @@ sys.path.insert(0, str(PROJECT_ROOT))
 DATA_DIR = PROJECT_ROOT / "data" / "raw"
 
 
-def load_json_file(path: Path) -> Optional[dict]:
+def load_json_file(path: Path) -> dict | None:
     """Load a JSON file, returning None on error."""
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
         return {"_error": str(e), "_path": str(path)}
@@ -56,7 +54,9 @@ def validate_date(date_str: str | None) -> tuple[bool, str | None]:
     formats = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f%z"]
     for fmt in formats:
         try:
-            parsed = datetime.strptime(date_str.split("+")[0].split("Z")[0], fmt.split("%z")[0].rstrip())
+            parsed = datetime.strptime(
+                date_str.split("+")[0].split("Z")[0], fmt.split("%z")[0].rstrip()
+            )
             # Check reasonable date range (1800-2100)
             if parsed.year < 1800 or parsed.year > 2100:
                 return False, f"date_out_of_range: {date_str}"
@@ -85,22 +85,26 @@ def audit_statutes(statutes_dir: Path) -> dict:
         for json_file in sorted(chapter_dir.glob("*.json")):
             data = load_json_file(json_file)
             if data is None:
-                issues.append({
-                    "file": str(json_file.relative_to(DATA_DIR)),
-                    "type": "statute",
-                    "issue": "file_read_error",
-                    "severity": "error",
-                })
+                issues.append(
+                    {
+                        "file": str(json_file.relative_to(DATA_DIR)),
+                        "type": "statute",
+                        "issue": "file_read_error",
+                        "severity": "error",
+                    }
+                )
                 continue
 
             if "_error" in data:
-                issues.append({
-                    "file": str(json_file.relative_to(DATA_DIR)),
-                    "type": "statute",
-                    "issue": "json_parse_error",
-                    "details": data["_error"],
-                    "severity": "error",
-                })
+                issues.append(
+                    {
+                        "file": str(json_file.relative_to(DATA_DIR)),
+                        "type": "statute",
+                        "issue": "json_parse_error",
+                        "details": data["_error"],
+                        "severity": "error",
+                    }
+                )
                 continue
 
             stats["count"] += 1
@@ -113,13 +117,15 @@ def audit_statutes(statutes_dir: Path) -> dict:
 
             # Check for duplicates
             if doc_id in ids_seen:
-                issues.append({
-                    "file": str(json_file.relative_to(DATA_DIR)),
-                    "type": "statute",
-                    "issue": "duplicate_id",
-                    "id": doc_id,
-                    "severity": "warning",
-                })
+                issues.append(
+                    {
+                        "file": str(json_file.relative_to(DATA_DIR)),
+                        "type": "statute",
+                        "issue": "duplicate_id",
+                        "id": doc_id,
+                        "severity": "warning",
+                    }
+                )
             ids_seen.add(doc_id)
 
             # Track by chapter
@@ -130,35 +136,41 @@ def audit_statutes(statutes_dir: Path) -> dict:
             for field in required_fields:
                 if not metadata.get(field):
                     stats["missing_fields"][field] += 1
-                    issues.append({
-                        "file": str(json_file.relative_to(DATA_DIR)),
-                        "type": "statute",
-                        "issue": "missing_field",
-                        "field": field,
-                        "severity": "warning",
-                    })
+                    issues.append(
+                        {
+                            "file": str(json_file.relative_to(DATA_DIR)),
+                            "type": "statute",
+                            "issue": "missing_field",
+                            "field": field,
+                            "severity": "warning",
+                        }
+                    )
 
             # Check text
             stats["text_lengths"].append(len(text))
             if len(text) < 50:
                 stats["empty_text"] += 1
-                issues.append({
-                    "file": str(json_file.relative_to(DATA_DIR)),
-                    "type": "statute",
-                    "issue": "empty_or_short_text",
-                    "length": len(text),
-                    "severity": "warning",
-                })
+                issues.append(
+                    {
+                        "file": str(json_file.relative_to(DATA_DIR)),
+                        "type": "statute",
+                        "issue": "empty_or_short_text",
+                        "length": len(text),
+                        "severity": "warning",
+                    }
+                )
 
             # Check encoding
             encoding_issues = check_encoding_issues(text)
             for issue in encoding_issues:
-                issues.append({
-                    "file": str(json_file.relative_to(DATA_DIR)),
-                    "type": "statute",
-                    "issue": issue,
-                    "severity": "warning",
-                })
+                issues.append(
+                    {
+                        "file": str(json_file.relative_to(DATA_DIR)),
+                        "type": "statute",
+                        "issue": issue,
+                        "severity": "warning",
+                    }
+                )
 
             # Check effective_date
             if metadata.get("effective_date") is None:
@@ -195,12 +207,14 @@ def audit_rules(rules_dir: Path) -> dict:
         for json_file in sorted(chapter_dir.glob("*.json")):
             data = load_json_file(json_file)
             if data is None or "_error" in data:
-                issues.append({
-                    "file": str(json_file.relative_to(DATA_DIR)),
-                    "type": "rule",
-                    "issue": "file_read_error",
-                    "severity": "error",
-                })
+                issues.append(
+                    {
+                        "file": str(json_file.relative_to(DATA_DIR)),
+                        "type": "rule",
+                        "issue": "file_read_error",
+                        "severity": "error",
+                    }
+                )
                 continue
 
             stats["count"] += 1
@@ -213,26 +227,30 @@ def audit_rules(rules_dir: Path) -> dict:
 
             # Check for duplicates
             if doc_id in ids_seen:
-                issues.append({
-                    "file": str(json_file.relative_to(DATA_DIR)),
-                    "type": "rule",
-                    "issue": "duplicate_id",
-                    "id": doc_id,
-                    "severity": "warning",
-                })
+                issues.append(
+                    {
+                        "file": str(json_file.relative_to(DATA_DIR)),
+                        "type": "rule",
+                        "issue": "duplicate_id",
+                        "id": doc_id,
+                        "severity": "warning",
+                    }
+                )
             ids_seen.add(doc_id)
 
             # Check required fields
             for field in required_fields:
                 if not metadata.get(field):
                     stats["missing_fields"][field] += 1
-                    issues.append({
-                        "file": str(json_file.relative_to(DATA_DIR)),
-                        "type": "rule",
-                        "issue": "missing_field",
-                        "field": field,
-                        "severity": "warning",
-                    })
+                    issues.append(
+                        {
+                            "file": str(json_file.relative_to(DATA_DIR)),
+                            "type": "rule",
+                            "issue": "missing_field",
+                            "field": field,
+                            "severity": "warning",
+                        }
+                    )
 
             # Check cross-references
             if metadata.get("rulemaking_authority"):
@@ -244,23 +262,27 @@ def audit_rules(rules_dir: Path) -> dict:
             stats["text_lengths"].append(len(text))
             if len(text) < 50:
                 stats["empty_text"] += 1
-                issues.append({
-                    "file": str(json_file.relative_to(DATA_DIR)),
-                    "type": "rule",
-                    "issue": "empty_or_short_text",
-                    "length": len(text),
-                    "severity": "warning",
-                })
+                issues.append(
+                    {
+                        "file": str(json_file.relative_to(DATA_DIR)),
+                        "type": "rule",
+                        "issue": "empty_or_short_text",
+                        "length": len(text),
+                        "severity": "warning",
+                    }
+                )
 
             # Check encoding
             encoding_issues = check_encoding_issues(text)
             for issue in encoding_issues:
-                issues.append({
-                    "file": str(json_file.relative_to(DATA_DIR)),
-                    "type": "rule",
-                    "issue": issue,
-                    "severity": "warning",
-                })
+                issues.append(
+                    {
+                        "file": str(json_file.relative_to(DATA_DIR)),
+                        "type": "rule",
+                        "issue": issue,
+                        "severity": "warning",
+                    }
+                )
 
     # Compute statistics
     if stats["text_lengths"]:
@@ -295,12 +317,14 @@ def audit_taas(taa_dir: Path) -> dict:
     for json_file in sorted(taa_dir.glob("TAA_*.json")):
         data = load_json_file(json_file)
         if data is None or "_error" in data:
-            issues.append({
-                "file": str(json_file.relative_to(DATA_DIR)),
-                "type": "taa",
-                "issue": "file_read_error",
-                "severity": "error",
-            })
+            issues.append(
+                {
+                    "file": str(json_file.relative_to(DATA_DIR)),
+                    "type": "taa",
+                    "issue": "file_read_error",
+                    "severity": "error",
+                }
+            )
             continue
 
         stats["count"] += 1
@@ -313,26 +337,30 @@ def audit_taas(taa_dir: Path) -> dict:
 
         # Check for duplicates
         if doc_id in ids_seen:
-            issues.append({
-                "file": str(json_file.relative_to(DATA_DIR)),
-                "type": "taa",
-                "issue": "duplicate_id",
-                "id": doc_id,
-                "severity": "warning",
-            })
+            issues.append(
+                {
+                    "file": str(json_file.relative_to(DATA_DIR)),
+                    "type": "taa",
+                    "issue": "duplicate_id",
+                    "id": doc_id,
+                    "severity": "warning",
+                }
+            )
         ids_seen.add(doc_id)
 
         # Check required fields
         for field in required_fields:
             if not metadata.get(field):
                 stats["missing_fields"][field] += 1
-                issues.append({
-                    "file": str(json_file.relative_to(DATA_DIR)),
-                    "type": "taa",
-                    "issue": "missing_field",
-                    "field": field,
-                    "severity": "warning",
-                })
+                issues.append(
+                    {
+                        "file": str(json_file.relative_to(DATA_DIR)),
+                        "type": "taa",
+                        "issue": "missing_field",
+                        "field": field,
+                        "severity": "warning",
+                    }
+                )
 
         # Check cross-references
         statutes = metadata.get("statutes_cited", [])
@@ -348,13 +376,15 @@ def audit_taas(taa_dir: Path) -> dict:
         stats["text_lengths"].append(len(text))
         if len(text) < 50:
             stats["empty_text"] += 1
-            issues.append({
-                "file": str(json_file.relative_to(DATA_DIR)),
-                "type": "taa",
-                "issue": "empty_or_short_text",
-                "length": len(text),
-                "severity": "warning",
-            })
+            issues.append(
+                {
+                    "file": str(json_file.relative_to(DATA_DIR)),
+                    "type": "taa",
+                    "issue": "empty_or_short_text",
+                    "length": len(text),
+                    "severity": "warning",
+                }
+            )
 
     # Compute statistics
     if stats["text_lengths"]:
@@ -393,12 +423,14 @@ def audit_cases(case_dir: Path) -> dict:
     for json_file in sorted(case_dir.glob("case_*.json")):
         data = load_json_file(json_file)
         if data is None or "_error" in data:
-            issues.append({
-                "file": str(json_file.relative_to(DATA_DIR)),
-                "type": "case",
-                "issue": "file_read_error",
-                "severity": "error",
-            })
+            issues.append(
+                {
+                    "file": str(json_file.relative_to(DATA_DIR)),
+                    "type": "case",
+                    "issue": "file_read_error",
+                    "severity": "error",
+                }
+            )
             continue
 
         stats["count"] += 1
@@ -411,26 +443,30 @@ def audit_cases(case_dir: Path) -> dict:
 
         # Check for duplicates
         if doc_id in ids_seen:
-            issues.append({
-                "file": str(json_file.relative_to(DATA_DIR)),
-                "type": "case",
-                "issue": "duplicate_id",
-                "id": doc_id,
-                "severity": "warning",
-            })
+            issues.append(
+                {
+                    "file": str(json_file.relative_to(DATA_DIR)),
+                    "type": "case",
+                    "issue": "duplicate_id",
+                    "id": doc_id,
+                    "severity": "warning",
+                }
+            )
         ids_seen.add(doc_id)
 
         # Check required fields
         for field in required_fields:
             if not metadata.get(field):
                 stats["missing_fields"][field] += 1
-                issues.append({
-                    "file": str(json_file.relative_to(DATA_DIR)),
-                    "type": "case",
-                    "issue": "missing_field",
-                    "field": field,
-                    "severity": "warning",
-                })
+                issues.append(
+                    {
+                        "file": str(json_file.relative_to(DATA_DIR)),
+                        "type": "case",
+                        "issue": "missing_field",
+                        "field": field,
+                        "severity": "warning",
+                    }
+                )
 
         # Check citations
         citations = metadata.get("citations", [])
@@ -462,13 +498,15 @@ def audit_cases(case_dir: Path) -> dict:
 
         if opinion_len < 50:
             stats["empty_opinion"] += 1
-            issues.append({
-                "file": str(json_file.relative_to(DATA_DIR)),
-                "type": "case",
-                "issue": "empty_or_short_opinion",
-                "length": opinion_len,
-                "severity": "warning",
-            })
+            issues.append(
+                {
+                    "file": str(json_file.relative_to(DATA_DIR)),
+                    "type": "case",
+                    "issue": "empty_or_short_opinion",
+                    "length": opinion_len,
+                    "severity": "warning",
+                }
+            )
         elif opinion_len < 500:
             # Likely truncated (full opinions are typically much longer)
             stats["truncated_opinion"] += 1
@@ -543,8 +581,7 @@ def run_audit() -> dict:
 
     # Build summary
     total_docs = sum(
-        all_stats.get(key, {}).get("count", 0)
-        for key in ["statutes", "rules", "taas", "cases"]
+        all_stats.get(key, {}).get("count", 0) for key in ["statutes", "rules", "taas", "cases"]
     )
 
     by_type = {
@@ -590,9 +627,11 @@ def main():
     print(f"  - Cases: {report['summary']['by_type']['case']}")
     print()
     print(f"Total issues found: {report['summary']['issues_found']}")
-    if report['summary']['issue_types']:
+    if report["summary"]["issue_types"]:
         print("Issue breakdown:")
-        for issue_type, count in sorted(report['summary']['issue_types'].items(), key=lambda x: -x[1]):
+        for issue_type, count in sorted(
+            report["summary"]["issue_types"].items(), key=lambda x: -x[1]
+        ):
             print(f"  - {issue_type}: {count}")
     print()
 
@@ -601,28 +640,28 @@ def main():
     print("-" * 40)
     if "statutes" in report["statistics"]:
         s = report["statistics"]["statutes"]
-        print(f"Statutes:")
+        print("Statutes:")
         print(f"  Avg text length: {s.get('avg_text_length', 'N/A')} chars")
         print(f"  Missing effective_date: {s.get('missing_effective_date', 0)}")
         print(f"  Empty/short text: {s.get('empty_text', 0)}")
 
     if "rules" in report["statistics"]:
         r = report["statistics"]["rules"]
-        print(f"Rules:")
+        print("Rules:")
         print(f"  Avg text length: {r.get('avg_text_length', 'N/A')} chars")
         print(f"  With rulemaking_authority: {r.get('with_rulemaking_authority', 0)}")
         print(f"  With law_implemented: {r.get('with_law_implemented', 0)}")
 
     if "taas" in report["statistics"]:
         t = report["statistics"]["taas"]
-        print(f"TAAs:")
+        print("TAAs:")
         print(f"  Avg text length: {t.get('avg_text_length', 'N/A')} chars")
         print(f"  With statutes cited: {t.get('with_statutes_cited', 0)}")
         print(f"  With rules cited: {t.get('with_rules_cited', 0)}")
 
     if "cases" in report["statistics"]:
         c = report["statistics"]["cases"]
-        print(f"Cases:")
+        print("Cases:")
         print(f"  Avg opinion length: {c.get('avg_opinion_length', 'N/A')} chars")
         print(f"  With statutes_cited: {c.get('with_statutes_cited', 0)}")
         print(f"  Empty statutes_cited: {c.get('count', 0) - c.get('with_statutes_cited', 0)}")

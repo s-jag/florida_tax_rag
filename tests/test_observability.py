@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import threading
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.api.errors import (
     GenerationError,
@@ -23,12 +21,9 @@ from src.api.errors import (
 from src.observability.context import (
     clear_request_context,
     get_context,
-    query_id_var,
-    request_id_var,
     set_request_context,
 )
-from src.observability.metrics import MetricsCollector, get_metrics_collector
-
+from src.observability.metrics import get_metrics_collector
 
 # =============================================================================
 # Context Tests
@@ -378,7 +373,6 @@ class TestMetricsEndpoint:
     @pytest.fixture
     def app(self):
         """Create a test FastAPI app with metrics endpoint."""
-        from src.api.routes import router
         from src.api.main import create_app
 
         return create_app()

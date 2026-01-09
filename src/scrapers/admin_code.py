@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import re
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from bs4 import BeautifulSoup
 
@@ -75,10 +75,12 @@ class FloridaAdminCodeScraper(BaseScraper):
                 if match:
                     chapter = match.group(1)
                     title = link.get_text(strip=True)
-                    chapters.append({
-                        "chapter": chapter,
-                        "title": title,
-                    })
+                    chapters.append(
+                        {
+                            "chapter": chapter,
+                            "title": title,
+                        }
+                    )
 
         self.log.info("found_chapters", division=division, count=len(chapters))
         return chapters
@@ -110,10 +112,12 @@ class FloridaAdminCodeScraper(BaseScraper):
                     if rule_id not in seen:
                         seen.add(rule_id)
                         title = link.get_text(strip=True)
-                        rules.append({
-                            "rule_number": rule_id,
-                            "title": title,
-                        })
+                        rules.append(
+                            {
+                                "rule_number": rule_id,
+                                "title": title,
+                            }
+                        )
 
         self.log.info("found_rules", chapter=chapter, count=len(rules))
         return rules
@@ -141,10 +145,12 @@ class FloridaAdminCodeScraper(BaseScraper):
         effective_date = self._extract_effective_date(soup)
         rulemaking_authority = self._extract_rulemaking_authority(soup)
         law_implemented = self._extract_law_implemented(soup)
-        history = self._extract_history(soup)
+        self._extract_history(soup)
 
         # Extract chapter from rule number (e.g., '12A-1' from '12A-1.001')
-        chapter = "-".join(rule_number.split("-")[:-1]) + "-" + rule_number.split("-")[-1].split(".")[0]
+        chapter = (
+            "-".join(rule_number.split("-")[:-1]) + "-" + rule_number.split("-")[-1].split(".")[0]
+        )
         if "-" in rule_number:
             parts = rule_number.split(".")
             if len(parts) >= 1:
@@ -173,7 +179,7 @@ class FloridaAdminCodeScraper(BaseScraper):
             text=text,
             html=html,
             source_url=url,
-            scraped_at=datetime.now(timezone.utc),
+            scraped_at=datetime.now(UTC),
         )
 
     def _extract_rule_title(self, soup: BeautifulSoup, rule_number: str) -> str:
@@ -193,8 +199,7 @@ class FloridaAdminCodeScraper(BaseScraper):
             title = title_tag.get_text(strip=True)
             # Extract between rule number and " - Florida"
             match = re.search(
-                rf"{re.escape(rule_number)}\s*:\s*([^-]+?)(?:\s*-\s*Florida|\s*$)",
-                title
+                rf"{re.escape(rule_number)}\s*:\s*([^-]+?)(?:\s*-\s*Florida|\s*$)", title
             )
             if match:
                 return match.group(1).strip()
@@ -203,7 +208,7 @@ class FloridaAdminCodeScraper(BaseScraper):
         text = soup.get_text()
         patterns = [
             rf"{re.escape(rule_number)}\s*:\s*([^\n-]+)",
-            rf"Rule Title:\s*([^\n]+)",
+            r"Rule Title:\s*([^\n]+)",
         ]
 
         for pattern in patterns:
@@ -249,7 +254,7 @@ class FloridaAdminCodeScraper(BaseScraper):
         content = self._clean_text(content)
         return content
 
-    def _extract_effective_date(self, soup: BeautifulSoup) -> Optional[date]:
+    def _extract_effective_date(self, soup: BeautifulSoup) -> date | None:
         """Extract the effective date from the page."""
         # Look for "Effective Date" text
         text = soup.get_text()
@@ -308,17 +313,11 @@ class FloridaAdminCodeScraper(BaseScraper):
         if section_name == "Rulemaking Authority":
             # Extract text between "Rulemaking Authority" and "Law Implemented"
             match = re.search(
-                r"Rulemaking Authority\s+(.*?)\s+Law Implemented",
-                text,
-                re.IGNORECASE | re.DOTALL
+                r"Rulemaking Authority\s+(.*?)\s+Law Implemented", text, re.IGNORECASE | re.DOTALL
             )
         else:
             # Extract text between "Law Implemented" and "History"
-            match = re.search(
-                r"Law Implemented\s+(.*?)\s+History",
-                text,
-                re.IGNORECASE | re.DOTALL
-            )
+            match = re.search(r"Law Implemented\s+(.*?)\s+History", text, re.IGNORECASE | re.DOTALL)
 
         if match:
             section_text = match.group(1)
@@ -527,7 +526,7 @@ class FloridaAdminCodeScraper(BaseScraper):
         # Save summary
         summary = {
             "total_rules": len(rules),
-            "scraped_at": datetime.now(timezone.utc).isoformat(),
+            "scraped_at": datetime.now(UTC).isoformat(),
             "chapters": {},
         }
 
@@ -541,5 +540,5 @@ class FloridaAdminCodeScraper(BaseScraper):
             summary["chapters"][chapter]["count"] += 1
             summary["chapters"][chapter]["rules"].append(rule.metadata.rule_number)
 
-        summary_path = self.output_dir / "summary.json"
+        self.output_dir / "summary.json"
         self.save_raw(summary, "admin_code/summary.json")

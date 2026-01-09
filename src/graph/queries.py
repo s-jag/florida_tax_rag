@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -16,8 +16,8 @@ class DocumentNode(BaseModel):
     doc_type: str = Field(..., description="Document type")
     title: str = Field(..., description="Document title")
     full_citation: str = Field(..., description="Full legal citation")
-    section: Optional[str] = Field(default=None, description="Section number")
-    chapter: Optional[str] = Field(default=None, description="Chapter number")
+    section: str | None = Field(default=None, description="Section number")
+    chapter: str | None = Field(default=None, description="Chapter number")
 
 
 class ChunkNode(BaseModel):
@@ -60,7 +60,7 @@ class InterpretationChainResult(BaseModel):
 def get_statute_with_implementing_rules(
     client: Neo4jClient,
     section: str,
-) -> Optional[InterpretationChainResult]:
+) -> InterpretationChainResult | None:
     """Get a statute with all rules that implement it.
 
     Args:
@@ -131,7 +131,7 @@ def get_all_citations_for_chunk(
 def get_interpretation_chain(
     client: Neo4jClient,
     statute_section: str,
-) -> Optional[InterpretationChainResult]:
+) -> InterpretationChainResult | None:
     """Get full interpretation chain: statute -> rules -> cases/TAAs.
 
     This traverses the legal authority hierarchy to find all documents
@@ -212,15 +212,13 @@ def find_path_between(
            to_node.id AS to_id, to_node.title AS to_title
     """
 
-    return client.run_query(
-        query, {"source_id": source_id, "target_id": target_id}
-    )
+    return client.run_query(query, {"source_id": source_id, "target_id": target_id})
 
 
 def get_document_with_chunks(
     client: Neo4jClient,
     doc_id: str,
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Get a document with all its chunks.
 
     Args:

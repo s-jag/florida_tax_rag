@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
-
 
 # =============================================================================
 # Enums
@@ -31,11 +29,11 @@ class DocType(str, Enum):
 class QueryOptions(BaseModel):
     """Options for query execution."""
 
-    doc_types: Optional[list[DocType]] = Field(
+    doc_types: list[DocType] | None = Field(
         default=None,
         description="Filter by document types",
     )
-    tax_year: Optional[int] = Field(
+    tax_year: int | None = Field(
         default=None,
         ge=1990,
         le=2030,
@@ -107,11 +105,9 @@ class SourceResponse(BaseModel):
     chunk_id: str = Field(..., description="Chunk identifier")
     doc_id: str = Field(..., description="Parent document identifier")
     doc_type: str = Field(..., description="Document type")
-    citation: Optional[str] = Field(default=None, description="Legal citation")
+    citation: str | None = Field(default=None, description="Legal citation")
     text: str = Field(..., description="Chunk text content")
-    effective_date: Optional[datetime] = Field(
-        default=None, description="Document effective date"
-    )
+    effective_date: datetime | None = Field(default=None, description="Document effective date")
     relevance_score: float = Field(..., description="Relevance score 0-1")
 
 
@@ -131,19 +127,15 @@ class QueryResponse(BaseModel):
     citations: list[CitationResponse] = Field(
         default_factory=list, description="Citations referenced in the answer"
     )
-    sources: list[SourceResponse] = Field(
-        default_factory=list, description="Source chunks used"
-    )
+    sources: list[SourceResponse] = Field(default_factory=list, description="Source chunks used")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score 0-1")
-    warnings: list[str] = Field(
-        default_factory=list, description="Warnings about the response"
-    )
-    reasoning_steps: Optional[list[ReasoningStep]] = Field(
+    warnings: list[str] = Field(default_factory=list, description="Warnings about the response")
+    reasoning_steps: list[ReasoningStep] | None = Field(
         default=None, description="Reasoning steps (if requested)"
     )
     validation_passed: bool = Field(..., description="Whether validation passed")
     processing_time_ms: int = Field(..., description="Processing time in milliseconds")
-    stage_timings: Optional[dict[str, float]] = Field(
+    stage_timings: dict[str, float] | None = Field(
         default=None, description="Per-stage timing breakdown in milliseconds"
     )
 
@@ -157,7 +149,7 @@ class QueryResponse(BaseModel):
                         "doc_id": "statute:212.05",
                         "citation": "Fla. Stat. § 212.05",
                         "doc_type": "statute",
-                        "text_snippet": "There is levied on each taxable transaction..."
+                        "text_snippet": "There is levied on each taxable transaction...",
                     }
                 ],
                 "sources": [
@@ -167,13 +159,13 @@ class QueryResponse(BaseModel):
                         "doc_type": "statute",
                         "citation": "Fla. Stat. § 212.05",
                         "text": "There is levied on each taxable transaction...",
-                        "relevance_score": 0.92
+                        "relevance_score": 0.92,
                     }
                 ],
                 "confidence": 0.92,
                 "warnings": [],
                 "validation_passed": True,
-                "processing_time_ms": 3250
+                "processing_time_ms": 3250,
             }
         }
     }
@@ -192,21 +184,15 @@ class ChunkDetailResponse(BaseModel):
     doc_type: str = Field(..., description="Document type")
     level: str = Field(..., description="Chunk level (parent or child)")
     text: str = Field(..., description="Chunk text content")
-    text_with_ancestry: Optional[str] = Field(
-        default=None, description="Text with ancestry context"
-    )
-    ancestry: Optional[str] = Field(default=None, description="Ancestry path")
-    citation: Optional[str] = Field(default=None, description="Legal citation")
-    effective_date: Optional[datetime] = Field(
-        default=None, description="Document effective date"
-    )
-    token_count: Optional[int] = Field(default=None, description="Token count")
-    parent_chunk_id: Optional[str] = Field(
+    text_with_ancestry: str | None = Field(default=None, description="Text with ancestry context")
+    ancestry: str | None = Field(default=None, description="Ancestry path")
+    citation: str | None = Field(default=None, description="Legal citation")
+    effective_date: datetime | None = Field(default=None, description="Document effective date")
+    token_count: int | None = Field(default=None, description="Token count")
+    parent_chunk_id: str | None = Field(
         default=None, description="Parent chunk ID if this is a child"
     )
-    child_chunk_ids: list[str] = Field(
-        default_factory=list, description="Child chunk IDs"
-    )
+    child_chunk_ids: list[str] = Field(default_factory=list, description="Child chunk IDs")
     related_doc_ids: list[str] = Field(
         default_factory=list, description="Related document IDs via citations"
     )
@@ -237,7 +223,7 @@ class RelatedDocumentsResponse(BaseModel):
     cited_documents: list[dict] = Field(
         default_factory=list, description="Documents cited by this one"
     )
-    interpretation_chain: Optional[dict] = Field(
+    interpretation_chain: dict | None = Field(
         default=None, description="Full interpretation chain (for statutes)"
     )
 
@@ -252,18 +238,14 @@ class ServiceHealth(BaseModel):
 
     name: str = Field(..., description="Service name")
     healthy: bool = Field(..., description="Whether service is healthy")
-    latency_ms: Optional[float] = Field(
-        default=None, description="Health check latency in ms"
-    )
-    error: Optional[str] = Field(default=None, description="Error message if unhealthy")
+    latency_ms: float | None = Field(default=None, description="Health check latency in ms")
+    error: str | None = Field(default=None, description="Error message if unhealthy")
 
 
 class HealthResponse(BaseModel):
     """Response from /health endpoint."""
 
-    status: str = Field(
-        ..., description="Overall status: healthy, degraded, unhealthy"
-    )
+    status: str = Field(..., description="Overall status: healthy, degraded, unhealthy")
     services: list[ServiceHealth] = Field(
         default_factory=list, description="Individual service health"
     )
@@ -275,9 +257,9 @@ class HealthResponse(BaseModel):
                 "status": "healthy",
                 "services": [
                     {"name": "neo4j", "healthy": True, "latency_ms": 12.5},
-                    {"name": "weaviate", "healthy": True, "latency_ms": 8.3}
+                    {"name": "weaviate", "healthy": True, "latency_ms": 8.3},
                 ],
-                "timestamp": "2024-01-15T10:30:00.000Z"
+                "timestamp": "2024-01-15T10:30:00.000Z",
             }
         }
     }
@@ -288,7 +270,7 @@ class ErrorDetail(BaseModel):
 
     code: str = Field(..., description="Error code")
     message: str = Field(..., description="Error message")
-    field: Optional[str] = Field(default=None, description="Field that caused error")
+    field: str | None = Field(default=None, description="Field that caused error")
 
 
 class ErrorResponse(BaseModel):
@@ -311,8 +293,8 @@ class LatencyStats(BaseModel):
     """Latency statistics for metrics."""
 
     avg: float = Field(..., description="Average latency in ms")
-    min: Optional[float] = Field(default=None, description="Minimum latency in ms")
-    max: Optional[float] = Field(default=None, description="Maximum latency in ms")
+    min: float | None = Field(default=None, description="Minimum latency in ms")
+    max: float | None = Field(default=None, description="Maximum latency in ms")
 
 
 class MetricsResponse(BaseModel):
@@ -323,9 +305,7 @@ class MetricsResponse(BaseModel):
     failed_queries: int = Field(..., description="Number of failed queries")
     success_rate_percent: float = Field(..., description="Success rate percentage")
     latency_ms: LatencyStats = Field(..., description="Latency statistics")
-    errors_by_type: dict[str, int] = Field(
-        default_factory=dict, description="Error counts by type"
-    )
+    errors_by_type: dict[str, int] = Field(default_factory=dict, description="Error counts by type")
     uptime_seconds: float = Field(..., description="Uptime in seconds")
     started_at: str = Field(..., description="Start time ISO format")
 
@@ -339,7 +319,7 @@ class MetricsResponse(BaseModel):
                 "latency_ms": {"avg": 3250.5, "min": 1200.0, "max": 8500.0},
                 "errors_by_type": {"TIMEOUT": 50, "RETRIEVAL_ERROR": 15, "VALIDATION_ERROR": 10},
                 "uptime_seconds": 86400.0,
-                "started_at": "2024-01-14T10:30:00.000Z"
+                "started_at": "2024-01-14T10:30:00.000Z",
             }
         }
     }

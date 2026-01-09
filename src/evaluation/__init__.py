@@ -1,15 +1,6 @@
 """Testing and evaluation metrics for RAG quality."""
 
-from .models import (
-    AnswerType,
-    Category,
-    Difficulty,
-    EvalDataset,
-    EvalQuestion,
-    EvalReport,
-    EvalResult,
-    JudgmentResult,
-)
+from .llm_judge import LLMJudge
 from .metrics import (
     answer_contains_expected,
     citation_precision,
@@ -20,7 +11,16 @@ from .metrics import (
     get_base_citation,
     normalize_citation,
 )
-from .llm_judge import LLMJudge
+from .models import (
+    AnswerType,
+    Category,
+    Difficulty,
+    EvalDataset,
+    EvalQuestion,
+    EvalReport,
+    EvalResult,
+    JudgmentResult,
+)
 from .report import (
     CategoryMetrics,
     DifficultyMetrics,
@@ -28,7 +28,11 @@ from .report import (
     QuestionSummary,
     generate_markdown_report,
 )
-from .runner import EvaluationRunner
+from .retrieval_analysis import (
+    RetrievalAnalyzer,
+    debug_retrieval,
+    generate_retrieval_markdown_report,
+)
 from .retrieval_metrics import (
     AlphaTuningResult,
     MethodComparisonResult,
@@ -41,11 +45,7 @@ from .retrieval_metrics import (
     precision_at_k,
     recall_at_k,
 )
-from .retrieval_analysis import (
-    RetrievalAnalyzer,
-    debug_retrieval,
-    generate_retrieval_markdown_report,
-)
+from .runner import EvaluationRunner
 
 __all__ = [
     # Enums

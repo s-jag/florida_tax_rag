@@ -2,8 +2,8 @@
 
 from .main import app, create_app
 from .models import (
-    CitationResponse,
     ChunkDetailResponse,
+    CitationResponse,
     ErrorResponse,
     HealthResponse,
     QueryOptions,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -97,7 +97,7 @@ class MultiQueryRetriever:
         query: str,
         top_k: int = 20,
         decompose: bool = True,
-        per_query_top_k: Optional[int] = None,
+        per_query_top_k: int | None = None,
         **retrieval_kwargs: Any,
     ) -> MultiRetrievalResult:
         """Retrieve documents using query decomposition.
@@ -129,9 +129,7 @@ class MultiQueryRetriever:
         # Simple query path
         if decomposition.is_simple:
             logger.info(f"Simple query, running single retrieval: {query[:50]}...")
-            results = await self._run_single_retrieval(
-                query, top_k, **retrieval_kwargs
-            )
+            results = await self._run_single_retrieval(query, top_k, **retrieval_kwargs)
             return MultiRetrievalResult(
                 original_query=query,
                 decomposition=decomposition,
@@ -140,9 +138,7 @@ class MultiQueryRetriever:
             )
 
         # Complex query path: parallel sub-query retrieval
-        logger.info(
-            f"Running {decomposition.query_count} sub-queries for: {query[:50]}..."
-        )
+        logger.info(f"Running {decomposition.query_count} sub-queries for: {query[:50]}...")
         sub_query_results = await self._parallel_retrieve(
             decomposition.sub_queries,
             per_query_top_k,
@@ -298,8 +294,7 @@ class MultiQueryRetriever:
                 boost = self.multi_match_boost * (match_count - 1)
                 result.score += boost
                 logger.debug(
-                    f"Boosted {chunk_id} by {boost:.3f} "
-                    f"(matched {match_count} sub-queries)"
+                    f"Boosted {chunk_id} by {boost:.3f} (matched {match_count} sub-queries)"
                 )
             merged.append(result)
 
@@ -311,8 +306,8 @@ class MultiQueryRetriever:
 
 
 def create_multi_retriever(
-    decomposer: Optional[QueryDecomposer] = None,
-    retriever: Optional[HybridRetriever] = None,
+    decomposer: QueryDecomposer | None = None,
+    retriever: HybridRetriever | None = None,
 ) -> MultiQueryRetriever:
     """Factory function to create a MultiQueryRetriever with default configuration.
 

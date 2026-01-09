@@ -33,21 +33,18 @@ import asyncio
 import json
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
-from urllib.parse import urljoin, urlparse, parse_qs
+from urllib.parse import urljoin
 
-from bs4 import BeautifulSoup, NavigableString
 import structlog
+from bs4 import BeautifulSoup, NavigableString
 
 from src.scrapers.base import BaseScraper
 from src.scrapers.models import RawStatute, StatuteMetadata
 from src.scrapers.utils import (
-    clean_html_text,
     extract_dates,
     normalize_whitespace,
-    parse_statute_citation,
 )
 
 logger = structlog.get_logger(__name__)
@@ -93,7 +90,7 @@ class FloridaStatutesScraper(BaseScraper):
     def __init__(
         self,
         rate_limit_delay: float = 1.0,
-        output_dir: Optional[Path] = None,
+        output_dir: Path | None = None,
         **kwargs,
     ):
         """Initialize the Florida Statutes scraper.
@@ -169,7 +166,9 @@ class FloridaStatutesScraper(BaseScraper):
         range_path = self._get_chapter_range_path(chapter)
         # Section files use the full section number with leading zeros for chapter
         section_file = f"{section.zfill(7) if '.' in section else section}.html"
-        return f"{BASE_URL}index.cfm?App_mode=Display_Statute&URL={range_path}/Sections/{section_file}"
+        return (
+            f"{BASE_URL}index.cfm?App_mode=Display_Statute&URL={range_path}/Sections/{section_file}"
+        )
 
     async def get_title_chapters(self, title_num: int) -> list[ChapterInfo]:
         """Get all chapters in a title.
@@ -518,7 +517,7 @@ class FloridaStatutesScraper(BaseScraper):
             text=main_text,
             html=html,
             source_url=section_info.section_url,
-            scraped_at=datetime.now(timezone.utc),
+            scraped_at=datetime.now(UTC),
         )
 
     async def scrape_chapter(
@@ -641,7 +640,7 @@ class FloridaStatutesScraper(BaseScraper):
         summary = {
             "title_number": title_num,
             "title_name": TITLES.get(title_num, {}).get("name", ""),
-            "scraped_at": datetime.now(timezone.utc).isoformat(),
+            "scraped_at": datetime.now(UTC).isoformat(),
             "total_sections": len(statutes),
             "chapters": {},
         }

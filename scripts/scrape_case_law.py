@@ -89,11 +89,10 @@ async def main() -> None:
         use_cache=not args.no_cache,
         raw_data_dir=raw_data_dir,
     ) as scraper:
-
         courts = args.court or ["fla"]
 
         if args.dry_run:
-            print(f"=== DRY RUN - Counting results ===")
+            print("=== DRY RUN - Counting results ===")
             print(f"Query: {args.query}")
             print(f"Courts: {', '.join(courts)}")
             print()
@@ -109,7 +108,9 @@ async def main() -> None:
 
             print(f"\nTotal: {total_count} cases")
             if args.max:
-                print(f"Would scrape: min({total_count}, {args.max}) = {min(total_count, args.max)} cases")
+                print(
+                    f"Would scrape: min({total_count}, {args.max}) = {min(total_count, args.max)} cases"
+                )
             est_time = min(total_count, args.max or total_count) * args.delay / 60
             print(f"Estimated time: {est_time:.1f} minutes at {args.delay}s delay")
             return
@@ -127,12 +128,12 @@ async def main() -> None:
                 delay=args.delay,
             )
 
-            print(f"\n=== Scrape Complete ===")
+            print("\n=== Scrape Complete ===")
             print(f"Total unique cases: {len(cases)}")
             return
 
         # Regular scrape
-        print(f"Scraping cases...")
+        print("Scraping cases...")
         print(f"Query: {args.query}")
         print(f"Courts: {', '.join(courts)}")
         print(f"Max cases: {args.max if args.max else 'all'}")
@@ -153,7 +154,7 @@ async def main() -> None:
             all_cases.extend(cases)
             print(f"  Found {len(cases)} cases")
 
-        print(f"\n=== Scrape Complete ===")
+        print("\n=== Scrape Complete ===")
         print(f"Total cases scraped: {len(all_cases)}")
 
         # Print summary by court

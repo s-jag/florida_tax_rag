@@ -2,23 +2,18 @@
 
 from __future__ import annotations
 
-import asyncio
 import pytest
 
 # Configure pytest-asyncio
 pytest_plugins = ("pytest_asyncio",)
-from pathlib import Path
-from unittest.mock import AsyncMock, patch, MagicMock
-from datetime import date
+from unittest.mock import AsyncMock, patch
 
 from src.scrapers.statutes import (
-    FloridaStatutesScraper,
-    ChapterInfo,
-    SectionInfo,
     TITLES,
-    BASE_URL,
+    ChapterInfo,
+    FloridaStatutesScraper,
+    SectionInfo,
 )
-
 
 # Sample HTML fixtures
 SAMPLE_TITLE_INDEX_HTML = """
@@ -260,10 +255,7 @@ class TestFloridaStatutesScraperParsing:
 
     def test_extract_history_years(self, scraper):
         """Test extracting amendment years from history text."""
-        history = (
-            "History.—s. 5, ch. 26319, 1949; s. 1, ch. 57-398; "
-            "s. 2, ch. 2024-99."
-        )
+        history = "History.—s. 5, ch. 26319, 1949; s. 1, ch. 57-398; s. 2, ch. 2024-99."
         years = scraper._extract_history_years(history)
 
         assert "1949" in years
@@ -362,7 +354,9 @@ class TestFloridaStatutesScraperIntegration:
             statutes = await scraper.scrape_chapter(chapter_info)
 
             # Should have scraped all 4 sections from SAMPLE_CHAPTER_CONTENTS_HTML
-            assert len(statutes) == 4, f"Expected 4 statutes, got {len(statutes)}. URLs called: {call_urls}"
+            assert len(statutes) == 4, (
+                f"Expected 4 statutes, got {len(statutes)}. URLs called: {call_urls}"
+            )
             assert all(s.metadata.chapter == 212 for s in statutes)
             assert len(call_urls) >= 5  # 1 contents + 4 sections
 

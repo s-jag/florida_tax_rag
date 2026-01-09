@@ -49,9 +49,7 @@ class TestResponseValidator:
         async def mock_to_thread(func, *args, **kwargs):
             return func(*args, **kwargs)
 
-        with patch(
-            "src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread
-        ):
+        with patch("src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread):
             result = await validator.validate_response(
                 response_text="Florida has a 6% sales tax [Source: 212.05]",
                 query="What is the sales tax rate?",
@@ -101,9 +99,7 @@ class TestResponseValidator:
         async def mock_to_thread(func, *args, **kwargs):
             return func(*args, **kwargs)
 
-        with patch(
-            "src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread
-        ):
+        with patch("src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread):
             result = await validator.validate_response(
                 response_text="The tax rate is 10% per Section 999.99",
                 query="What is the tax rate?",
@@ -111,10 +107,7 @@ class TestResponseValidator:
             )
 
         assert len(result.hallucinations) == 1
-        assert (
-            result.hallucinations[0].hallucination_type
-            == HallucinationType.FABRICATED_CITATION
-        )
+        assert result.hallucinations[0].hallucination_type == HallucinationType.FABRICATED_CITATION
         assert result.hallucinations[0].severity == 0.9
         assert result.needs_regeneration  # High severity triggers regeneration
 
@@ -155,9 +148,7 @@ class TestResponseValidator:
         async def mock_to_thread(func, *args, **kwargs):
             return func(*args, **kwargs)
 
-        with patch(
-            "src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread
-        ):
+        with patch("src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread):
             result = await validator.validate_response(
                 response_text="The exemption applies to all food items [Source: 212.08(1)]",
                 query="What food is exempt?",
@@ -170,10 +161,7 @@ class TestResponseValidator:
             )
 
         assert len(result.hallucinations) == 1
-        assert (
-            result.hallucinations[0].hallucination_type
-            == HallucinationType.MISQUOTED_TEXT
-        )
+        assert result.hallucinations[0].hallucination_type == HallucinationType.MISQUOTED_TEXT
         assert result.hallucinations[0].suggested_correction is not None
         assert not result.needs_regeneration  # Medium severity
         assert result.needs_correction
@@ -204,9 +192,7 @@ class TestResponseValidator:
         async def mock_to_thread(func, *args, **kwargs):
             return func(*args, **kwargs)
 
-        with patch(
-            "src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread
-        ):
+        with patch("src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread):
             result = await validator.validate_response(
                 response_text="Test response",
                 query="Test query",
@@ -318,15 +304,11 @@ class TestResponseCorrector:
         async def mock_to_thread(func, *args, **kwargs):
             return func(*args, **kwargs)
 
-        with patch(
-            "src.generation.corrector.asyncio.to_thread", side_effect=mock_to_thread
-        ):
+        with patch("src.generation.corrector.asyncio.to_thread", side_effect=mock_to_thread):
             result = await corrector.correct(
                 response_text="All food is exempt from sales tax in Florida.",
                 validation_result=validation_result,
-                chunks=[
-                    {"text": "food for human consumption...", "citation": "212.08(1)"}
-                ],
+                chunks=[{"text": "food for human consumption...", "citation": "212.08(1)"}],
             )
 
         assert "Caveats" in result.corrected_answer or len(result.disclaimers_added) > 0
@@ -338,9 +320,7 @@ class TestResponseCorrector:
         corrector = ResponseCorrector()
 
         mock_client = MagicMock()
-        mock_client.messages.create = MagicMock(
-            side_effect=Exception("Correction Error")
-        )
+        mock_client.messages.create = MagicMock(side_effect=Exception("Correction Error"))
         corrector.client = mock_client
 
         validation_result = ValidationResult(
@@ -362,9 +342,7 @@ class TestResponseCorrector:
         async def mock_to_thread(func, *args, **kwargs):
             return func(*args, **kwargs)
 
-        with patch(
-            "src.generation.corrector.asyncio.to_thread", side_effect=mock_to_thread
-        ):
+        with patch("src.generation.corrector.asyncio.to_thread", side_effect=mock_to_thread):
             result = await corrector.correct(
                 response_text="Original response",
                 validation_result=validation_result,
@@ -415,9 +393,7 @@ class TestValidationEdgeCases:
         async def mock_to_thread(func, *args, **kwargs):
             return func(*args, **kwargs)
 
-        with patch(
-            "src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread
-        ):
+        with patch("src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread):
             result = await validator.validate_response(
                 response_text="The cryptocurrency tax rate in Florida is 2%",
                 query="What is Florida's crypto tax?",
@@ -465,9 +441,7 @@ class TestValidationEdgeCases:
         async def mock_to_thread(func, *args, **kwargs):
             return func(*args, **kwargs)
 
-        with patch(
-            "src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread
-        ):
+        with patch("src.generation.validator.asyncio.to_thread", side_effect=mock_to_thread):
             result = await validator.validate_response(
                 response_text="Florida has 6% state sales tax plus a mandatory 2% local tax",
                 query="What is the total sales tax?",

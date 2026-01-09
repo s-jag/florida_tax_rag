@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -38,7 +38,7 @@ class LegalDocument(BaseModel):
     text: str = Field(..., description="Plain text content of the document")
 
     # Temporal
-    effective_date: Optional[date] = Field(
+    effective_date: date | None = Field(
         default=None,
         description="Effective date (for statutes/rules) or filing date (for cases)",
     )
@@ -47,7 +47,7 @@ class LegalDocument(BaseModel):
     source_url: str = Field(..., description="Original source URL")
 
     # Hierarchy (for statutes/rules)
-    parent_id: Optional[str] = Field(
+    parent_id: str | None = Field(
         default=None,
         description="Parent document ID (e.g., chapter for section)",
     )

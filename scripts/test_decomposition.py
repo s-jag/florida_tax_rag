@@ -82,7 +82,7 @@ async def test_decomposition(query: str, verbose: bool = False) -> dict:
     Returns:
         dict with decomposition results
     """
-    from src.retrieval import QueryDecomposer, create_decomposer
+    from src.retrieval import create_decomposer
 
     decomposer = create_decomposer()
 
@@ -114,9 +114,9 @@ async def test_multi_retrieval(query: str, top_k: int = 5) -> None:
     """
     from src.retrieval import create_multi_retriever
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("MULTI-QUERY RETRIEVAL TEST")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     try:
         retriever = create_multi_retriever()
@@ -137,7 +137,7 @@ async def test_multi_retrieval(query: str, top_k: int = 5) -> None:
         for sq in result.decomposition.sub_queries:
             print(f"  [{sq.priority}] {sq.type.value}: {sq.text}")
 
-        print(f"\nSub-query Results:")
+        print("\nSub-query Results:")
         for sqr in result.sub_query_results:
             print(f"  {sqr.sub_query.type.value}: {sqr.result_count} results")
 
@@ -165,7 +165,7 @@ async def run_all_tests(verbose: bool = False) -> None:
 
     results = []
     for test in TEST_QUERIES:
-        print(f"\n{'-'*70}")
+        print(f"\n{'-' * 70}")
         print(f"Query: {test['query']}")
         print(f"Description: {test['description']}")
         print(f"Expected: simple={test['expected_simple']}, types={test['expected_types']}")
@@ -174,7 +174,7 @@ async def run_all_tests(verbose: bool = False) -> None:
             result = await test_decomposition(test["query"], verbose=verbose)
             results.append(result)
 
-            print(f"\nResult:")
+            print("\nResult:")
             print(f"  Is Simple: {result['is_simple']}")
             print(f"  Reasoning: {result['reasoning']}")
 
@@ -225,7 +225,7 @@ async def run_single_query(query: str, multi: bool = False, top_k: int = 5) -> N
 
     result = await test_decomposition(query, verbose=True)
 
-    print(f"\nResult:")
+    print("\nResult:")
     print(f"  Heuristic: {'decompose' if result['heuristic'] else 'simple'}")
     print(f"  LLM says: {'simple' if result['is_simple'] else 'complex'}")
     print(f"  Reasoning: {result['reasoning']}")
@@ -281,7 +281,7 @@ def main() -> int:
         async def default_run():
             print("Running first 3 test queries (use --all for all)...")
             for test in TEST_QUERIES[:3]:
-                print(f"\n{'='*70}")
+                print(f"\n{'=' * 70}")
                 print(f"Query: {test['query']}")
                 result = await test_decomposition(test["query"])
                 print(f"Simple: {result['is_simple']}")

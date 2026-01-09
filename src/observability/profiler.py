@@ -3,19 +3,18 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
-from typing import Any, Generator, Optional
+from typing import Any
 
 from .logging import get_logger
 
 logger = get_logger(__name__)
 
 # Context variable to store profiler instance per request
-_profiler_var: ContextVar[Optional["PipelineProfiler"]] = ContextVar(
-    "pipeline_profiler", default=None
-)
+_profiler_var: ContextVar[PipelineProfiler | None] = ContextVar("pipeline_profiler", default=None)
 
 
 @dataclass
@@ -24,11 +23,11 @@ class StageMetrics:
 
     name: str
     start_time: float
-    end_time: Optional[float] = None
-    duration_ms: Optional[float] = None
+    end_time: float | None = None
+    duration_ms: float | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
-    def complete(self, end_time: Optional[float] = None) -> None:
+    def complete(self, end_time: float | None = None) -> None:
         """Mark stage as complete and calculate duration."""
         self.end_time = end_time or time.perf_counter()
         self.duration_ms = (self.end_time - self.start_time) * 1000
@@ -83,13 +82,11 @@ class PipelineProfiler:
         self.request_id = request_id
         self.start_time = time.perf_counter()
         self._stages: list[StageMetrics] = []
-        self._current_stage: Optional[StageMetrics] = None
+        self._current_stage: StageMetrics | None = None
         self._metadata: dict[str, Any] = {}
 
     @contextmanager
-    def stage(
-        self, name: str, **metadata: Any
-    ) -> Generator[StageMetrics, None, None]:
+    def stage(self, name: str, **metadata: Any) -> Generator[StageMetrics, None, None]:
         """Context manager to time a pipeline stage.
 
         Args:
@@ -197,7 +194,7 @@ def set_profiler(profiler: PipelineProfiler) -> None:
     _profiler_var.set(profiler)
 
 
-def get_profiler() -> Optional[PipelineProfiler]:
+def get_profiler() -> PipelineProfiler | None:
     """Get the profiler for the current async context.
 
     Returns:

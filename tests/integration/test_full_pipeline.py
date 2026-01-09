@@ -10,10 +10,9 @@ Run with: pytest -m integration
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 
 # Mark all tests in this module as integration tests
 pytestmark = pytest.mark.integration
@@ -46,12 +45,14 @@ def mock_weaviate_client():
 def mock_agent_graph():
     """Create a mock agent graph for testing."""
     graph = MagicMock()
-    graph.invoke = MagicMock(return_value={
-        "answer": "The Florida sales tax rate is 6 percent.",
-        "citations": [{"doc_id": "statute:212.05", "citation": "Fla. Stat. § 212.05"}],
-        "sources": [],
-        "confidence": 0.9,
-    })
+    graph.invoke = MagicMock(
+        return_value={
+            "answer": "The Florida sales tax rate is 6 percent.",
+            "citations": [{"doc_id": "statute:212.05", "citation": "Fla. Stat. § 212.05"}],
+            "sources": [],
+            "confidence": 0.9,
+        }
+    )
     return graph
 
 
@@ -63,9 +64,7 @@ def mock_agent_graph():
 class TestHealthCheck:
     """Test health check endpoints with services."""
 
-    async def test_health_check_all_healthy(
-        self, mock_neo4j_client, mock_weaviate_client
-    ) -> None:
+    async def test_health_check_all_healthy(self, mock_neo4j_client, mock_weaviate_client) -> None:
         """Health check should return healthy when all services are up."""
         with patch("src.api.routes.get_neo4j_client", return_value=mock_neo4j_client):
             with patch("src.api.routes.get_weaviate_client", return_value=mock_weaviate_client):
@@ -73,9 +72,7 @@ class TestHealthCheck:
                 assert mock_neo4j_client.verify_connectivity() is True
                 assert mock_weaviate_client.is_ready() is True
 
-    async def test_health_check_neo4j_down(
-        self, mock_neo4j_client, mock_weaviate_client
-    ) -> None:
+    async def test_health_check_neo4j_down(self, mock_neo4j_client, mock_weaviate_client) -> None:
         """Health check should report degraded when Neo4j is down."""
         mock_neo4j_client.verify_connectivity.side_effect = Exception("Connection refused")
 
@@ -106,14 +103,14 @@ class TestQueryFlow:
         assert "citations" in result
         assert result["confidence"] > 0
 
-    async def test_query_with_graph_expansion(
-        self, mock_neo4j_client, mock_agent_graph
-    ) -> None:
+    async def test_query_with_graph_expansion(self, mock_neo4j_client, mock_agent_graph) -> None:
         """Should expand results using graph traversal."""
         # Mock graph expansion
-        mock_neo4j_client.get_related_documents = MagicMock(return_value=[
-            {"doc_id": "rule:12A-1.001", "relation": "IMPLEMENTS"},
-        ])
+        mock_neo4j_client.get_related_documents = MagicMock(
+            return_value=[
+                {"doc_id": "rule:12A-1.001", "relation": "IMPLEMENTS"},
+            ]
+        )
 
         state = {
             "query": "What are sales tax exemptions?",
@@ -135,13 +132,15 @@ class TestRetrieval:
 
     async def test_vector_search(self, mock_weaviate_client) -> None:
         """Should perform vector similarity search."""
-        mock_weaviate_client.search = MagicMock(return_value=[
-            {
-                "chunk_id": "chunk:statute:212.05:0",
-                "text": "Sales tax rate is 6 percent.",
-                "score": 0.92,
-            }
-        ])
+        mock_weaviate_client.search = MagicMock(
+            return_value=[
+                {
+                    "chunk_id": "chunk:statute:212.05:0",
+                    "text": "Sales tax rate is 6 percent.",
+                    "score": 0.92,
+                }
+            ]
+        )
 
         results = mock_weaviate_client.search(
             query="sales tax rate",
@@ -153,13 +152,15 @@ class TestRetrieval:
 
     async def test_hybrid_search(self, mock_weaviate_client) -> None:
         """Should perform hybrid (vector + keyword) search."""
-        mock_weaviate_client.hybrid_search = MagicMock(return_value=[
-            {
-                "chunk_id": "chunk:statute:212.08:0",
-                "text": "Exemptions from sales tax.",
-                "score": 0.88,
-            }
-        ])
+        mock_weaviate_client.hybrid_search = MagicMock(
+            return_value=[
+                {
+                    "chunk_id": "chunk:statute:212.08:0",
+                    "text": "Exemptions from sales tax.",
+                    "score": 0.88,
+                }
+            ]
+        )
 
         results = mock_weaviate_client.hybrid_search(
             query="sales tax exemptions",

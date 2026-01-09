@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -11,7 +11,6 @@ from bs4 import BeautifulSoup
 
 from src.scrapers.admin_code import FloridaAdminCodeScraper
 from src.scrapers.models import RawRule, RuleMetadata
-
 
 # =============================================================================
 # Fixtures
@@ -141,7 +140,7 @@ class TestScraperInit:
     def test_creates_output_dir(self, temp_dirs: tuple[Path, Path]) -> None:
         """Scraper should create admin_code output directory."""
         cache_dir, raw_data_dir = temp_dirs
-        scraper = FloridaAdminCodeScraper(
+        FloridaAdminCodeScraper(
             cache_dir=cache_dir,
             raw_data_dir=raw_data_dir,
         )
@@ -167,9 +166,7 @@ class TestGetDivisionChapters:
         self, scraper: FloridaAdminCodeScraper, sample_division_html: str
     ) -> None:
         """Should parse chapter links from division page."""
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = sample_division_html
 
             chapters = await scraper.get_division_chapters("12A")
@@ -180,14 +177,10 @@ class TestGetDivisionChapters:
         assert chapters[1]["chapter"] == "12A-15"
         assert chapters[2]["chapter"] == "12A-19"
 
-    async def test_handles_empty_division(
-        self, scraper: FloridaAdminCodeScraper
-    ) -> None:
+    async def test_handles_empty_division(self, scraper: FloridaAdminCodeScraper) -> None:
         """Should return empty list for division with no chapters."""
         empty_html = "<html><body><p>No chapters found</p></body></html>"
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = empty_html
 
             chapters = await scraper.get_division_chapters("12X")
@@ -202,9 +195,7 @@ class TestGetChapterRules:
         self, scraper: FloridaAdminCodeScraper, sample_chapter_html: str
     ) -> None:
         """Should parse rule links from chapter page."""
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = sample_chapter_html
 
             rules = await scraper.get_chapter_rules("12A-1")
@@ -220,9 +211,7 @@ class TestGetChapterRules:
         self, scraper: FloridaAdminCodeScraper, sample_chapter_html: str
     ) -> None:
         """Should deduplicate rule links."""
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = sample_chapter_html
 
             rules = await scraper.get_chapter_rules("12A-1")
@@ -423,18 +412,14 @@ class TestParseStatuteCitations:
         assert "212.08" in citations
         assert "213.06" in citations
 
-    def test_parses_citations_with_subsections(
-        self, scraper: FloridaAdminCodeScraper
-    ) -> None:
+    def test_parses_citations_with_subsections(self, scraper: FloridaAdminCodeScraper) -> None:
         """Should parse citations with subsections."""
         text = "212.08(7)(f), 212.17(6), 213.06(1)"
         citations = scraper._parse_statute_citations(text)
         assert "212.08(7)(f)" in citations
         assert "212.17(6)" in citations
 
-    def test_parses_complex_subsections(
-        self, scraper: FloridaAdminCodeScraper
-    ) -> None:
+    def test_parses_complex_subsections(self, scraper: FloridaAdminCodeScraper) -> None:
         """Should parse complex subsection formats."""
         text = "212.08(7)(h)2."
         citations = scraper._parse_statute_citations(text)
@@ -461,9 +446,7 @@ class TestExtractHistory:
         assert "New 1-1-90" in history
         assert "Amended" in history
 
-    def test_returns_empty_for_no_history(
-        self, scraper: FloridaAdminCodeScraper
-    ) -> None:
+    def test_returns_empty_for_no_history(self, scraper: FloridaAdminCodeScraper) -> None:
         """Should return empty string when no history found."""
         html = "<html><body><p>No history</p></body></html>"
         soup = BeautifulSoup(html, "lxml")
@@ -479,9 +462,7 @@ class TestExtractHistory:
 class TestCleanText:
     """Test _clean_text method."""
 
-    def test_removes_excessive_whitespace(
-        self, scraper: FloridaAdminCodeScraper
-    ) -> None:
+    def test_removes_excessive_whitespace(self, scraper: FloridaAdminCodeScraper) -> None:
         """Should remove excessive whitespace."""
         text = "Line 1\n\n\n\nLine 2"
         result = scraper._clean_text(text)
@@ -490,9 +471,7 @@ class TestCleanText:
         assert "Line 1" in result
         assert "Line 2" in result
 
-    def test_removes_navigation_elements(
-        self, scraper: FloridaAdminCodeScraper
-    ) -> None:
+    def test_removes_navigation_elements(self, scraper: FloridaAdminCodeScraper) -> None:
         """Should remove navigation elements."""
         text = "Content here\nPrevious Up Next\nMore content"
         result = scraper._clean_text(text)
@@ -518,9 +497,7 @@ class TestScrapeRule:
         self, scraper: FloridaAdminCodeScraper, sample_rule_html: str
     ) -> None:
         """Should return a RawRule object."""
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = sample_rule_html
 
             rule = await scraper.scrape_rule("12A-1.001", "Specific Exemptions")
@@ -533,9 +510,7 @@ class TestScrapeRule:
         self, scraper: FloridaAdminCodeScraper, sample_rule_html: str
     ) -> None:
         """Should extract rule metadata."""
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = sample_rule_html
 
             rule = await scraper.scrape_rule("12A-1.001")
@@ -547,9 +522,7 @@ class TestScrapeRule:
         self, scraper: FloridaAdminCodeScraper, sample_rule_html: str
     ) -> None:
         """Should extract chapter from rule number."""
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = sample_rule_html
 
             rule = await scraper.scrape_rule("12A-1.001")
@@ -565,9 +538,7 @@ class TestScrapeRule:
 class TestScrapeChapter:
     """Test scrape_chapter method."""
 
-    async def test_scrapes_all_rules(
-        self, scraper: FloridaAdminCodeScraper
-    ) -> None:
+    async def test_scrapes_all_rules(self, scraper: FloridaAdminCodeScraper) -> None:
         """Should scrape all rules in a chapter."""
         rules_list = [
             {"rule_number": "12A-1.001", "title": "Exemptions"},
@@ -580,14 +551,10 @@ class TestScrapeChapter:
         mock_rule.metadata.chapter = "12A-1"
         mock_rule.model_dump_json.return_value = "{}"
 
-        with patch.object(
-            scraper, "get_chapter_rules", new_callable=AsyncMock
-        ) as mock_get_rules:
+        with patch.object(scraper, "get_chapter_rules", new_callable=AsyncMock) as mock_get_rules:
             mock_get_rules.return_value = rules_list
 
-            with patch.object(
-                scraper, "scrape_rule", new_callable=AsyncMock
-            ) as mock_scrape:
+            with patch.object(scraper, "scrape_rule", new_callable=AsyncMock) as mock_scrape:
                 mock_scrape.return_value = mock_rule
 
                 rules = await scraper.scrape_chapter("12A-1", delay=0.001)
@@ -604,9 +571,7 @@ class TestScrapeChapter:
 class TestScrape:
     """Test main scrape method."""
 
-    async def test_scrapes_specified_divisions(
-        self, scraper: FloridaAdminCodeScraper
-    ) -> None:
+    async def test_scrapes_specified_divisions(self, scraper: FloridaAdminCodeScraper) -> None:
         """Should scrape only specified divisions."""
         mock_rule = MagicMock(spec=RawRule)
         mock_rule.metadata = MagicMock(spec=RuleMetadata)
@@ -615,9 +580,7 @@ class TestScrape:
         mock_rule.model_dump.return_value = {"test": "data"}
         mock_rule.model_dump_json.return_value = "{}"
 
-        with patch.object(
-            scraper, "scrape_division", new_callable=AsyncMock
-        ) as mock_scrape_div:
+        with patch.object(scraper, "scrape_division", new_callable=AsyncMock) as mock_scrape_div:
             mock_scrape_div.return_value = [mock_rule]
 
             with patch.object(scraper, "_save_combined_output"):
@@ -628,13 +591,9 @@ class TestScrape:
         call_args = mock_scrape_div.call_args
         assert call_args[0][0] == "12A"
 
-    async def test_warns_unknown_division(
-        self, scraper: FloridaAdminCodeScraper
-    ) -> None:
+    async def test_warns_unknown_division(self, scraper: FloridaAdminCodeScraper) -> None:
         """Should warn for unknown divisions."""
-        with patch.object(
-            scraper, "scrape_division", new_callable=AsyncMock
-        ) as mock_scrape_div:
+        with patch.object(scraper, "scrape_division", new_callable=AsyncMock) as mock_scrape_div:
             mock_scrape_div.return_value = []
 
             with patch.object(scraper, "_save_combined_output"):
@@ -652,9 +611,7 @@ class TestScrape:
 class TestSaveRule:
     """Test _save_rule method."""
 
-    def test_creates_chapter_directory(
-        self, scraper: FloridaAdminCodeScraper
-    ) -> None:
+    def test_creates_chapter_directory(self, scraper: FloridaAdminCodeScraper) -> None:
         """Should create chapter subdirectory."""
         mock_rule = MagicMock(spec=RawRule)
         mock_rule.metadata = MagicMock()

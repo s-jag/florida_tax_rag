@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import weaviate
 from pydantic import BaseModel, Field
@@ -18,12 +18,8 @@ from .schema import CollectionName, get_legal_chunk_collection_config
 class WeaviateConfig(BaseModel):
     """Weaviate connection configuration."""
 
-    url: str = Field(
-        default="http://localhost:8080", description="Weaviate HTTP URL"
-    )
-    api_key: Optional[str] = Field(
-        default=None, description="Optional API key for authentication"
-    )
+    url: str = Field(default="http://localhost:8080", description="Weaviate HTTP URL")
+    api_key: str | None = Field(default=None, description="Optional API key for authentication")
     grpc_port: int = Field(default=50051, description="gRPC port")
 
 
@@ -34,22 +30,20 @@ class SearchResult(BaseModel):
     doc_id: str
     doc_type: str
     level: str
-    ancestry: Optional[str] = None
-    citation: Optional[str] = None
+    ancestry: str | None = None
+    citation: str | None = None
     text: str
-    text_with_ancestry: Optional[str] = None
-    effective_date: Optional[datetime] = None
-    token_count: Optional[int] = None
+    text_with_ancestry: str | None = None
+    effective_date: datetime | None = None
+    token_count: int | None = None
     score: float = Field(description="Search relevance score")
-    distance: Optional[float] = Field(
-        default=None, description="Vector distance (for vector search)"
-    )
+    distance: float | None = Field(default=None, description="Vector distance (for vector search)")
 
 
 class WeaviateClient:
     """Weaviate database client for hybrid search."""
 
-    def __init__(self, config: Optional[WeaviateConfig] = None):
+    def __init__(self, config: WeaviateConfig | None = None):
         """Initialize Weaviate client.
 
         Args:
@@ -68,37 +62,56 @@ class WeaviateClient:
             )
 
         self._config = config
-        self._client: Optional[weaviate.WeaviateClient] = None
+        self._client: weaviate.WeaviateClient | None = None
         self._logger = logging.getLogger(__name__)
 
     @property
     def client(self) -> weaviate.WeaviateClient:
         """Get or create the Weaviate client."""
         if self._client is None:
-            # Parse URL to get host and port
             url = self._config.url
-            if url.startswith("http://"):
-                host = url[7:]
-            elif url.startswith("https://"):
-                host = url[8:]
-            else:
-                host = url
 
-            # Remove port if present
-            if ":" in host:
-                host, port_str = host.rsplit(":", 1)
-                http_port = int(port_str)
-            else:
-                http_port = 8080
+            # Check if this is a Weaviate Cloud URL
+            if "weaviate.cloud" in url:
+                # Use the dedicated cloud connection helper
+                auth = None
+                if self._config.api_key:
+                    auth = weaviate.auth.AuthApiKey(self._config.api_key)
 
-            self._client = weaviate.connect_to_custom(
-                http_host=host,
-                http_port=http_port,
-                http_secure=self._config.url.startswith("https"),
-                grpc_host=host,
-                grpc_port=self._config.grpc_port,
-                grpc_secure=False,
-            )
+                self._client = weaviate.connect_to_weaviate_cloud(
+                    cluster_url=url,
+                    auth_credentials=auth,
+                )
+            else:
+                # Parse URL to get host and port for local/custom instances
+                if url.startswith("http://"):
+                    host = url[7:]
+                elif url.startswith("https://"):
+                    host = url[8:]
+                else:
+                    host = url
+
+                # Remove port if present
+                if ":" in host:
+                    host, port_str = host.rsplit(":", 1)
+                    http_port = int(port_str)
+                else:
+                    http_port = 8080
+
+                # Set up authentication if API key is provided
+                auth = None
+                if self._config.api_key:
+                    auth = weaviate.auth.AuthApiKey(self._config.api_key)
+
+                self._client = weaviate.connect_to_custom(
+                    http_host=host,
+                    http_port=http_port,
+                    http_secure=url.startswith("https"),
+                    grpc_host=host,
+                    grpc_port=self._config.grpc_port,
+                    grpc_secure=url.startswith("https"),
+                    auth_credentials=auth,
+                )
 
         return self._client
 
@@ -108,15 +121,15 @@ class WeaviateClient:
             self._client.close()
             self._client = None
 
-    def __enter__(self) -> "WeaviateClient":
+    def __enter__(self) -> WeaviateClient:
         """Context manager entry."""
         return self
 
     def __exit__(
         self,
-        exc_type: Optional[type],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[Any],
+        exc_type: type | None,
+        exc_val: BaseException | None,
+        exc_tb: Any | None,
     ) -> None:
         """Context manager exit."""
         self.close()
@@ -152,7 +165,7 @@ class WeaviateClient:
         self._logger.info(f"Created collection '{collection_name}'")
         return True
 
-    def delete_collection(self, collection_name: Optional[str] = None) -> bool:
+    def delete_collection(self, collection_name: str | None = None) -> bool:
         """Delete a collection.
 
         Args:
@@ -171,9 +184,7 @@ class WeaviateClient:
         self._logger.info(f"Deleted collection '{name}'")
         return True
 
-    def get_collection_info(
-        self, collection_name: Optional[str] = None
-    ) -> Optional[dict[str, Any]]:
+    def get_collection_info(self, collection_name: str | None = None) -> dict[str, Any] | None:
         """Get collection schema and object count.
 
         Args:
@@ -198,8 +209,7 @@ class WeaviateClient:
             "name": name,
             "description": config.description,
             "properties": [
-                {"name": p.name, "data_type": str(p.data_type)}
-                for p in config.properties
+                {"name": p.name, "data_type": str(p.data_type)} for p in config.properties
             ],
             "object_count": count,
         }
@@ -240,9 +250,7 @@ class WeaviateClient:
         """
         # Validation (not retried)
         if len(chunks_data) != len(vectors):
-            raise ValueError(
-                f"Mismatch: {len(chunks_data)} chunks vs {len(vectors)} vectors"
-            )
+            raise ValueError(f"Mismatch: {len(chunks_data)} chunks vs {len(vectors)} vectors")
 
         if not chunks_data:
             return {"inserted": 0, "errors": 0}
@@ -290,7 +298,7 @@ class WeaviateClient:
         query_vector: list[float],
         alpha: float = 0.5,
         limit: int = 20,
-        filters: Optional[dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[SearchResult]:
         """Perform hybrid search combining BM25 and vector similarity.
 
@@ -337,7 +345,7 @@ class WeaviateClient:
         self,
         query: str,
         limit: int = 20,
-        filters: Optional[dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[SearchResult]:
         """Perform BM25 keyword search only.
 
@@ -379,7 +387,7 @@ class WeaviateClient:
         self,
         query_vector: list[float],
         limit: int = 20,
-        filters: Optional[dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[SearchResult]:
         """Perform vector similarity search only.
 

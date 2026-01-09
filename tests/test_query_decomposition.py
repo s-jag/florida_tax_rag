@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -155,9 +155,7 @@ class TestQueryDecomposer:
         """Test queries with complexity keywords are decomposed."""
         decomposer = QueryDecomposer(client=MagicMock())
         assert (
-            decomposer._should_decompose(
-                "Is software and consulting both taxable in Florida?"
-            )
+            decomposer._should_decompose("Is software and consulting both taxable in Florida?")
             is True
         )
 
@@ -165,20 +163,14 @@ class TestQueryDecomposer:
         """Test queries with county names are decomposed."""
         decomposer = QueryDecomposer(client=MagicMock())
         assert (
-            decomposer._should_decompose(
-                "What is the sales tax rate in Miami-Dade county?"
-            )
-            is True
+            decomposer._should_decompose("What is the sales tax rate in Miami-Dade county?") is True
         )
 
     def test_should_decompose_multiple_questions(self):
         """Test queries with multiple question marks are decomposed."""
         decomposer = QueryDecomposer(client=MagicMock())
         assert (
-            decomposer._should_decompose(
-                "What is sales tax? And what are the exemptions?"
-            )
-            is True
+            decomposer._should_decompose("What is sales tax? And what are the exemptions?") is True
         )
 
     @pytest.mark.asyncio
@@ -217,9 +209,7 @@ class TestQueryDecomposer:
         client.messages.create.side_effect = Exception("API error")
         decomposer = QueryDecomposer(client=client)
 
-        result = await decomposer.decompose(
-            "Do I owe sales tax on software consulting in Miami?"
-        )
+        result = await decomposer.decompose("Do I owe sales tax on software consulting in Miami?")
 
         # Should fallback to simple query
         assert result.is_simple is True
@@ -235,9 +225,7 @@ class TestQueryDecomposer:
         client.messages.create.return_value = response
         decomposer = QueryDecomposer(client=client)
 
-        result = await decomposer.decompose(
-            "Do I owe sales tax on software consulting in Miami?"
-        )
+        result = await decomposer.decompose("Do I owe sales tax on software consulting in Miami?")
 
         assert result.is_simple is True
 

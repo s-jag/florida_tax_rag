@@ -96,15 +96,9 @@ def main() -> int:
     Returns:
         Exit code (0 for success, 1 for failure)
     """
-    parser = argparse.ArgumentParser(
-        description="Initialize Neo4j with Florida Tax RAG data"
-    )
-    parser.add_argument(
-        "--clear", action="store_true", help="Clear existing data before loading"
-    )
-    parser.add_argument(
-        "--verify", action="store_true", help="Verify counts after loading"
-    )
+    parser = argparse.ArgumentParser(description="Initialize Neo4j with Florida Tax RAG data")
+    parser.add_argument("--clear", action="store_true", help="Clear existing data before loading")
+    parser.add_argument("--verify", action="store_true", help="Verify counts after loading")
     args = parser.parse_args()
 
     data_dir = PROJECT_ROOT / "data" / "processed"
@@ -168,7 +162,7 @@ def main() -> int:
             print("-" * 40)
             load_start = time.time()
             stats = load_all(client, corpus_path, chunks_path, citations_path)
-            load_time = time.time() - load_start
+            time.time() - load_start
             print()
 
             # Print summary

@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from src.retrieval.hybrid import HybridRetriever
-from src.retrieval.models import RetrievalResult
 
-from .metrics import citations_match, normalize_citation
+from .metrics import citations_match
 from .models import EvalDataset, EvalQuestion
 from .retrieval_metrics import (
     AlphaTuningResult,
@@ -16,10 +14,8 @@ from .retrieval_metrics import (
     QueryRetrievalResult,
     RetrievalAnalysisReport,
     RetrievalMetrics,
-    find_rank,
     mean_reciprocal_rank,
     ndcg_at_k,
-    precision_at_k,
     recall_at_k,
 )
 
@@ -131,9 +127,7 @@ class RetrievalAnalyzer:
 
         # Extract doc_ids and citations
         retrieved_doc_ids = [r.doc_id for r in results]
-        retrieved_citations = [
-            self._extract_citation_from_doc_id(r.doc_id) for r in results
-        ]
+        retrieved_citations = [self._extract_citation_from_doc_id(r.doc_id) for r in results]
         retrieved_scores = [r.score for r in results]
 
         # Find which expected docs were retrieved and at what rank
@@ -234,9 +228,9 @@ class RetrievalAnalyzer:
 
     def tune_alpha(
         self,
-        alphas: Optional[list[float]] = None,
+        alphas: list[float] | None = None,
         top_k: int = 20,
-        progress_callback: Optional[callable] = None,
+        progress_callback: callable | None = None,
     ) -> list[AlphaTuningResult]:
         """Tune alpha parameter across all questions.
 
@@ -252,7 +246,7 @@ class RetrievalAnalyzer:
             alphas = [0.0, 0.25, 0.5, 0.75, 1.0]
 
         results = []
-        matcher = self._create_matcher()
+        self._create_matcher()
 
         for alpha in alphas:
             logger.info(f"Testing alpha={alpha}")
@@ -296,9 +290,9 @@ class RetrievalAnalyzer:
 
     def run_full_analysis(
         self,
-        alphas: Optional[list[float]] = None,
+        alphas: list[float] | None = None,
         top_k: int = 20,
-        progress_callback: Optional[callable] = None,
+        progress_callback: callable | None = None,
     ) -> RetrievalAnalysisReport:
         """Run full retrieval analysis.
 
@@ -324,7 +318,7 @@ class RetrievalAnalyzer:
         logger.info(f"Analyzing {len(self.dataset.questions)} questions...")
 
         for i, question in enumerate(self.dataset.questions):
-            logger.info(f"Analyzing {question.id} ({i+1}/{len(self.dataset.questions)})")
+            logger.info(f"Analyzing {question.id} ({i + 1}/{len(self.dataset.questions)})")
 
             if progress_callback:
                 progress_callback("compare", i + 1, len(self.dataset.questions))
@@ -364,8 +358,7 @@ class RetrievalAnalyzer:
         logger.info("Aggregating metrics by method...")
 
         method_metrics = {
-            method: aggregate_metrics(results)
-            for method, results in method_results.items()
+            method: aggregate_metrics(results) for method, results in method_results.items()
         }
 
         # Alpha tuning
@@ -393,7 +386,7 @@ class RetrievalAnalyzer:
 def debug_retrieval(
     retriever: HybridRetriever,
     query: str,
-    expected_citations: Optional[list[str]] = None,
+    expected_citations: list[str] | None = None,
     top_k: int = 20,
 ) -> dict:
     """Deep dive debugging for a single query.
@@ -421,15 +414,11 @@ def debug_retrieval(
         ("keyword", lambda: retriever.keyword_search(query, top_k=top_k)),
         (
             "hybrid",
-            lambda: retriever.retrieve(
-                query, top_k=top_k, alpha=0.5, expand_graph=False
-            ),
+            lambda: retriever.retrieve(query, top_k=top_k, alpha=0.5, expand_graph=False),
         ),
         (
             "graph",
-            lambda: retriever.retrieve(
-                query, top_k=top_k, alpha=0.5, expand_graph=True
-            ),
+            lambda: retriever.retrieve(query, top_k=top_k, alpha=0.5, expand_graph=True),
         ),
     ]
 
@@ -445,9 +434,7 @@ def debug_retrieval(
                     "citation": r.citation,
                     "score": round(r.score, 4),
                     "vector_score": round(r.vector_score, 4) if r.vector_score else None,
-                    "keyword_score": (
-                        round(r.keyword_score, 4) if r.keyword_score else None
-                    ),
+                    "keyword_score": (round(r.keyword_score, 4) if r.keyword_score else None),
                     "graph_boost": round(r.graph_boost, 4) if r.graph_boost else 0.0,
                     "text_preview": r.text[:200] if r.text else "",
                     "matches_expected": (
@@ -576,9 +563,7 @@ def generate_retrieval_markdown_report(report: RetrievalAnalysisReport) -> str:
 
     if report.graph_metrics.mrr > report.hybrid_metrics.mrr:
         improvement = (
-            (report.graph_metrics.mrr - report.hybrid_metrics.mrr)
-            / report.hybrid_metrics.mrr
-            * 100
+            (report.graph_metrics.mrr - report.hybrid_metrics.mrr) / report.hybrid_metrics.mrr * 100
         )
         lines.append(
             f"2. **Enable graph expansion:** Graph-enhanced retrieval improves MRR by {improvement:.1f}%."

@@ -34,7 +34,7 @@ from src.ingestion.citation_extractor import CitationRelation, RelationType
 
 def load_chunks(chunks_path: Path) -> list[dict]:
     """Load chunks from JSON file."""
-    with open(chunks_path, "r", encoding="utf-8") as f:
+    with open(chunks_path, encoding="utf-8") as f:
         data = json.load(f)
     return data["chunks"]
 

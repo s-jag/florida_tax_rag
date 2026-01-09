@@ -21,7 +21,6 @@ from src.scrapers.models import (
     TAAMetadata,
 )
 
-
 # =============================================================================
 # Sample Raw Documents (Scraper Output)
 # =============================================================================
@@ -279,7 +278,9 @@ def sample_child_chunk(sample_parent_chunk: LegalChunk) -> LegalChunk:
 
 
 @pytest.fixture
-def sample_chunks(sample_parent_chunk: LegalChunk, sample_child_chunk: LegalChunk) -> list[LegalChunk]:
+def sample_chunks(
+    sample_parent_chunk: LegalChunk, sample_child_chunk: LegalChunk
+) -> list[LegalChunk]:
     """List of sample chunks."""
     parent = sample_parent_chunk.model_copy()
     parent.child_chunk_ids = [sample_child_chunk.id]

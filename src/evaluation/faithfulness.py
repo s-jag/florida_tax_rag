@@ -10,7 +10,6 @@ import asyncio
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 
 from openai import AsyncOpenAI
 
@@ -92,7 +91,7 @@ class FaithfulnessChecker:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         model: str = "gpt-4-turbo-preview",
         max_concurrent: int = 5,
     ):
@@ -231,11 +230,10 @@ class FaithfulnessChecker:
         # SUPPORTED = 1.0, PARTIALLY = 0.5, NOT_SUPPORTED = 0.0, CONTRADICTED = -0.5
         total = len(results)
         score = (
-            supported * 1.0 +
-            partial * 0.5 +
-            unsupported * 0.0 +
-            contradicted * -0.5
-        ) / total if total > 0 else 1.0
+            (supported * 1.0 + partial * 0.5 + unsupported * 0.0 + contradicted * -0.5) / total
+            if total > 0
+            else 1.0
+        )
 
         # Clamp to [0, 1]
         score = max(0.0, min(1.0, score))
@@ -308,11 +306,13 @@ def extract_claims_from_answer(
                         break
 
         if source_text:
-            claims.append({
-                "claim": sentence,
-                "source_text": source_text,
-                "source_citation": source_citation,
-            })
+            claims.append(
+                {
+                    "claim": sentence,
+                    "source_text": source_text,
+                    "source_citation": source_citation,
+                }
+            )
 
     return claims
 
@@ -321,7 +321,7 @@ async def check_answer_faithfulness(
     answer: str,
     citations: list[dict],
     chunks: list[dict],
-    checker: Optional[FaithfulnessChecker] = None,
+    checker: FaithfulnessChecker | None = None,
 ) -> FaithfulnessReport:
     """Check faithfulness of an entire answer.
 

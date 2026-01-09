@@ -6,7 +6,7 @@ import asyncio
 import hashlib
 import json
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -221,7 +221,7 @@ class BaseScraper(ABC):
 
         # Add metadata
         data_with_meta = {
-            "_scraped_at": datetime.now(timezone.utc).isoformat(),
+            "_scraped_at": datetime.now(UTC).isoformat(),
             "_scraper": self.__class__.__name__,
             **data,
         }
@@ -257,7 +257,7 @@ class BaseScraper(ABC):
         """
         pass
 
-    async def __aenter__(self) -> "BaseScraper":
+    async def __aenter__(self) -> BaseScraper:
         """Async context manager entry."""
         return self
 

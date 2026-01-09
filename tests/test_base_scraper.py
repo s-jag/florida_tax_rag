@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 from pathlib import Path
 from typing import Any
@@ -17,7 +16,6 @@ from src.scrapers.base import (
     FetchError,
     ScraperError,
 )
-
 
 # =============================================================================
 # Concrete Implementation for Testing
@@ -109,7 +107,7 @@ class TestScraperInit:
         cache_dir = tmp_path / "new_cache"
         raw_dir = tmp_path / "new_raw"
 
-        scraper = ConcreteScraper(cache_dir=cache_dir, raw_data_dir=raw_dir)
+        ConcreteScraper(cache_dir=cache_dir, raw_data_dir=raw_dir)
 
         assert cache_dir.exists()
         assert raw_dir.exists()
@@ -150,9 +148,7 @@ class TestScraperInit:
 class TestUserAgentRotation:
     """Test user agent rotation."""
 
-    def test_get_next_user_agent_returns_string(
-        self, scraper: ConcreteScraper
-    ) -> None:
+    def test_get_next_user_agent_returns_string(self, scraper: ConcreteScraper) -> None:
         """_get_next_user_agent should return a user agent string."""
         ua = scraper._get_next_user_agent()
         assert isinstance(ua, str)
@@ -227,9 +223,7 @@ class TestCachePath:
 class TestCacheReadWrite:
     """Test cache read/write operations."""
 
-    def test_load_from_cache_returns_none_when_empty(
-        self, scraper: ConcreteScraper
-    ) -> None:
+    def test_load_from_cache_returns_none_when_empty(self, scraper: ConcreteScraper) -> None:
         """_load_from_cache should return None when cache is empty."""
         result = scraper._load_from_cache("https://nonexistent.com")
         assert result is None
@@ -244,9 +238,7 @@ class TestCacheReadWrite:
 
         assert loaded == content
 
-    def test_cache_disabled_does_not_save(
-        self, scraper_no_cache: ConcreteScraper
-    ) -> None:
+    def test_cache_disabled_does_not_save(self, scraper_no_cache: ConcreteScraper) -> None:
         """Should not save to cache when caching is disabled."""
         url = "https://example.com/test"
         content = "<html>Test</html>"
@@ -256,9 +248,7 @@ class TestCacheReadWrite:
 
         assert not cache_path.exists()
 
-    def test_cache_disabled_returns_none(
-        self, scraper_no_cache: ConcreteScraper
-    ) -> None:
+    def test_cache_disabled_returns_none(self, scraper_no_cache: ConcreteScraper) -> None:
         """Should return None when caching is disabled."""
         # Manually create a cache file
         url = "https://example.com/test"
@@ -359,9 +349,7 @@ class TestFetchPage:
         url = "https://example.com/new"
         content = "<html>Fresh</html>"
 
-        with patch.object(
-            scraper, "_fetch_with_retry", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "_fetch_with_retry", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = content
 
             result = await scraper.fetch_page(url)
@@ -375,9 +363,7 @@ class TestFetchPage:
         """fetch_page should raise FetchError on failure."""
         url = "https://example.com/error"
 
-        with patch.object(
-            scraper, "_fetch_with_retry", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "_fetch_with_retry", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.side_effect = Exception("Network error")
 
             with pytest.raises(FetchError) as exc_info:
@@ -398,9 +384,7 @@ class TestFetchWithRateLimit:
             "https://example.com/3",
         ]
 
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.side_effect = ["<html>1</html>", "<html>2</html>", "<html>3</html>"]
 
             results = await scraper.fetch_with_rate_limit(urls)
@@ -414,9 +398,7 @@ class TestFetchWithRateLimit:
         """fetch_with_rate_limit should return None for failed fetches."""
         urls = ["https://example.com/1", "https://example.com/2"]
 
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.side_effect = ["<html>1</html>", FetchError("Failed")]
 
             results = await scraper.fetch_with_rate_limit(urls)
@@ -429,9 +411,7 @@ class TestFetchWithRateLimit:
         """fetch_with_rate_limit should use custom delay."""
         urls = ["https://example.com/1", "https://example.com/2"]
 
-        with patch.object(
-            scraper, "fetch_page", new_callable=AsyncMock
-        ) as mock_fetch:
+        with patch.object(scraper, "fetch_page", new_callable=AsyncMock) as mock_fetch:
             mock_fetch.return_value = "<html>Test</html>"
 
             with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
@@ -502,9 +482,7 @@ class TestRawDataPersistence:
 class TestContextManager:
     """Test async context manager functionality."""
 
-    async def test_async_enter_returns_scraper(
-        self, temp_dirs: tuple[Path, Path]
-    ) -> None:
+    async def test_async_enter_returns_scraper(self, temp_dirs: tuple[Path, Path]) -> None:
         """__aenter__ should return the scraper instance."""
         cache_dir, raw_data_dir = temp_dirs
         scraper = ConcreteScraper(cache_dir=cache_dir, raw_data_dir=raw_data_dir)
@@ -512,9 +490,7 @@ class TestContextManager:
         async with scraper as s:
             assert s is scraper
 
-    async def test_async_exit_closes_client(
-        self, temp_dirs: tuple[Path, Path]
-    ) -> None:
+    async def test_async_exit_closes_client(self, temp_dirs: tuple[Path, Path]) -> None:
         """__aexit__ should close the HTTP client."""
         cache_dir, raw_data_dir = temp_dirs
         scraper = ConcreteScraper(cache_dir=cache_dir, raw_data_dir=raw_data_dir)
@@ -525,9 +501,7 @@ class TestContextManager:
 
         assert client.is_closed
 
-    async def test_context_manager_handles_exception(
-        self, temp_dirs: tuple[Path, Path]
-    ) -> None:
+    async def test_context_manager_handles_exception(self, temp_dirs: tuple[Path, Path]) -> None:
         """Context manager should close client even on exception."""
         cache_dir, raw_data_dir = temp_dirs
         scraper = ConcreteScraper(cache_dir=cache_dir, raw_data_dir=raw_data_dir)

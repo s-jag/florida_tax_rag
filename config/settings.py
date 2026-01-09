@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Optional
 
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -56,10 +55,10 @@ class Settings(BaseSettings):
     # ==========================================================================
     # API Keys (Optional)
     # ==========================================================================
-    openai_api_key: Optional[SecretStr] = None
+    openai_api_key: SecretStr | None = None
     """OpenAI API key for GPT-4 evaluation judge (optional)."""
 
-    weaviate_api_key: Optional[SecretStr] = None
+    weaviate_api_key: SecretStr | None = None
     """Weaviate API key (optional, for cloud deployments)."""
 
     # ==========================================================================

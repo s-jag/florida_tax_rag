@@ -7,7 +7,6 @@ import json
 import logging
 import re
 from enum import Enum
-from typing import Optional
 
 import anthropic
 from pydantic import BaseModel, Field, field_validator
@@ -15,6 +14,8 @@ from pydantic import BaseModel, Field, field_validator
 from config.prompts import (
     CLASSIFICATION_PROMPT,
     DECOMPOSITION_PROMPT,
+)
+from config.prompts import (
     RETRIEVAL_SYSTEM_MESSAGE as SYSTEM_MESSAGE,
 )
 
@@ -41,12 +42,8 @@ class SubQuery(BaseModel):
 
     text: str = Field(..., description="The sub-query text for retrieval")
     type: QueryType = Field(..., description="Type of sub-query")
-    priority: int = Field(
-        default=3, ge=1, le=5, description="Priority 1 (highest) to 5 (lowest)"
-    )
-    reasoning: Optional[str] = Field(
-        default=None, description="Why this sub-query was generated"
-    )
+    priority: int = Field(default=3, ge=1, le=5, description="Priority 1 (highest) to 5 (lowest)")
+    reasoning: str | None = Field(default=None, description="Why this sub-query was generated")
 
     @field_validator("type", mode="before")
     @classmethod
@@ -73,13 +70,9 @@ class DecompositionResult(BaseModel):
     """Result of query decomposition."""
 
     original_query: str = Field(..., description="The original user query")
-    sub_queries: list[SubQuery] = Field(
-        default_factory=list, description="Decomposed sub-queries"
-    )
+    sub_queries: list[SubQuery] = Field(default_factory=list, description="Decomposed sub-queries")
     reasoning: str = Field(..., description="Explanation of decomposition decision")
-    is_simple: bool = Field(
-        default=False, description="True if query didn't need decomposition"
-    )
+    is_simple: bool = Field(default=False, description="True if query didn't need decomposition")
 
     @property
     def query_count(self) -> int:
@@ -115,7 +108,7 @@ class QueryDecomposer:
 
     def __init__(
         self,
-        client: Optional[anthropic.Anthropic] = None,
+        client: anthropic.Anthropic | None = None,
         model: str = "claude-sonnet-4-20250514",
         max_tokens: int = 1024,
     ):
@@ -130,9 +123,7 @@ class QueryDecomposer:
             from config.settings import get_settings
 
             settings = get_settings()
-            client = anthropic.Anthropic(
-                api_key=settings.anthropic_api_key.get_secret_value()
-            )
+            client = anthropic.Anthropic(api_key=settings.anthropic_api_key.get_secret_value())
         self.client = client
         self.model = model
         self.max_tokens = max_tokens

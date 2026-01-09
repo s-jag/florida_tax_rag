@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from datetime import date
-from typing import Optional
 
 from src.graph.client import Neo4jClient
 from src.vector.client import SearchResult, WeaviateClient
@@ -32,8 +31,8 @@ class HybridRetriever:
         weaviate_client: WeaviateClient,
         neo4j_client: Neo4jClient,
         embedder: VoyageEmbedder,
-        reranker: Optional[LegalReranker] = None,
-        graph_expander: Optional[GraphExpander] = None,
+        reranker: LegalReranker | None = None,
+        graph_expander: GraphExpander | None = None,
     ):
         """Initialize the hybrid retriever.
 
@@ -55,9 +54,9 @@ class HybridRetriever:
         query: str,
         top_k: int = 20,
         alpha: float = 0.5,
-        doc_types: Optional[list[str]] = None,
-        min_date: Optional[date] = None,
-        max_date: Optional[date] = None,
+        doc_types: list[str] | None = None,
+        min_date: date | None = None,
+        max_date: date | None = None,
         expand_graph: bool = True,
         rerank: bool = True,
         prefer_recent: bool = True,
@@ -132,7 +131,7 @@ class HybridRetriever:
         self,
         query: str,
         top_k: int = 20,
-        doc_types: Optional[list[str]] = None,
+        doc_types: list[str] | None = None,
     ) -> list[RetrievalResult]:
         """Perform vector-only search (no keyword matching).
 
@@ -163,7 +162,7 @@ class HybridRetriever:
         self,
         query: str,
         top_k: int = 20,
-        doc_types: Optional[list[str]] = None,
+        doc_types: list[str] | None = None,
     ) -> list[RetrievalResult]:
         """Perform keyword-only search (BM25, no vector similarity).
 
@@ -191,8 +190,8 @@ class HybridRetriever:
 
     def _build_filters(
         self,
-        doc_types: Optional[list[str]],
-    ) -> Optional[dict]:
+        doc_types: list[str] | None,
+    ) -> dict | None:
         """Build Weaviate filter dict.
 
         Args:
@@ -213,8 +212,8 @@ class HybridRetriever:
     def _filter_by_date(
         self,
         results: list[RetrievalResult],
-        min_date: Optional[date],
-        max_date: Optional[date],
+        min_date: date | None,
+        max_date: date | None,
     ) -> list[RetrievalResult]:
         """Filter results by effective date range.
 

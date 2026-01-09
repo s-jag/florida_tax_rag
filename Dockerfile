@@ -31,23 +31,23 @@ RUN pip install --no-cache-dir \
     "uvicorn[standard]>=0.32.0" \
     tenacity>=9.0.0 \
     structlog>=24.0.0 \
-    redis>=5.0.0
+    redis>=5.0.0 \
+    tiktoken>=0.5.0
 
 # Copy application code
 COPY src/ ./src/
 COPY config/ ./config/
-COPY data/processed/ ./data/processed/
 
 # Create non-root user
 RUN useradd --create-home appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Expose port
+# Expose port (Railway will override with $PORT)
 EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/ || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8000}/api/v1/ping || exit 1
 
-# Run the API with 2 workers (suitable for t3.medium)
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Run the API with verbose logging
+CMD ["sh", "-c", "echo 'Starting uvicorn on port ${PORT:-8000}' && uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info"]

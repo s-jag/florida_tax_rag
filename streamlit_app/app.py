@@ -4,9 +4,8 @@ Florida Tax Law Assistant - Streamlit Frontend
 A simple web interface for querying the Florida Tax RAG API.
 """
 
-import streamlit as st
 import requests
-from typing import Optional
+import streamlit as st
 
 # Configuration
 API_URL = "http://localhost:8000"
@@ -30,7 +29,7 @@ def check_health() -> dict:
         return {"status": "error", "error": str(e)}
 
 
-def query_tax_law(question: str, options: Optional[dict] = None) -> dict:
+def query_tax_law(question: str, options: dict | None = None) -> dict:
     """Send a query to the RAG API."""
     try:
         payload = {"query": question}
@@ -40,7 +39,7 @@ def query_tax_law(question: str, options: Optional[dict] = None) -> dict:
         response = requests.post(
             f"{API_URL}/api/v1/query",
             json=payload,
-            timeout=120  # Long timeout for complex queries
+            timeout=120,  # Long timeout for complex queries
         )
         return response.json()
     except requests.exceptions.ConnectionError:
@@ -75,7 +74,7 @@ def display_confidence_badge(confidence: float):
     st.markdown(
         f'<span style="background-color: {color}; color: white; padding: 4px 8px; '
         f'border-radius: 4px; font-size: 14px;">{label} Confidence: {confidence:.0%}</span>',
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 
@@ -113,15 +112,13 @@ def main():
             min_value=1990,
             max_value=2030,
             value=2024,
-            help="Filter results to a specific tax year"
+            help="Filter results to a specific tax year",
         )
 
         # Advanced options
         st.subheader("Advanced")
         include_reasoning = st.checkbox(
-            "Show reasoning steps",
-            value=False,
-            help="Include detailed reasoning in the response"
+            "Show reasoning steps", value=False, help="Include detailed reasoning in the response"
         )
 
         st.divider()
@@ -150,7 +147,7 @@ def main():
         question = st.text_area(
             "Ask a question about Florida tax law:",
             placeholder="e.g., What is the Florida sales tax rate?",
-            height=100
+            height=100,
         )
 
         # Submit button
@@ -206,7 +203,7 @@ def main():
 
         with col_time:
             proc_time = result.get("processing_time_ms", 0)
-            st.metric("Processing Time", f"{proc_time/1000:.1f}s")
+            st.metric("Processing Time", f"{proc_time / 1000:.1f}s")
 
         with col_valid:
             validation = result.get("validation_passed", True)
@@ -239,12 +236,7 @@ def main():
                 text = source.get("text", "")
 
                 # Type badge color
-                type_colors = {
-                    "statute": "🔵",
-                    "rule": "🟢",
-                    "case": "🟠",
-                    "taa": "🟣"
-                }
+                type_colors = {"statute": "🔵", "rule": "🟢", "case": "🟠", "taa": "🟣"}
                 type_badge = type_colors.get(doc_type, "⚪")
 
                 with st.expander(f"{type_badge} {citation} (relevance: {relevance:.0%})"):

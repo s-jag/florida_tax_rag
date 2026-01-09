@@ -29,7 +29,6 @@ PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.vector.client import WeaviateClient
-from src.vector.schema import CollectionName
 
 # Configure logging
 logging.basicConfig(
@@ -181,9 +180,7 @@ def main() -> int:
     Returns:
         Exit code (0 for success, 1 for failure)
     """
-    parser = argparse.ArgumentParser(
-        description="Load chunks and embeddings into Weaviate"
-    )
+    parser = argparse.ArgumentParser(description="Load chunks and embeddings into Weaviate")
     parser.add_argument(
         "--resume",
         action="store_true",
@@ -258,10 +255,9 @@ def main() -> int:
         loaded_ids = load_checkpoint()
         if loaded_ids:
             # Filter out already loaded chunks
-            original_count = len(matched_chunks)
+            len(matched_chunks)
             filtered = [
-                (c, v) for c, v in zip(matched_chunks, matched_vectors)
-                if c["id"] not in loaded_ids
+                (c, v) for c, v in zip(matched_chunks, matched_vectors) if c["id"] not in loaded_ids
             ]
             matched_chunks = [c for c, _ in filtered]
             matched_vectors = [v for _, v in filtered]
@@ -325,7 +321,9 @@ def main() -> int:
         batch_properties = [chunk_to_weaviate_properties(c) for c in batch_chunks]
 
         try:
-            result = client.batch_insert(batch_properties, batch_vectors, batch_size=len(batch_properties))
+            result = client.batch_insert(
+                batch_properties, batch_vectors, batch_size=len(batch_properties)
+            )
             total_loaded += result["inserted"]
             total_errors += result["errors"]
 

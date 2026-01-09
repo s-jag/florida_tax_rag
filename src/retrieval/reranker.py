@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional
 
 from .models import RetrievalResult
 
@@ -34,7 +33,7 @@ class LegalReranker:
 
     def __init__(
         self,
-        doc_type_priority: Optional[dict[str, float]] = None,
+        doc_type_priority: dict[str, float] | None = None,
         recency_years: int = 10,
     ):
         """Initialize the reranker.

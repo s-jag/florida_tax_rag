@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-import pytest
-
 from src.graph.queries import (
     ChunkNode,
     CitationEdge,
@@ -223,9 +221,7 @@ class TestGetInterpretationChain:
     def test_statute_not_found(self):
         """Test when statute is not found."""
         mock_client = MagicMock()
-        mock_client.run_query.return_value = [
-            {"s": None, "rules": [], "cases": [], "taas": []}
-        ]
+        mock_client.run_query.return_value = [{"s": None, "rules": [], "cases": [], "taas": []}]
 
         result = get_interpretation_chain(mock_client, "999.999")
         assert result is None

@@ -128,9 +128,7 @@ def run_query(
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Test the hybrid retrieval system"
-    )
+    parser = argparse.ArgumentParser(description="Test the hybrid retrieval system")
     parser.add_argument(
         "--query",
         type=str,
@@ -165,7 +163,8 @@ def main() -> int:
         help="Vector vs keyword balance (0.0=keyword, 1.0=vector, default: 0.5)",
     )
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Show verbose output",
     )
@@ -209,7 +208,7 @@ def main() -> int:
     expand_graph = not args.no_graph and neo4j_ok
     rerank = not args.no_rerank
 
-    print(f"\nConfiguration:")
+    print("\nConfiguration:")
     print(f"  Alpha: {args.alpha} (0=keyword, 1=vector)")
     print(f"  Graph expansion: {'ON' if expand_graph else 'OFF'}")
     print(f"  Reranking: {'ON' if rerank else 'OFF'}")
@@ -230,7 +229,7 @@ def main() -> int:
     elif args.all:
         # All test queries
         for test in TEST_QUERIES:
-            print(f"\n{'='*70}")
+            print(f"\n{'=' * 70}")
             print(f"Expected: {test['expected']}")
             run_query(
                 retriever,

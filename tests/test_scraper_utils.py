@@ -2,8 +2,6 @@
 
 from datetime import date
 
-import pytest
-
 from src.scrapers.utils import (
     clean_html_text,
     extract_chapter_number,

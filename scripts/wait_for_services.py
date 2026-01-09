@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """Wait for Docker services to be ready before proceeding."""
 
+import socket
 import sys
 import time
 from urllib.error import URLError
 from urllib.request import urlopen
-
-import socket
 
 
 def check_neo4j(host: str = "localhost", port: int = 7474, timeout: float = 5.0) -> bool:
@@ -37,7 +36,7 @@ def check_redis(host: str = "localhost", port: int = 6379, timeout: float = 5.0)
         response = sock.recv(1024)
         sock.close()
         return b"+PONG" in response
-    except (socket.error, TimeoutError):
+    except (OSError, TimeoutError):
         return False
 
 

@@ -9,13 +9,13 @@ from typing import Any
 
 import structlog
 
+from config.prompts import CORRECTION_PROMPT
 from src.generation.formatter import format_chunks_for_context
 from src.generation.models import (
     CorrectionResult,
     DetectedHallucination,
     ValidationResult,
 )
-from config.prompts import CORRECTION_PROMPT
 
 logger = structlog.get_logger(__name__)
 
@@ -63,9 +63,7 @@ class ResponseCorrector:
             from config.settings import get_settings
 
             settings = get_settings()
-            self.client = anthropic.Anthropic(
-                api_key=settings.anthropic_api_key.get_secret_value()
-            )
+            self.client = anthropic.Anthropic(api_key=settings.anthropic_api_key.get_secret_value())
         return self.client
 
     async def correct(
@@ -139,9 +137,7 @@ class ResponseCorrector:
                         1,  # Only first occurrence
                     )
                     claim_preview = (
-                        h.claim_text[:50] + "..."
-                        if len(h.claim_text) > 50
-                        else h.claim_text
+                        h.claim_text[:50] + "..." if len(h.claim_text) > 50 else h.claim_text
                     )
                     correction_preview = (
                         h.suggested_correction[:50] + "..."
@@ -189,7 +185,7 @@ class ResponseCorrector:
         # Format hallucinations for prompt
         hallucination_desc = "\n".join(
             [
-                f"- Claim: \"{h.claim_text}\"\n"
+                f'- Claim: "{h.claim_text}"\n'
                 f"  Type: {h.hallucination_type.value}\n"
                 f"  Severity: {h.severity}\n"
                 f"  Issue: {h.reasoning}\n"
@@ -221,9 +217,9 @@ class ResponseCorrector:
             disclaimers = self._extract_disclaimers(corrected_answer)
 
             # Calculate confidence adjustment
-            avg_severity = sum(
-                h.severity for h in validation_result.hallucinations
-            ) / len(validation_result.hallucinations)
+            avg_severity = sum(h.severity for h in validation_result.hallucinations) / len(
+                validation_result.hallucinations
+            )
             confidence_adjustment = -0.2 - (avg_severity * 0.3)
 
             logger.info(
@@ -235,8 +231,7 @@ class ResponseCorrector:
             return CorrectionResult(
                 corrected_answer=corrected_answer,
                 corrections_made=[
-                    f"Addressed: {h.claim_text[:50]}..."
-                    for h in validation_result.hallucinations
+                    f"Addressed: {h.claim_text[:50]}..." for h in validation_result.hallucinations
                 ],
                 disclaimers_added=disclaimers,
                 confidence_adjustment=max(confidence_adjustment, -0.5),

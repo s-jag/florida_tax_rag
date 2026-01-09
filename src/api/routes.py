@@ -5,10 +5,10 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+from collections.abc import AsyncGenerator
 from datetime import datetime
-from typing import AsyncGenerator
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
 from src.agent import TaxAgentState
@@ -22,7 +22,6 @@ from src.observability.metrics import get_metrics_collector
 from src.observability.profiler import profile_request
 
 from .cache import get_query_cache
-
 from .dependencies import (
     AgentGraphDep,
     Neo4jDep,
@@ -78,10 +77,12 @@ The agent performs:
                     "example": {
                         "request_id": "abc-123-def",
                         "answer": "The Florida state sales tax rate is 6%...",
-                        "citations": [{"doc_id": "statute:212.05", "citation": "Fla. Stat. § 212.05"}],
+                        "citations": [
+                            {"doc_id": "statute:212.05", "citation": "Fla. Stat. § 212.05"}
+                        ],
                         "confidence": 0.92,
                         "validation_passed": True,
-                        "processing_time_ms": 3250
+                        "processing_time_ms": 3250,
                     }
                 }
             },
@@ -114,12 +115,8 @@ async def query(
             return QueryResponse(
                 request_id=request_id,
                 answer=cached.get("answer", ""),
-                citations=[
-                    CitationResponse(**c) for c in cached.get("citations", [])
-                ],
-                sources=[
-                    SourceResponse(**s) for s in cached.get("sources", [])
-                ],
+                citations=[CitationResponse(**c) for c in cached.get("citations", [])],
+                sources=[SourceResponse(**s) for s in cached.get("sources", [])],
                 confidence=cached.get("confidence", 0.0),
                 warnings=cached.get("warnings", []) + ["Response from cache"],
                 reasoning_steps=None,  # Don't return reasoning from cache
@@ -157,7 +154,7 @@ async def query(
             )
             stage_timings = profiler.get_stage_timings()
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.warning(
             "query_timeout",
             query_preview=request.query[:50],
@@ -214,7 +211,9 @@ async def query(
             ReasoningStep(
                 step_number=i + 1,
                 node=step.get("node", "unknown") if isinstance(step, dict) else "unknown",
-                description=step.get("description", str(step)) if isinstance(step, dict) else str(step),
+                description=step.get("description", str(step))
+                if isinstance(step, dict)
+                else str(step),
             )
             for i, step in enumerate(result.get("reasoning_steps", []))
         ]
@@ -332,7 +331,7 @@ async def query_stream(
 
             yield f"event: complete\ndata: {json.dumps({'request_id': request_id, 'processing_time_ms': processing_time_ms})}\n\n"
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("streaming_query_timeout", query_preview=request.query[:50])
             yield f"event: error\ndata: {json.dumps({'code': 'TIMEOUT', 'message': 'Request timed out'})}\n\n"
         except Exception as e:
@@ -466,17 +465,19 @@ async def get_statute(
         )
 
     return StatuteWithRulesResponse(
-        statute=result.statute.model_dump() if hasattr(result.statute, 'model_dump') else dict(result.statute),
+        statute=result.statute.model_dump()
+        if hasattr(result.statute, "model_dump")
+        else dict(result.statute),
         implementing_rules=[
-            r.model_dump() if hasattr(r, 'model_dump') else dict(r)
+            r.model_dump() if hasattr(r, "model_dump") else dict(r)
             for r in (result.implementing_rules or [])
         ],
         interpreting_cases=[
-            c.model_dump() if hasattr(c, 'model_dump') else dict(c)
+            c.model_dump() if hasattr(c, "model_dump") else dict(c)
             for c in (result.interpreting_cases or [])
         ],
         interpreting_taas=[
-            t.model_dump() if hasattr(t, 'model_dump') else dict(t)
+            t.model_dump() if hasattr(t, "model_dump") else dict(t)
             for t in (result.interpreting_taas or [])
         ],
     )
@@ -518,27 +519,23 @@ async def get_related_documents(
         if chain:
             interpretation = {
                 "implementing_rules": [
-                    r.model_dump() if hasattr(r, 'model_dump') else dict(r)
+                    r.model_dump() if hasattr(r, "model_dump") else dict(r)
                     for r in (chain.implementing_rules or [])
                 ],
                 "interpreting_cases": [
-                    c.model_dump() if hasattr(c, 'model_dump') else dict(c)
+                    c.model_dump() if hasattr(c, "model_dump") else dict(c)
                     for c in (chain.interpreting_cases or [])
                 ],
                 "interpreting_taas": [
-                    t.model_dump() if hasattr(t, 'model_dump') else dict(t)
+                    t.model_dump() if hasattr(t, "model_dump") else dict(t)
                     for t in (chain.interpreting_taas or [])
                 ],
             }
 
     return RelatedDocumentsResponse(
         doc_id=doc_id,
-        citing_documents=[
-            d.model_dump() if hasattr(d, 'model_dump') else dict(d) for d in citing
-        ],
-        cited_documents=[
-            d.model_dump() if hasattr(d, 'model_dump') else dict(d) for d in cited
-        ],
+        citing_documents=[d.model_dump() if hasattr(d, "model_dump") else dict(d) for d in citing],
+        cited_documents=[d.model_dump() if hasattr(d, "model_dump") else dict(d) for d in cited],
         interpretation_chain=interpretation,
     )
 
@@ -588,6 +585,17 @@ async def get_metrics() -> MetricsResponse:
 # =============================================================================
 # Health Endpoint
 # =============================================================================
+
+
+@router.get(
+    "/ping",
+    summary="Ping",
+    description="Simple liveness check endpoint. Returns immediately without checking external services.",
+    tags=["Monitoring"],
+)
+async def ping():
+    """Simple ping endpoint for basic liveness check."""
+    return {"status": "ok", "message": "pong"}
 
 
 @router.get(

@@ -24,7 +24,6 @@ from src.ingestion.consolidate import (
 )
 from src.ingestion.models import DocumentType
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================
@@ -238,9 +237,7 @@ class TestLoadJsonFile:
 class TestConsolidateStatute:
     """Test consolidate_statute function."""
 
-    def test_creates_legal_document(
-        self, sample_statute_data: dict, tmp_path: Path
-    ) -> None:
+    def test_creates_legal_document(self, sample_statute_data: dict, tmp_path: Path) -> None:
         """Should create a LegalDocument from statute data."""
         result = consolidate_statute(sample_statute_data, tmp_path / "test.json")
 
@@ -248,27 +245,21 @@ class TestConsolidateStatute:
         assert result.id == "statute:212.05"
         assert result.doc_type == DocumentType.STATUTE
 
-    def test_sets_title_from_section_name(
-        self, sample_statute_data: dict, tmp_path: Path
-    ) -> None:
+    def test_sets_title_from_section_name(self, sample_statute_data: dict, tmp_path: Path) -> None:
         """Should use section_name as title."""
         result = consolidate_statute(sample_statute_data, tmp_path / "test.json")
 
         assert result is not None
         assert result.title == "Sales Tax Rate"
 
-    def test_sets_parent_id_from_chapter(
-        self, sample_statute_data: dict, tmp_path: Path
-    ) -> None:
+    def test_sets_parent_id_from_chapter(self, sample_statute_data: dict, tmp_path: Path) -> None:
         """Should set parent_id from chapter."""
         result = consolidate_statute(sample_statute_data, tmp_path / "test.json")
 
         assert result is not None
         assert result.parent_id == "statute:chapter_212"
 
-    def test_parses_effective_date(
-        self, sample_statute_data: dict, tmp_path: Path
-    ) -> None:
+    def test_parses_effective_date(self, sample_statute_data: dict, tmp_path: Path) -> None:
         """Should parse effective date."""
         result = consolidate_statute(sample_statute_data, tmp_path / "test.json")
 
@@ -290,9 +281,7 @@ class TestConsolidateStatute:
 class TestConsolidateRule:
     """Test consolidate_rule function."""
 
-    def test_creates_legal_document(
-        self, sample_rule_data: dict, tmp_path: Path
-    ) -> None:
+    def test_creates_legal_document(self, sample_rule_data: dict, tmp_path: Path) -> None:
         """Should create a LegalDocument from rule data."""
         result = consolidate_rule(sample_rule_data, tmp_path / "test.json")
 
@@ -300,9 +289,7 @@ class TestConsolidateRule:
         assert result.id == "rule:12A-1.001"
         assert result.doc_type == DocumentType.RULE
 
-    def test_merges_statute_citations(
-        self, sample_rule_data: dict, tmp_path: Path
-    ) -> None:
+    def test_merges_statute_citations(self, sample_rule_data: dict, tmp_path: Path) -> None:
         """Should merge all statute citation lists."""
         result = consolidate_rule(sample_rule_data, tmp_path / "test.json")
 
@@ -327,9 +314,7 @@ class TestConsolidateRule:
 class TestConsolidateTAA:
     """Test consolidate_taa function."""
 
-    def test_creates_legal_document(
-        self, sample_taa_data: dict, tmp_path: Path
-    ) -> None:
+    def test_creates_legal_document(self, sample_taa_data: dict, tmp_path: Path) -> None:
         """Should create a LegalDocument from TAA data."""
         result = consolidate_taa(sample_taa_data, tmp_path / "test.json")
 
@@ -337,9 +322,7 @@ class TestConsolidateTAA:
         assert result.id == "taa:TAA_24A-001"
         assert result.doc_type == DocumentType.TAA
 
-    def test_includes_statutes_cited(
-        self, sample_taa_data: dict, tmp_path: Path
-    ) -> None:
+    def test_includes_statutes_cited(self, sample_taa_data: dict, tmp_path: Path) -> None:
         """Should include statute citations."""
         result = consolidate_taa(sample_taa_data, tmp_path / "test.json")
 
@@ -347,18 +330,14 @@ class TestConsolidateTAA:
         assert "212.08(5)" in result.cites_statutes
         assert "212.05" in result.cites_statutes
 
-    def test_includes_rules_cited(
-        self, sample_taa_data: dict, tmp_path: Path
-    ) -> None:
+    def test_includes_rules_cited(self, sample_taa_data: dict, tmp_path: Path) -> None:
         """Should include rule citations."""
         result = consolidate_taa(sample_taa_data, tmp_path / "test.json")
 
         assert result is not None
         assert "12A-1.096" in result.cites_rules
 
-    def test_normalizes_taa_number(
-        self, sample_taa_data: dict, tmp_path: Path
-    ) -> None:
+    def test_normalizes_taa_number(self, sample_taa_data: dict, tmp_path: Path) -> None:
         """Should normalize TAA number (replace spaces with underscores)."""
         result = consolidate_taa(sample_taa_data, tmp_path / "test.json")
 
@@ -380,9 +359,7 @@ class TestConsolidateTAA:
 class TestConsolidateCase:
     """Test consolidate_case function."""
 
-    def test_creates_legal_document(
-        self, sample_case_data: dict, tmp_path: Path
-    ) -> None:
+    def test_creates_legal_document(self, sample_case_data: dict, tmp_path: Path) -> None:
         """Should create a LegalDocument from case data."""
         result = consolidate_case(sample_case_data, tmp_path / "test.json")
 
@@ -390,18 +367,14 @@ class TestConsolidateCase:
         assert result.id == "case:1234567"
         assert result.doc_type == DocumentType.CASE
 
-    def test_uses_opinion_text(
-        self, sample_case_data: dict, tmp_path: Path
-    ) -> None:
+    def test_uses_opinion_text(self, sample_case_data: dict, tmp_path: Path) -> None:
         """Should use opinion_text as text."""
         result = consolidate_case(sample_case_data, tmp_path / "test.json")
 
         assert result is not None
         assert "The court holds that" in result.text
 
-    def test_converts_case_citations(
-        self, sample_case_data: dict, tmp_path: Path
-    ) -> None:
+    def test_converts_case_citations(self, sample_case_data: dict, tmp_path: Path) -> None:
         """Should convert case IDs to case:ID format."""
         result = consolidate_case(sample_case_data, tmp_path / "test.json")
 
@@ -424,9 +397,7 @@ class TestConsolidateCase:
 class TestConsolidateStatutes:
     """Test consolidate_statutes function."""
 
-    def test_loads_all_statute_files(
-        self, temp_data_dir: Path, sample_statute_data: dict
-    ) -> None:
+    def test_loads_all_statute_files(self, temp_data_dir: Path, sample_statute_data: dict) -> None:
         """Should load all statute files from chapter directories."""
         statutes_dir = temp_data_dir / "statutes" / "chapter_212"
         statutes_dir.mkdir(parents=True)
@@ -448,9 +419,7 @@ class TestConsolidateStatutes:
 class TestConsolidateRules:
     """Test consolidate_rules function."""
 
-    def test_loads_all_rule_files(
-        self, temp_data_dir: Path, sample_rule_data: dict
-    ) -> None:
+    def test_loads_all_rule_files(self, temp_data_dir: Path, sample_rule_data: dict) -> None:
         """Should load all rule files from chapter directories."""
         rules_dir = temp_data_dir / "admin_code" / "chapter_12A_1"
         rules_dir.mkdir(parents=True)
@@ -470,9 +439,7 @@ class TestConsolidateRules:
 class TestConsolidateTAAs:
     """Test consolidate_taas function."""
 
-    def test_loads_all_taa_files(
-        self, temp_data_dir: Path, sample_taa_data: dict
-    ) -> None:
+    def test_loads_all_taa_files(self, temp_data_dir: Path, sample_taa_data: dict) -> None:
         """Should load all TAA files matching pattern."""
         taa_dir = temp_data_dir / "taa"
         taa_dir.mkdir(parents=True)
@@ -489,9 +456,7 @@ class TestConsolidateTAAs:
 class TestConsolidateCases:
     """Test consolidate_cases function."""
 
-    def test_loads_all_case_files(
-        self, temp_data_dir: Path, sample_case_data: dict
-    ) -> None:
+    def test_loads_all_case_files(self, temp_data_dir: Path, sample_case_data: dict) -> None:
         """Should load all case files matching pattern."""
         case_dir = temp_data_dir / "case_law"
         case_dir.mkdir(parents=True)
@@ -542,9 +507,7 @@ class TestConsolidateAll:
         assert result.metadata.total_documents == 0
         assert len(result.documents) == 0
 
-    def test_handles_malformed_json(
-        self, temp_data_dir: Path, sample_statute_data: dict
-    ) -> None:
+    def test_handles_malformed_json(self, temp_data_dir: Path, sample_statute_data: dict) -> None:
         """Should skip malformed JSON files."""
         statutes_dir = temp_data_dir / "statutes" / "chapter_212"
         statutes_dir.mkdir(parents=True)

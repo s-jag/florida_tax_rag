@@ -7,11 +7,11 @@ import pytest
 from src.agent import (
     Citation,
     TaxAgentState,
+    check_for_errors,
     create_tax_agent_graph,
     get_graph_visualization,
     should_continue_retrieval,
     should_expand_graph,
-    check_for_errors,
 )
 
 
@@ -106,9 +106,7 @@ class TestEdgeLogic:
         """Test graph expansion triggered for statutes."""
         state: TaxAgentState = {
             "original_query": "test",
-            "current_retrieval_results": [
-                {"doc_type": "statute", "doc_id": "statute:212.05"}
-            ],
+            "current_retrieval_results": [{"doc_type": "statute", "doc_id": "statute:212.05"}],
         }
         assert should_expand_graph(state) == "expand"
 
@@ -116,9 +114,7 @@ class TestEdgeLogic:
         """Test graph expansion triggered for rules."""
         state: TaxAgentState = {
             "original_query": "test",
-            "current_retrieval_results": [
-                {"doc_type": "rule", "doc_id": "rule:12A-1.001"}
-            ],
+            "current_retrieval_results": [{"doc_type": "rule", "doc_id": "rule:12A-1.001"}],
         }
         assert should_expand_graph(state) == "expand"
 
@@ -126,9 +122,7 @@ class TestEdgeLogic:
         """Test graph expansion triggered for few results."""
         state: TaxAgentState = {
             "original_query": "test",
-            "current_retrieval_results": [
-                {"doc_type": "case", "doc_id": "case:123"}
-            ],
+            "current_retrieval_results": [{"doc_type": "case", "doc_id": "case:123"}],
         }
         assert should_expand_graph(state) == "expand"
 

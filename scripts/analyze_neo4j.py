@@ -22,7 +22,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.graph.client import Neo4jClient
 from src.graph.schema import get_schema_queries
 
-
 # Key queries to analyze
 KEY_QUERIES = [
     {
@@ -97,15 +96,9 @@ def run_explain(client: Neo4jClient, query: str, name: str) -> dict:
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Analyze and optimize Neo4j query performance"
-    )
-    parser.add_argument(
-        "--explain", action="store_true", help="Run EXPLAIN on key queries"
-    )
-    parser.add_argument(
-        "--update-indexes", action="store_true", help="Add missing indexes"
-    )
+    parser = argparse.ArgumentParser(description="Analyze and optimize Neo4j query performance")
+    parser.add_argument("--explain", action="store_true", help="Run EXPLAIN on key queries")
+    parser.add_argument("--update-indexes", action="store_true", help="Add missing indexes")
     args = parser.parse_args()
 
     print("=" * 60)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from operator import add
-from typing import Annotated, Optional, TypedDict
+from typing import Annotated, TypedDict
 
 
 class Citation(TypedDict):
@@ -49,11 +49,11 @@ class TaxAgentState(TypedDict, total=False):
     relevance_threshold: float  # Default 0.5
 
     # Temporal validation
-    query_tax_year: Optional[int]  # Inferred from query
+    query_tax_year: int | None  # Inferred from query
     temporally_valid_chunks: list  # Chunks valid for tax year
 
     # Output
-    final_answer: Optional[str]
+    final_answer: str | None
     citations: list  # list[Citation]
     confidence: float  # 0-1 confidence score
 
@@ -68,9 +68,9 @@ class TaxAgentState(TypedDict, total=False):
     _synthesis_context: str  # Formatted context for LLM answer generation
 
     # Validation and correction
-    validation_result: Optional[dict]  # ValidationResult as dict
-    correction_result: Optional[dict]  # CorrectionResult as dict
+    validation_result: dict | None  # ValidationResult as dict
+    correction_result: dict | None  # CorrectionResult as dict
     regeneration_count: int  # Number of regeneration attempts
     max_regenerations: int  # Max regeneration attempts (default 1)
     validation_passed: bool  # Whether validation passed
-    original_answer: Optional[str]  # Original answer before corrections
+    original_answer: str | None  # Original answer before corrections

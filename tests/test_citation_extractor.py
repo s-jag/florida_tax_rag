@@ -1,7 +1,13 @@
 """Unit tests for citation extraction."""
 
-import pytest
-
+from src.ingestion.build_citation_graph import (
+    CitationIndex,
+    ResolvedEdge,
+    build_citation_index,
+    deduplicate_edges,
+    normalize_case_citation_for_index,
+    resolve_citation,
+)
 from src.ingestion.citation_extractor import (
     Citation,
     CitationType,
@@ -13,14 +19,6 @@ from src.ingestion.citation_extractor import (
     extract_rule_citations,
     extract_statute_citations,
     get_context,
-)
-from src.ingestion.build_citation_graph import (
-    CitationIndex,
-    ResolvedEdge,
-    build_citation_index,
-    deduplicate_edges,
-    normalize_case_citation_for_index,
-    resolve_citation,
 )
 
 

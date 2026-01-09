@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import math
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from pydantic import BaseModel, Field
-
 
 # =============================================================================
 # Data Models
@@ -66,10 +65,10 @@ class MethodComparisonResult(BaseModel):
     expected_citations: list[str] = Field(default_factory=list)
 
     # Results by method
-    vector_result: Optional[QueryRetrievalResult] = None
-    keyword_result: Optional[QueryRetrievalResult] = None
-    hybrid_result: Optional[QueryRetrievalResult] = None
-    graph_result: Optional[QueryRetrievalResult] = None
+    vector_result: QueryRetrievalResult | None = None
+    keyword_result: QueryRetrievalResult | None = None
+    hybrid_result: QueryRetrievalResult | None = None
+    graph_result: QueryRetrievalResult | None = None
 
     # Best method for this query
     best_method: str = Field(default="", description="Method with highest MRR")
@@ -121,7 +120,7 @@ class RetrievalAnalysisReport(BaseModel):
 def mean_reciprocal_rank(
     expected: list[str],
     retrieved: list[str],
-    matcher: Optional[Callable[[str, str], bool]] = None,
+    matcher: Callable[[str, str], bool] | None = None,
 ) -> float:
     """Calculate Reciprocal Rank for a single query.
 
@@ -140,7 +139,9 @@ def mean_reciprocal_rank(
         return 0.0
 
     if matcher is None:
-        matcher = lambda a, b: a == b
+
+        def matcher(a, b):
+            return a == b
 
     for rank, doc_id in enumerate(retrieved, start=1):
         for exp in expected:
@@ -153,7 +154,7 @@ def ndcg_at_k(
     expected: list[str],
     retrieved: list[str],
     k: int,
-    matcher: Optional[Callable[[str, str], bool]] = None,
+    matcher: Callable[[str, str], bool] | None = None,
 ) -> float:
     """Calculate Normalized Discounted Cumulative Gain at k.
 
@@ -173,7 +174,9 @@ def ndcg_at_k(
         return 0.0
 
     if matcher is None:
-        matcher = lambda a, b: a == b
+
+        def matcher(a, b):
+            return a == b
 
     # Calculate DCG@k
     dcg = 0.0
@@ -196,7 +199,7 @@ def recall_at_k(
     expected: list[str],
     retrieved: list[str],
     k: int,
-    matcher: Optional[Callable[[str, str], bool]] = None,
+    matcher: Callable[[str, str], bool] | None = None,
 ) -> float:
     """Calculate Recall at k.
 
@@ -217,7 +220,9 @@ def recall_at_k(
         return 0.0
 
     if matcher is None:
-        matcher = lambda a, b: a == b
+
+        def matcher(a, b):
+            return a == b
 
     found = 0
     for exp in expected:
@@ -233,7 +238,7 @@ def precision_at_k(
     expected: list[str],
     retrieved: list[str],
     k: int,
-    matcher: Optional[Callable[[str, str], bool]] = None,
+    matcher: Callable[[str, str], bool] | None = None,
 ) -> float:
     """Calculate Precision at k.
 
@@ -252,7 +257,9 @@ def precision_at_k(
         return 0.0
 
     if matcher is None:
-        matcher = lambda a, b: a == b
+
+        def matcher(a, b):
+            return a == b
 
     top_k = retrieved[:k]
     relevant_count = 0
@@ -267,7 +274,7 @@ def precision_at_k(
 def find_rank(
     target: str,
     retrieved: list[str],
-    matcher: Optional[Callable[[str, str], bool]] = None,
+    matcher: Callable[[str, str], bool] | None = None,
 ) -> int:
     """Find the rank of a target document in retrieved list.
 
@@ -280,7 +287,9 @@ def find_rank(
         1-indexed rank, or 0 if not found
     """
     if matcher is None:
-        matcher = lambda a, b: a == b
+
+        def matcher(a, b):
+            return a == b
 
     for rank, doc_id in enumerate(retrieved, start=1):
         if matcher(doc_id, target):

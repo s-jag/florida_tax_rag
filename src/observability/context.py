@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from contextvars import ContextVar
-from typing import Optional
 
 # Context variables for request tracing
 request_id_var: ContextVar[str] = ContextVar("request_id", default="")
@@ -32,7 +31,7 @@ def get_context() -> dict[str, str]:
     return ctx
 
 
-def set_request_context(request_id: str, query_id: Optional[str] = None) -> None:
+def set_request_context(request_id: str, query_id: str | None = None) -> None:
     """Set request context for the current async context.
 
     Args:

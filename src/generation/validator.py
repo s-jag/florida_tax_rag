@@ -8,13 +8,13 @@ from typing import Any
 
 import structlog
 
+from config.prompts import HALLUCINATION_DETECTION_PROMPT
 from src.generation.formatter import format_chunks_for_context
 from src.generation.models import (
     DetectedHallucination,
     HallucinationType,
     ValidationResult,
 )
-from config.prompts import HALLUCINATION_DETECTION_PROMPT
 
 logger = structlog.get_logger(__name__)
 
@@ -60,9 +60,7 @@ class ResponseValidator:
             from config.settings import get_settings
 
             settings = get_settings()
-            self.client = anthropic.Anthropic(
-                api_key=settings.anthropic_api_key.get_secret_value()
-            )
+            self.client = anthropic.Anthropic(api_key=settings.anthropic_api_key.get_secret_value())
         return self.client
 
     async def validate_response(
@@ -158,8 +156,7 @@ class ResponseValidator:
                 or overall_accuracy < 0.5
             )
             needs_correction = not needs_regeneration and (
-                avg_severity >= CORRECTION_THRESHOLD
-                or overall_accuracy < ACCURACY_PASS_THRESHOLD
+                avg_severity >= CORRECTION_THRESHOLD or overall_accuracy < ACCURACY_PASS_THRESHOLD
             )
 
             validation_result = ValidationResult(

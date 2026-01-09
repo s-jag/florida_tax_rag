@@ -14,7 +14,6 @@ import argparse
 import asyncio
 import json
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
@@ -168,18 +167,20 @@ async def main() -> int:
         for diff in ["easy", "medium", "hard"]:
             if diff in report.metrics_by_difficulty:
                 m = report.metrics_by_difficulty[diff]
-                print(f"  {diff:8s}: {m.count} questions, "
-                      f"score={m.avg_score:.1f}, "
-                      f"pass={m.pass_rate:.0%}")
+                print(
+                    f"  {diff:8s}: {m.count} questions, "
+                    f"score={m.avg_score:.1f}, "
+                    f"pass={m.pass_rate:.0%}"
+                )
 
     # Print by category breakdown
     if report.metrics_by_category:
         print()
         print("By Category:")
         for cat, m in sorted(report.metrics_by_category.items()):
-            print(f"  {cat:15s}: {m.count} questions, "
-                  f"score={m.avg_score:.1f}, "
-                  f"pass={m.pass_rate:.0%}")
+            print(
+                f"  {cat:15s}: {m.count} questions, score={m.avg_score:.1f}, pass={m.pass_rate:.0%}"
+            )
 
     print("=" * 60)
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from starlette.requests import Request
@@ -11,7 +11,6 @@ from starlette.responses import Response
 
 from src.api.errors import RateLimitError
 from src.api.middleware import RateLimitMiddleware, RequestLoggingMiddleware
-
 
 # =============================================================================
 # Fixtures
@@ -236,9 +235,7 @@ class TestRateLimitMiddleware:
             response = await middleware.dispatch(mock_request, call_next)
             assert response.status_code == 200
 
-    async def test_per_ip_tracking(
-        self, mock_response: Response, mock_app: MagicMock
-    ) -> None:
+    async def test_per_ip_tracking(self, mock_response: Response, mock_app: MagicMock) -> None:
         """Should track rate limit per IP address."""
 
         async def call_next(request):

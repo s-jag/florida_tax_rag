@@ -76,7 +76,6 @@ async def main() -> None:
         use_cache=not args.no_cache,
         raw_data_dir=raw_data_dir,
     ) as scraper:
-
         # Handle --url (single TAA)
         if args.url:
             print(f"Scraping single TAA: {args.url}")
@@ -105,7 +104,7 @@ async def main() -> None:
             print("\n=== DRY RUN - Listing what would be scraped ===\n")
             count = args.max or len(taa_index)
             for i, taa_info in enumerate(taa_index[:count]):
-                print(f"  [{i+1}] {taa_info['taa_number']}: {taa_info['title'][:60]}...")
+                print(f"  [{i + 1}] {taa_info['taa_number']}: {taa_info['title'][:60]}...")
                 if i >= 19 and count > 20:
                     print(f"  ... and {count - 20} more")
                     break
@@ -117,14 +116,14 @@ async def main() -> None:
 
         # Full scrape
         max_count = args.max
-        print(f"\nStarting TAA scrape...")
+        print("\nStarting TAA scrape...")
         print(f"Max TAAs: {max_count if max_count else 'all'}")
         print(f"Rate limit delay: {args.delay}s")
         print()
 
         taas = await scraper.scrape(max_count=max_count, delay=args.delay)
 
-        print(f"\n=== Scrape Complete ===")
+        print("\n=== Scrape Complete ===")
         print(f"Total TAAs scraped: {len(taas)}")
 
         # Print summary by tax type

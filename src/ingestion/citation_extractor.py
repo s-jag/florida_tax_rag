@@ -8,12 +8,11 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
 # Import existing patterns from scrapers
-from src.scrapers.utils import STATUTE_PATTERN, RULE_PATTERN
+from src.scrapers.utils import RULE_PATTERN, STATUTE_PATTERN
 
 
 class CitationType(str, Enum):
@@ -46,16 +45,16 @@ class Citation(BaseModel):
     citation_type: CitationType = Field(..., description="Type of citation")
 
     # Parsed components (depend on type)
-    chapter: Optional[str] = Field(default=None, description="Chapter number (e.g., '212')")
-    section: Optional[str] = Field(default=None, description="Section number (e.g., '212.05')")
-    subsection: Optional[str] = Field(default=None, description="Subsection (e.g., '(1)(a)')")
+    chapter: str | None = Field(default=None, description="Chapter number (e.g., '212')")
+    section: str | None = Field(default=None, description="Section number (e.g., '212.05')")
+    subsection: str | None = Field(default=None, description="Subsection (e.g., '(1)(a)')")
 
     # For case citations
-    volume: Optional[int] = Field(default=None, description="Reporter volume")
-    reporter: Optional[str] = Field(default=None, description="Reporter name (e.g., 'So. 2d')")
-    page: Optional[int] = Field(default=None, description="Starting page")
-    year: Optional[int] = Field(default=None, description="Decision year")
-    court: Optional[str] = Field(default=None, description="Court name")
+    volume: int | None = Field(default=None, description="Reporter volume")
+    reporter: str | None = Field(default=None, description="Reporter name (e.g., 'So. 2d')")
+    page: int | None = Field(default=None, description="Starting page")
+    year: int | None = Field(default=None, description="Decision year")
+    court: str | None = Field(default=None, description="Court name")
 
     # Match metadata
     start_pos: int = Field(default=0, description="Start position in text")
@@ -70,7 +69,7 @@ class CitationRelation(BaseModel):
     target_citation: Citation = Field(..., description="The extracted citation")
     relation_type: RelationType = Field(..., description="Type of relationship")
     context: str = Field(default="", description="Surrounding text for context")
-    target_doc_id: Optional[str] = Field(default=None, description="Resolved target document ID")
+    target_doc_id: str | None = Field(default=None, description="Resolved target document ID")
 
 
 # Florida case citation patterns
@@ -381,10 +380,7 @@ def detect_relation_type(
             for kw in ["rulemaking authority", "authority:", "specific authority"]
         ):
             return RelationType.AUTHORITY
-        if any(
-            kw in context_lower
-            for kw in ["law implemented", "implements", "implementing"]
-        ):
+        if any(kw in context_lower for kw in ["law implemented", "implements", "implementing"]):
             return RelationType.IMPLEMENTS
 
     # Check for interpretation (cases)

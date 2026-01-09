@@ -3,7 +3,6 @@
 from src.scrapers.admin_code import FloridaAdminCodeScraper
 from src.scrapers.base import BaseScraper, FetchError, ScraperError
 from src.scrapers.case_law import FloridaCaseLawScraper
-from src.scrapers.taa import FloridaTAAScraper
 from src.scrapers.models import (
     CaseMetadata,
     RawCase,
@@ -15,6 +14,7 @@ from src.scrapers.models import (
     StatuteMetadata,
     TAAMetadata,
 )
+from src.scrapers.taa import FloridaTAAScraper
 from src.scrapers.utils import (
     clean_html_text,
     extract_dates,

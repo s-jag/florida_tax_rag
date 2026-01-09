@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from .models import Category, Difficulty, EvalResult
+from .models import EvalResult
 
 
 class CategoryMetrics(BaseModel):
@@ -43,13 +42,13 @@ class QuestionSummary(BaseModel):
     question_text: str
     category: str
     difficulty: str
-    score: Optional[int] = None
+    score: int | None = None
     passed: bool = False
     hallucinations: list[str] = Field(default_factory=list)
     missing_concepts: list[str] = Field(default_factory=list)
     latency_ms: int = 0
-    faithfulness_score: Optional[float] = None
-    correction_action: Optional[str] = None
+    faithfulness_score: float | None = None
+    correction_action: str | None = None
 
 
 class AuthorityAnalysis(BaseModel):
@@ -121,9 +120,9 @@ class FullEvaluationReport(BaseModel):
     metrics_by_difficulty: dict[str, DifficultyMetrics] = Field(default_factory=dict)
 
     # New analysis sections
-    authority_analysis: Optional[AuthorityAnalysis] = Field(default=None)
-    faithfulness_analysis: Optional[FaithfulnessAnalysis] = Field(default=None)
-    correction_analysis: Optional[CorrectionAnalysis] = Field(default=None)
+    authority_analysis: AuthorityAnalysis | None = Field(default=None)
+    faithfulness_analysis: FaithfulnessAnalysis | None = Field(default=None)
+    correction_analysis: CorrectionAnalysis | None = Field(default=None)
 
     # Individual results
     results: list[EvalResult] = Field(default_factory=list)
@@ -138,7 +137,7 @@ class FullEvaluationReport(BaseModel):
 
 def generate_markdown_report(
     report: FullEvaluationReport,
-    questions_map: Optional[dict] = None,
+    questions_map: dict | None = None,
 ) -> str:
     """Generate human-readable markdown report.
 
@@ -164,7 +163,9 @@ def generate_markdown_report(
     lines.append("")
     lines.append("| Metric | Value |")
     lines.append("|--------|-------|")
-    lines.append(f"| Questions Evaluated | {report.successful_evaluations}/{report.total_questions} |")
+    lines.append(
+        f"| Questions Evaluated | {report.successful_evaluations}/{report.total_questions} |"
+    )
     lines.append(f"| Pass Rate | {report.pass_rate:.1%} |")
     lines.append(f"| Avg Overall Score | {report.avg_overall_score:.1f}/10 |")
     lines.append(f"| Citation Precision | {report.avg_citation_precision:.1%} |")
@@ -183,10 +184,18 @@ def generate_markdown_report(
         lines.append("")
         lines.append("| Metric | Value |")
         lines.append("|--------|-------|")
-        lines.append(f"| Authority-Weighted NDCG@5 | {report.authority_analysis.avg_authority_ndcg_at_5:.3f} |")
-        lines.append(f"| Authority-Weighted NDCG@10 | {report.authority_analysis.avg_authority_ndcg_at_10:.3f} |")
-        lines.append(f"| Hierarchy Alignment | {report.authority_analysis.avg_hierarchy_alignment:.1%} |")
-        lines.append(f"| Primary Authority Rate | {report.authority_analysis.avg_primary_authority_rate:.1%} |")
+        lines.append(
+            f"| Authority-Weighted NDCG@5 | {report.authority_analysis.avg_authority_ndcg_at_5:.3f} |"
+        )
+        lines.append(
+            f"| Authority-Weighted NDCG@10 | {report.authority_analysis.avg_authority_ndcg_at_10:.3f} |"
+        )
+        lines.append(
+            f"| Hierarchy Alignment | {report.authority_analysis.avg_hierarchy_alignment:.1%} |"
+        )
+        lines.append(
+            f"| Primary Authority Rate | {report.authority_analysis.avg_primary_authority_rate:.1%} |"
+        )
         lines.append("")
 
         if report.authority_analysis.doc_type_distribution:
@@ -202,12 +211,18 @@ def generate_markdown_report(
         lines.append("")
         lines.append("| Metric | Value |")
         lines.append("|--------|-------|")
-        lines.append(f"| Total Claims Checked | {report.faithfulness_analysis.total_claims_checked} |")
+        lines.append(
+            f"| Total Claims Checked | {report.faithfulness_analysis.total_claims_checked} |"
+        )
         lines.append(f"| Supported | {report.faithfulness_analysis.total_supported} |")
-        lines.append(f"| Partially Supported | {report.faithfulness_analysis.total_partially_supported} |")
+        lines.append(
+            f"| Partially Supported | {report.faithfulness_analysis.total_partially_supported} |"
+        )
         lines.append(f"| Unsupported | {report.faithfulness_analysis.total_unsupported} |")
         lines.append(f"| Contradicted | {report.faithfulness_analysis.total_contradicted} |")
-        lines.append(f"| Avg Faithfulness Score | {report.faithfulness_analysis.avg_faithfulness_score:.1%} |")
+        lines.append(
+            f"| Avg Faithfulness Score | {report.faithfulness_analysis.avg_faithfulness_score:.1%} |"
+        )
         lines.append(f"| Fabrication Rate | {report.faithfulness_analysis.fabrication_rate:.1%} |")
         lines.append("")
 
@@ -223,7 +238,9 @@ def generate_markdown_report(
         lines.append(f"| Regenerated | {report.correction_analysis.queries_regenerated} |")
         lines.append(f"| Failed Corrections | {report.correction_analysis.queries_failed} |")
         lines.append(f"| Intervention Rate | {report.correction_analysis.intervention_rate:.1%} |")
-        lines.append(f"| Correction Success Rate | {report.correction_analysis.correction_success_rate:.1%} |")
+        lines.append(
+            f"| Correction Success Rate | {report.correction_analysis.correction_success_rate:.1%} |"
+        )
         lines.append("")
 
         if report.correction_analysis.issues_by_type:
@@ -237,8 +254,12 @@ def generate_markdown_report(
     if report.metrics_by_category:
         lines.append("## Results by Category")
         lines.append("")
-        lines.append("| Category | Count | Avg Score | Pass Rate | Precision | Recall | Hallucinations |")
-        lines.append("|----------|-------|-----------|-----------|-----------|--------|----------------|")
+        lines.append(
+            "| Category | Count | Avg Score | Pass Rate | Precision | Recall | Hallucinations |"
+        )
+        lines.append(
+            "|----------|-------|-----------|-----------|-----------|--------|----------------|"
+        )
         for cat_name, metrics in sorted(report.metrics_by_category.items()):
             lines.append(
                 f"| {cat_name} | {metrics.count} | {metrics.avg_score:.1f} | "
@@ -251,8 +272,12 @@ def generate_markdown_report(
     if report.metrics_by_difficulty:
         lines.append("## Results by Difficulty")
         lines.append("")
-        lines.append("| Difficulty | Count | Avg Score | Pass Rate | Precision | Recall | Avg Latency |")
-        lines.append("|------------|-------|-----------|-----------|-----------|--------|-------------|")
+        lines.append(
+            "| Difficulty | Count | Avg Score | Pass Rate | Precision | Recall | Avg Latency |"
+        )
+        lines.append(
+            "|------------|-------|-----------|-----------|-----------|--------|-------------|"
+        )
         for diff_name in ["easy", "medium", "hard"]:
             if diff_name in report.metrics_by_difficulty:
                 metrics = report.metrics_by_difficulty[diff_name]
@@ -265,7 +290,8 @@ def generate_markdown_report(
 
     # Worst Performing Questions
     failed_or_low = [
-        s for s in report.question_summaries
+        s
+        for s in report.question_summaries
         if not s.passed or (s.score is not None and s.score < 7)
     ]
     failed_or_low.sort(key=lambda x: x.score if x.score is not None else -1)
@@ -275,17 +301,19 @@ def generate_markdown_report(
         lines.append("")
         for i, summary in enumerate(failed_or_low[:5], 1):
             score_str = f"{summary.score}/10" if summary.score is not None else "N/A"
-            lines.append(f"### {i}. {summary.question_id} ({summary.difficulty}, {summary.category}) - Score: {score_str}")
+            lines.append(
+                f"### {i}. {summary.question_id} ({summary.difficulty}, {summary.category}) - Score: {score_str}"
+            )
             lines.append("")
             lines.append(f"**Question:** {summary.question_text}")
             lines.append("")
             if summary.hallucinations:
-                lines.append(f"**Hallucinations:**")
+                lines.append("**Hallucinations:**")
                 for h in summary.hallucinations:
                     lines.append(f"- {h}")
                 lines.append("")
             if summary.missing_concepts:
-                lines.append(f"**Missing Concepts:**")
+                lines.append("**Missing Concepts:**")
                 for m in summary.missing_concepts:
                     lines.append(f"- {m}")
                 lines.append("")
@@ -333,7 +361,9 @@ def generate_markdown_report(
         score = result.judgment.overall_score if result.judgment else "N/A"
         passed = "Yes" if result.judgment and result.judgment.passed else "No"
         # Find matching summary for category/difficulty
-        summary = next((s for s in report.question_summaries if s.question_id == result.question_id), None)
+        summary = next(
+            (s for s in report.question_summaries if s.question_id == result.question_id), None
+        )
         cat = summary.category if summary else "?"
         diff = summary.difficulty if summary else "?"
         lines.append(

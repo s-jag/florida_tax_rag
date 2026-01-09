@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -159,7 +158,7 @@ class TestRetrieveForSubquery:
             mock_retriever.retrieve.return_value = []
             mock_create.return_value = mock_retriever
 
-            result = await retrieve_for_subquery(state)
+            await retrieve_for_subquery(state)
 
         # Should have used original query
         mock_retriever.retrieve.assert_called_once()
@@ -212,7 +211,7 @@ class TestExpandWithGraph:
             "current_retrieval_results": [],
         }
 
-        with patch("src.graph.Neo4jClient") as mock_client_cls:
+        with patch("src.graph.Neo4jClient"):
             result = await expand_with_graph(state)
 
         assert result["graph_context"] == []
@@ -228,8 +227,18 @@ class TestScoreRelevance:
         state: TaxAgentState = {
             "original_query": "What is sales tax?",
             "current_retrieval_results": [
-                {"chunk_id": "chunk:1", "doc_type": "statute", "citation": "Fla. Stat. 212.05", "text": "Sales tax..."},
-                {"chunk_id": "chunk:2", "doc_type": "rule", "citation": "Rule 12A-1", "text": "Rules..."},
+                {
+                    "chunk_id": "chunk:1",
+                    "doc_type": "statute",
+                    "citation": "Fla. Stat. 212.05",
+                    "text": "Sales tax...",
+                },
+                {
+                    "chunk_id": "chunk:2",
+                    "doc_type": "rule",
+                    "citation": "Rule 12A-1",
+                    "text": "Rules...",
+                },
             ],
         }
 
@@ -489,7 +498,12 @@ class TestSynthesizeAnswer:
         state: TaxAgentState = {
             "original_query": "Test",
             "temporally_valid_chunks": [
-                {"citation": "Source 1", "text": "Content 1", "doc_type": "statute", "doc_id": "s1"},
+                {
+                    "citation": "Source 1",
+                    "text": "Content 1",
+                    "doc_type": "statute",
+                    "doc_id": "s1",
+                },
                 {"citation": "Source 2", "text": "Content 2", "doc_type": "rule", "doc_id": "r1"},
             ],
             "graph_context": [],

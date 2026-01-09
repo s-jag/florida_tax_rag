@@ -8,9 +8,9 @@ import pytest
 
 from src.vector.client import SearchResult, WeaviateClient, WeaviateConfig
 from src.vector.schema import (
-    CollectionName,
     LEGAL_CHUNK_PROPERTIES,
     VOYAGE_LAW_2_DIMENSION,
+    CollectionName,
     get_legal_chunk_collection_config,
 )
 

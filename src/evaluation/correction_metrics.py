@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 
 class CorrectionAction(Enum):
@@ -129,8 +128,8 @@ class CorrectionTracker:
         action: CorrectionAction,
         issues_detected: int = 0,
         issues_corrected: int = 0,
-        severity_scores: Optional[list[float]] = None,
-        hallucination_types: Optional[list[str]] = None,
+        severity_scores: list[float] | None = None,
+        hallucination_types: list[str] | None = None,
         confidence_before: float = 0.0,
         confidence_after: float = 0.0,
     ) -> None:
@@ -146,16 +145,18 @@ class CorrectionTracker:
             confidence_before: Confidence before correction
             confidence_after: Confidence after correction
         """
-        self.events.append(CorrectionEvent(
-            query_id=query_id,
-            action=action,
-            issues_detected=issues_detected,
-            issues_corrected=issues_corrected,
-            severity_scores=severity_scores or [],
-            hallucination_types=hallucination_types or [],
-            confidence_before=confidence_before,
-            confidence_after=confidence_after,
-        ))
+        self.events.append(
+            CorrectionEvent(
+                query_id=query_id,
+                action=action,
+                issues_detected=issues_detected,
+                issues_corrected=issues_corrected,
+                severity_scores=severity_scores or [],
+                hallucination_types=hallucination_types or [],
+                confidence_before=confidence_before,
+                confidence_after=confidence_after,
+            )
+        )
 
     def record_from_state(
         self,

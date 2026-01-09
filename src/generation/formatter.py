@@ -26,7 +26,7 @@ def format_chunks_for_context(chunks: list[dict]) -> str:
     formatted = []
     for i, chunk in enumerate(chunks):
         doc_type = chunk.get("doc_type", "unknown").upper()
-        citation = chunk.get("citation", f"Source {i+1}")
+        citation = chunk.get("citation", f"Source {i + 1}")
         effective_date = chunk.get("effective_date", "Not specified")
         ancestry = chunk.get("ancestry", "")
         text = chunk.get("text", "")
@@ -37,7 +37,7 @@ def format_chunks_for_context(chunks: list[dict]) -> str:
 
         formatted.append(
             f"""
---- Document {i+1} ({doc_type}) ---
+--- Document {i + 1} ({doc_type}) ---
 Citation: {citation}
 Effective Date: {effective_date}
 Ancestry: {ancestry}

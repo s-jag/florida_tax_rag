@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 class TaxRAGError(Exception):
@@ -21,9 +21,9 @@ class TaxRAGError(Exception):
     def __init__(
         self,
         message: str,
-        details: Optional[dict[str, Any]] = None,
-        error_code: Optional[str] = None,
-        status_code: Optional[int] = None,
+        details: dict[str, Any] | None = None,
+        error_code: str | None = None,
+        status_code: int | None = None,
     ) -> None:
         """Initialize the exception.
 

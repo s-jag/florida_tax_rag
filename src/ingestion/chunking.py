@@ -10,7 +10,6 @@ from __future__ import annotations
 import re
 from datetime import date
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -35,7 +34,8 @@ class LegalChunk(BaseModel):
 
     # Hierarchy context
     ancestry: str = Field(
-        ..., description="Hierarchy path (e.g., 'Florida Statutes > Title XIV > Chapter 212 > § 212.08')"
+        ...,
+        description="Hierarchy path (e.g., 'Florida Statutes > Title XIV > Chapter 212 > § 212.08')",
     )
     subsection_path: str = Field(
         default="", description="Subsection marker (e.g., '(7)(a)') or empty for parent"
@@ -46,12 +46,16 @@ class LegalChunk(BaseModel):
     text_with_ancestry: str = Field(..., description="Text with ancestry prepended for embedding")
 
     # Parent-child linking
-    parent_chunk_id: Optional[str] = Field(default=None, description="ID of parent chunk (for child chunks)")
-    child_chunk_ids: list[str] = Field(default_factory=list, description="IDs of child chunks (for parent chunks)")
+    parent_chunk_id: str | None = Field(
+        default=None, description="ID of parent chunk (for child chunks)"
+    )
+    child_chunk_ids: list[str] = Field(
+        default_factory=list, description="IDs of child chunks (for parent chunks)"
+    )
 
     # Preserved metadata
     citation: str = Field(..., description="Full legal citation")
-    effective_date: Optional[date] = Field(default=None, description="Effective/filing date")
+    effective_date: date | None = Field(default=None, description="Effective/filing date")
     doc_type: str = Field(..., description="Document type: statute, rule, taa, case")
 
     # Token stats
@@ -62,13 +66,10 @@ class LegalChunk(BaseModel):
 
 # Regex patterns for subsection markers
 # These patterns match markers at the start of a line (after newline)
-SUBSECTION_PATTERN = re.compile(
-    r'\n(\((\d+)\)|\(([a-z])\)|(\d+)\.|([a-z])\.)',
-    re.MULTILINE
-)
+SUBSECTION_PATTERN = re.compile(r"\n(\((\d+)\)|\(([a-z])\)|(\d+)\.|([a-z])\.)", re.MULTILINE)
 
 # Pattern to identify top-level subsections only: (1), (2), etc.
-TOP_LEVEL_PATTERN = re.compile(r'^\((\d+)\)\s*$', re.MULTILINE)
+TOP_LEVEL_PATTERN = re.compile(r"^\((\d+)\)\s*$", re.MULTILINE)
 
 
 def parse_top_level_subsections(text: str) -> list[tuple[str, str, int, int]]:
@@ -87,7 +88,7 @@ def parse_top_level_subsections(text: str) -> list[tuple[str, str, int, int]]:
 
     # Find all top-level markers like \n(1)\n, \n(2)\n, etc.
     # The marker should be on its own line
-    pattern = re.compile(r'\n\((\d+)\)\n', re.MULTILINE)
+    pattern = re.compile(r"\n\((\d+)\)\n", re.MULTILINE)
     matches = list(pattern.finditer(text))
 
     if not matches:
@@ -184,7 +185,7 @@ def create_chunk(
     text: str,
     ancestry: str,
     subsection_path: str = "",
-    parent_chunk_id: Optional[str] = None,
+    parent_chunk_id: str | None = None,
 ) -> LegalChunk:
     """Create a LegalChunk with computed fields.
 
@@ -383,7 +384,7 @@ def chunk_taa(doc: LegalDocument) -> list[LegalChunk]:
 
     for header in TAA_SECTIONS:
         # Look for header as a standalone line or at start of line
-        pattern = re.compile(rf'\n{re.escape(header)}\n', re.IGNORECASE)
+        pattern = re.compile(rf"\n{re.escape(header)}\n", re.IGNORECASE)
         match = pattern.search(text)
         if match:
             sections_found.append((header, match.start(), match.end()))

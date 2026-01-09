@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import re
-from datetime import date, datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import quote_plus
 
-from .base import BaseScraper, FetchError
+from .base import BaseScraper
 from .models import CaseMetadata, RawCase
 from .utils import parse_statute_citation
 
@@ -108,7 +108,11 @@ class FloridaCaseLawScraper(BaseScraper):
                 except json.JSONDecodeError as e:
                     self.log.error("json_decode_error", error=str(e), output=result.stdout[:200])
                     return {"count": 0, "results": []}
-            self.log.warning("curl_failed", returncode=result.returncode, stderr=result.stderr[:200] if result.stderr else "")
+            self.log.warning(
+                "curl_failed",
+                returncode=result.returncode,
+                stderr=result.stderr[:200] if result.stderr else "",
+            )
             return {"count": 0, "results": []}
         except Exception as e:
             self.log.error("search_error", error=str(e))
@@ -128,6 +132,7 @@ class FloridaCaseLawScraper(BaseScraper):
         url = f"{self.BASE_URL}/clusters/{cluster_id}/"
 
         import subprocess
+
         try:
             result = await asyncio.to_thread(
                 subprocess.run,
@@ -157,6 +162,7 @@ class FloridaCaseLawScraper(BaseScraper):
         url = f"{self.BASE_URL}/opinions/{opinion_id}/"
 
         import subprocess
+
         try:
             result = await asyncio.to_thread(
                 subprocess.run,
@@ -169,18 +175,18 @@ class FloridaCaseLawScraper(BaseScraper):
                 data = json.loads(result.stdout)
                 # Try different text fields
                 return (
-                    data.get("plain_text", "") or
-                    data.get("html", "") or
-                    data.get("html_lawbox", "") or
-                    data.get("html_columbia", "") or
-                    ""
+                    data.get("plain_text", "")
+                    or data.get("html", "")
+                    or data.get("html_lawbox", "")
+                    or data.get("html_columbia", "")
+                    or ""
                 )
             return ""
         except Exception as e:
             self.log.error("opinion_fetch_error", opinion_id=opinion_id, error=str(e))
             return ""
 
-    def _parse_search_result(self, result: dict[str, Any]) -> Optional[RawCase]:
+    def _parse_search_result(self, result: dict[str, Any]) -> RawCase | None:
         """Parse a search result into a RawCase.
 
         Args:
@@ -213,9 +219,15 @@ class FloridaCaseLawScraper(BaseScraper):
             # Build citations list
             citations = []
             if result.get("citation"):
-                citations = result["citation"] if isinstance(result["citation"], list) else [result["citation"]]
+                citations = (
+                    result["citation"]
+                    if isinstance(result["citation"], list)
+                    else [result["citation"]]
+                )
             elif result.get("citations"):
-                citations = [c.get("cite", "") for c in result.get("citations", []) if c.get("cite")]
+                citations = [
+                    c.get("cite", "") for c in result.get("citations", []) if c.get("cite")
+                ]
 
             # Extract case names
             case_name = result.get("caseName", "") or result.get("case_name", "")
@@ -281,7 +293,7 @@ class FloridaCaseLawScraper(BaseScraper):
                 opinion_html=None,
                 source_url=source_url,
                 pdf_url=pdf_url,
-                scraped_at=datetime.now(timezone.utc),
+                scraped_at=datetime.now(UTC),
             )
         except Exception as e:
             self.log.warning("parse_result_failed", error=str(e), result=result)
@@ -456,7 +468,7 @@ class FloridaCaseLawScraper(BaseScraper):
             "total_cases": len(cases),
             "query": query,
             "courts": courts,
-            "scraped_at": datetime.now(timezone.utc).isoformat(),
+            "scraped_at": datetime.now(UTC).isoformat(),
             "cases": [
                 {
                     "cluster_id": c.metadata.cluster_id,

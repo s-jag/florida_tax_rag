@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -11,7 +11,6 @@ import pytest
 
 from src.scrapers.case_law import FloridaCaseLawScraper
 from src.scrapers.models import CaseMetadata, RawCase
-
 
 # =============================================================================
 # Fixtures
@@ -145,7 +144,7 @@ class TestScraperInit:
     def test_creates_output_dir(self, temp_dirs: tuple[Path, Path]) -> None:
         """Should create case_law output directory."""
         cache_dir, raw_data_dir = temp_dirs
-        scraper = FloridaCaseLawScraper(
+        FloridaCaseLawScraper(
             cache_dir=cache_dir,
             raw_data_dir=raw_data_dir,
         )
@@ -213,9 +212,7 @@ class TestSearchCases:
 
         assert results == {"count": 0, "results": []}
 
-    async def test_handles_json_decode_error(
-        self, scraper: FloridaCaseLawScraper
-    ) -> None:
+    async def test_handles_json_decode_error(self, scraper: FloridaCaseLawScraper) -> None:
         """Should handle invalid JSON response."""
         mock_result = MagicMock()
         mock_result.returncode = 0
@@ -348,9 +345,7 @@ class TestParseSearchResult:
         assert case is not None
         assert "123 So.3d 456" in case.metadata.citations
 
-    def test_parses_citations_from_citations_field(
-        self, scraper: FloridaCaseLawScraper
-    ) -> None:
+    def test_parses_citations_from_citations_field(self, scraper: FloridaCaseLawScraper) -> None:
         """Should parse citations from citations field with dicts."""
         result = {
             "cluster_id": 123,
@@ -363,9 +358,7 @@ class TestParseSearchResult:
         assert "100 So.3d 200" in case.metadata.citations
         assert "101 So.3d 201" in case.metadata.citations
 
-    def test_extracts_cluster_id_from_url(
-        self, scraper: FloridaCaseLawScraper
-    ) -> None:
+    def test_extracts_cluster_id_from_url(self, scraper: FloridaCaseLawScraper) -> None:
         """Should extract cluster_id from cluster URL if not present."""
         result = {
             "cluster": "/api/rest/v4/clusters/99999/",
@@ -414,9 +407,7 @@ class TestParseSearchResult:
         assert "courtlistener.com" in case.source_url
         assert "/opinion/12345/" in case.source_url
 
-    def test_returns_none_for_missing_cluster_id(
-        self, scraper: FloridaCaseLawScraper
-    ) -> None:
+    def test_returns_none_for_missing_cluster_id(self, scraper: FloridaCaseLawScraper) -> None:
         """Should return None if cluster_id cannot be determined."""
         result = {"caseName": "Test Case"}
         case = scraper._parse_search_result(result)
@@ -468,7 +459,7 @@ class TestSaveCase:
             metadata=metadata,
             opinion_text="Test opinion text",
             source_url="https://example.com",
-            scraped_at=datetime.now(timezone.utc),
+            scraped_at=datetime.now(UTC),
         )
 
         path = scraper._save_case(case)
@@ -501,9 +492,7 @@ class TestScrapeSearchResults:
         with patch("asyncio.to_thread", new_callable=AsyncMock) as mock_thread:
             mock_thread.return_value = mock_result
 
-            cases = await scraper.scrape_search_results(
-                '"department of revenue"', delay=0.001
-            )
+            cases = await scraper.scrape_search_results('"department of revenue"', delay=0.001)
 
         assert len(cases) == 2
         assert all(isinstance(c, RawCase) for c in cases)
@@ -547,9 +536,7 @@ class TestScrapeSearchResults:
 class TestScrapeAllTaxCases:
     """Test scrape_all_tax_cases method."""
 
-    async def test_deduplicates_by_cluster_id(
-        self, scraper: FloridaCaseLawScraper
-    ) -> None:
+    async def test_deduplicates_by_cluster_id(self, scraper: FloridaCaseLawScraper) -> None:
         """Should deduplicate cases by cluster_id."""
         # Create two responses with overlapping cluster_id
         response1 = {
@@ -582,12 +569,8 @@ class TestScrapeAllTaxCases:
                 return [scraper._parse_search_result(response1["results"][0])]
             return [scraper._parse_search_result(response2["results"][0])]
 
-        with patch.object(
-            scraper, "scrape_search_results", side_effect=mock_scrape_results
-        ):
-            cases = await scraper.scrape_all_tax_cases(
-                courts=["fla", "flaapp"], delay=0.001
-            )
+        with patch.object(scraper, "scrape_search_results", side_effect=mock_scrape_results):
+            cases = await scraper.scrape_all_tax_cases(courts=["fla", "flaapp"], delay=0.001)
 
         # Should only have one case due to deduplication
         assert len(cases) == 1
@@ -635,9 +618,7 @@ class TestScrape:
         with patch("asyncio.to_thread", new_callable=AsyncMock) as mock_thread:
             mock_thread.return_value = mock_result
 
-            results = await scraper.scrape(
-                query='"test"', courts=["fla"], delay=0.001
-            )
+            results = await scraper.scrape(query='"test"', courts=["fla"], delay=0.001)
 
         assert all(isinstance(r, dict) for r in results)
         assert "metadata" in results[0]

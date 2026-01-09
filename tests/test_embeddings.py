@@ -88,7 +88,6 @@ class TestEmbeddingCache:
         """Test get_many returns only cached embeddings."""
         mock_redis = MagicMock()
         embedding1 = [0.1, 0.2, 0.3]
-        embedding2 = [0.4, 0.5, 0.6]
         # Simulate: first text cached, second not cached
         mock_redis.mget.return_value = [json.dumps(embedding1), None]
         cache = EmbeddingCache(mock_redis)
@@ -171,7 +170,9 @@ class TestVoyageEmbedder:
 
         texts = ["text"] * 150  # 3 batches of 50
 
-        with patch.object(embedder, "_embed_batch", return_value=[[0.1] * VOYAGE_LAW_2_DIMENSION] * 50):
+        with patch.object(
+            embedder, "_embed_batch", return_value=[[0.1] * VOYAGE_LAW_2_DIMENSION] * 50
+        ):
             result = embedder.embed_texts(texts, show_progress=False)
 
         assert len(result) == 150
@@ -294,7 +295,9 @@ class TestVoyageEmbedderIntegration:
     @pytest.mark.integration
     def test_embed_single_text(self, embedder):
         """Test embedding a single text."""
-        result = embedder.embed_texts(["This is a test sentence about Florida tax law."], show_progress=False)
+        result = embedder.embed_texts(
+            ["This is a test sentence about Florida tax law."], show_progress=False
+        )
 
         assert len(result) == 1
         assert len(result[0]) == VOYAGE_LAW_2_DIMENSION
